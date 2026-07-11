@@ -1,0 +1,17 @@
+<Project Sdk="Godot.NET.Sdk/4.6.0">
+  <PropertyGroup>
+    <TargetFramework>net8.0</TargetFramework>
+    <RootNamespace>ProcPoke</RootNamespace>
+    <Nullable>enable</Nullable>
+  </PropertyGroup>
+  <ItemGroup>
+    <!-- Domain libraries and tests build as their own projects; keep them out of the game assembly. -->
+    <Compile Remove="domain/**;tests/**" />
+    <None Remove="domain/**;tests/**" />
+  </ItemGroup>
+  <ItemGroup>
+    <ProjectReference Include="domain/ProcPoke.Data/ProcPoke.Data.csproj" />
+    <ProjectReference Include="domain/ProcPoke.Generation/ProcPoke.Generation.csproj" />
+    <ProjectReference Include="domain/ProcPoke.Battle/ProcPoke.Battle.csproj" />
+  </ItemGroup>
+</Project>

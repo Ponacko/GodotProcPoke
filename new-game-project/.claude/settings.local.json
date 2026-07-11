@@ -1,0 +1,16 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(dotnet --version)",
+      "Bash(dotnet --list-sdks)",
+      "Read(//usr/lib/dotnet/**)",
+      "Bash(apt-cache policy *)",
+      "Bash(snap list *)",
+      "Bash(apt-cache search *)",
+      "Bash(sudo -n true)",
+      "Bash(curl -fsSL https://dot.net/v1/dotnet-install.sh -o /tmp/claude-1001/-home-tstolarik-Documents-GitHub-GodotProcPoke-new-game-project/58bc42ef-65bf-40a4-b232-4526d0ef2c55/scratchpad/dotnet-install.sh)",
+      "Bash(chmod +x /tmp/claude-1001/-home-tstolarik-Documents-GitHub-GodotProcPoke-new-game-project/58bc42ef-65bf-40a4-b232-4526d0ef2c55/scratchpad/dotnet-install.sh)",
+      "Bash(/tmp/claude-1001/-home-tstolarik-Documents-GitHub-GodotProcPoke-new-game-project/58bc42ef-65bf-40a4-b232-4526d0ef2c55/scratchpad/dotnet-install.sh --channel 10.0 --install-dir /home/tstolarik/.dotnet)"
+    ]
+  }
+}

@@ -1,3 +1,12 @@
 # Godot 4+ specific ignores
 .godot/
 /android/
+
+# .NET build artifacts
+bin/
+obj/
+*.user
+
+# Godot mono cruft
+.mono/
+mono_crash.*.json

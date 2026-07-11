@@ -10,19 +10,26 @@ config_version=5
 
 [application]
 
-config/name="New Game Project"
-config/features=PackedStringArray("4.6", "Mobile")
+config/name="ProcPoke"
+config/features=PackedStringArray("4.6", "GL Compatibility")
 config/icon="res://icon.svg"
+
+[display]
+
+window/size/viewport_width=256
+window/size/viewport_height=192
+window/size/window_width_override=1024
+window/size/window_height_override=768
+window/stretch/mode="viewport"
+window/stretch/aspect="keep"
+window/stretch/scale_mode="integer"
 
 [dotnet]
 
-project/assembly_name="New Game Project"
-
-[physics]
-
-3d/physics_engine="Jolt Physics"
+project/assembly_name="ProcPoke"
 
 [rendering]
 
-rendering_device/driver.windows="d3d12"
-renderer/rendering_method="mobile"
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"
+textures/canvas_textures/default_texture_filter=0

@@ -1,0 +1,13 @@
+<Solution>
+  <Folder Name="/domain/">
+    <Project Path="domain/ProcPoke.Battle/ProcPoke.Battle.csproj" />
+    <Project Path="domain/ProcPoke.Data/ProcPoke.Data.csproj" />
+    <Project Path="domain/ProcPoke.Generation/ProcPoke.Generation.csproj" />
+  </Folder>
+  <Folder Name="/tests/">
+    <Project Path="tests/ProcPoke.Battle.Tests/ProcPoke.Battle.Tests.csproj" />
+    <Project Path="tests/ProcPoke.Data.Tests/ProcPoke.Data.Tests.csproj" />
+    <Project Path="tests/ProcPoke.Generation.Tests/ProcPoke.Generation.Tests.csproj" />
+  </Folder>
+  <Project Path="ProcPoke.csproj" />
+</Solution>
