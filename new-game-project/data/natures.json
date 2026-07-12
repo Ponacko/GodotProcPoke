@@ -1,0 +1,142 @@
+[
+  {
+    "Id": 1,
+    "Name": "Hardy"
+  },
+  {
+    "Id": 2,
+    "Name": "Bold",
+    "IncreasedStat": "Defense",
+    "DecreasedStat": "Attack"
+  },
+  {
+    "Id": 3,
+    "Name": "Modest",
+    "IncreasedStat": "SpecialAttack",
+    "DecreasedStat": "Attack"
+  },
+  {
+    "Id": 4,
+    "Name": "Calm",
+    "IncreasedStat": "SpecialDefense",
+    "DecreasedStat": "Attack"
+  },
+  {
+    "Id": 5,
+    "Name": "Timid",
+    "IncreasedStat": "Speed",
+    "DecreasedStat": "Attack"
+  },
+  {
+    "Id": 6,
+    "Name": "Lonely",
+    "IncreasedStat": "Attack",
+    "DecreasedStat": "Defense"
+  },
+  {
+    "Id": 7,
+    "Name": "Docile"
+  },
+  {
+    "Id": 8,
+    "Name": "Mild",
+    "IncreasedStat": "SpecialAttack",
+    "DecreasedStat": "Defense"
+  },
+  {
+    "Id": 9,
+    "Name": "Gentle",
+    "IncreasedStat": "SpecialDefense",
+    "DecreasedStat": "Defense"
+  },
+  {
+    "Id": 10,
+    "Name": "Hasty",
+    "IncreasedStat": "Speed",
+    "DecreasedStat": "Defense"
+  },
+  {
+    "Id": 11,
+    "Name": "Adamant",
+    "IncreasedStat": "Attack",
+    "DecreasedStat": "SpecialAttack"
+  },
+  {
+    "Id": 12,
+    "Name": "Impish",
+    "IncreasedStat": "Defense",
+    "DecreasedStat": "SpecialAttack"
+  },
+  {
+    "Id": 13,
+    "Name": "Bashful"
+  },
+  {
+    "Id": 14,
+    "Name": "Careful",
+    "IncreasedStat": "SpecialDefense",
+    "DecreasedStat": "SpecialAttack"
+  },
+  {
+    "Id": 15,
+    "Name": "Rash",
+    "IncreasedStat": "SpecialAttack",
+    "DecreasedStat": "SpecialDefense"
+  },
+  {
+    "Id": 16,
+    "Name": "Jolly",
+    "IncreasedStat": "Speed",
+    "DecreasedStat": "SpecialAttack"
+  },
+  {
+    "Id": 17,
+    "Name": "Naughty",
+    "IncreasedStat": "Attack",
+    "DecreasedStat": "SpecialDefense"
+  },
+  {
+    "Id": 18,
+    "Name": "Lax",
+    "IncreasedStat": "Defense",
+    "DecreasedStat": "SpecialDefense"
+  },
+  {
+    "Id": 19,
+    "Name": "Quirky"
+  },
+  {
+    "Id": 20,
+    "Name": "Naive",
+    "IncreasedStat": "Speed",
+    "DecreasedStat": "SpecialDefense"
+  },
+  {
+    "Id": 21,
+    "Name": "Brave",
+    "IncreasedStat": "Attack",
+    "DecreasedStat": "Speed"
+  },
+  {
+    "Id": 22,
+    "Name": "Relaxed",
+    "IncreasedStat": "Defense",
+    "DecreasedStat": "Speed"
+  },
+  {
+    "Id": 23,
+    "Name": "Quiet",
+    "IncreasedStat": "SpecialAttack",
+    "DecreasedStat": "Speed"
+  },
+  {
+    "Id": 24,
+    "Name": "Sassy",
+    "IncreasedStat": "SpecialDefense",
+    "DecreasedStat": "Speed"
+  },
+  {
+    "Id": 25,
+    "Name": "Serious"
+  }
+]

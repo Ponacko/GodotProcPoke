@@ -1,0 +1,9 @@
+{
+  "SourceRepo": "PokeAPI/pokeapi",
+  "SourceCommitSha": "d638fe7791214a8d3c3282e2a3113eea7cfef288",
+  "VersionGroup": "black-2-white-2",
+  "VersionGroupId": 14,
+  "GenerationId": 5,
+  "BakeToolVersion": 1,
+  "SpeciesCount": 649
+}

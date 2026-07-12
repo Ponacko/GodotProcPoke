@@ -5,9 +5,9 @@
     <Nullable>enable</Nullable>
   </PropertyGroup>
   <ItemGroup>
-    <!-- Domain libraries and tests build as their own projects; keep them out of the game assembly. -->
-    <Compile Remove="domain/**;tests/**" />
-    <None Remove="domain/**;tests/**" />
+    <!-- Domain libraries, tests, and tools build as their own projects; keep them out of the game assembly. -->
+    <Compile Remove="domain/**;tests/**;tools/**" />
+    <None Remove="domain/**;tests/**;tools/**" />
   </ItemGroup>
   <ItemGroup>
     <ProjectReference Include="domain/ProcPoke.Data/ProcPoke.Data.csproj" />

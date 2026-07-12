@@ -1,0 +1,15 @@
+<Project Sdk="Microsoft.NET.Sdk">
+  <PropertyGroup>
+    <OutputType>Exe</OutputType>
+    <!-- net10.0: the only runtime installed here; a net10 exe may reference the net8.0 domain libs. -->
+    <TargetFramework>net10.0</TargetFramework>
+    <Nullable>enable</Nullable>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <RootNamespace>ProcPoke.Bake</RootNamespace>
+    <AssemblyName>ProcPoke.Bake</AssemblyName>
+    <InvariantGlobalization>true</InvariantGlobalization>
+  </PropertyGroup>
+  <ItemGroup>
+    <ProjectReference Include="../../domain/ProcPoke.Data/ProcPoke.Data.csproj" />
+  </ItemGroup>
+</Project>

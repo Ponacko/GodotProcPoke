@@ -10,3 +10,6 @@ obj/
 # Godot mono cruft
 .mono/
 mono_crash.*.json
+
+# Data-pipeline caches (the bake tool + pinned SHAs are the reproducibility story; data/ is committed)
+.cache/

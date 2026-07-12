@@ -1,0 +1,4329 @@
+[
+  {
+    "Id": 1,
+    "Name": "Master Ball",
+    "Category": "standard-balls",
+    "Cost": 0
+  },
+  {
+    "Id": 2,
+    "Name": "Ultra Ball",
+    "Category": "standard-balls",
+    "Cost": 800
+  },
+  {
+    "Id": 3,
+    "Name": "Great Ball",
+    "Category": "standard-balls",
+    "Cost": 600
+  },
+  {
+    "Id": 4,
+    "Name": "Pok\u00E9 Ball",
+    "Category": "standard-balls",
+    "Cost": 200
+  },
+  {
+    "Id": 5,
+    "Name": "Safari Ball",
+    "Category": "standard-balls",
+    "Cost": 0
+  },
+  {
+    "Id": 6,
+    "Name": "Net Ball",
+    "Category": "special-balls",
+    "Cost": 1000
+  },
+  {
+    "Id": 7,
+    "Name": "Dive Ball",
+    "Category": "special-balls",
+    "Cost": 1000
+  },
+  {
+    "Id": 8,
+    "Name": "Nest Ball",
+    "Category": "special-balls",
+    "Cost": 1000
+  },
+  {
+    "Id": 9,
+    "Name": "Repeat Ball",
+    "Category": "special-balls",
+    "Cost": 1000
+  },
+  {
+    "Id": 10,
+    "Name": "Timer Ball",
+    "Category": "special-balls",
+    "Cost": 1000
+  },
+  {
+    "Id": 11,
+    "Name": "Luxury Ball",
+    "Category": "special-balls",
+    "Cost": 3000
+  },
+  {
+    "Id": 12,
+    "Name": "Premier Ball",
+    "Category": "special-balls",
+    "Cost": 20
+  },
+  {
+    "Id": 13,
+    "Name": "Dusk Ball",
+    "Category": "special-balls",
+    "Cost": 1000
+  },
+  {
+    "Id": 14,
+    "Name": "Heal Ball",
+    "Category": "special-balls",
+    "Cost": 300
+  },
+  {
+    "Id": 15,
+    "Name": "Quick Ball",
+    "Category": "special-balls",
+    "Cost": 1000
+  },
+  {
+    "Id": 16,
+    "Name": "Cherish Ball",
+    "Category": "special-balls",
+    "Cost": 0
+  },
+  {
+    "Id": 17,
+    "Name": "Potion",
+    "Category": "healing",
+    "Cost": 200,
+    "FlingPower": 30
+  },
+  {
+    "Id": 18,
+    "Name": "Antidote",
+    "Category": "status-cures",
+    "Cost": 200,
+    "FlingPower": 30
+  },
+  {
+    "Id": 19,
+    "Name": "Burn Heal",
+    "Category": "status-cures",
+    "Cost": 200,
+    "FlingPower": 30
+  },
+  {
+    "Id": 20,
+    "Name": "Ice Heal",
+    "Category": "status-cures",
+    "Cost": 200,
+    "FlingPower": 30
+  },
+  {
+    "Id": 21,
+    "Name": "Awakening",
+    "Category": "status-cures",
+    "Cost": 200,
+    "FlingPower": 30
+  },
+  {
+    "Id": 22,
+    "Name": "Paralyze Heal",
+    "Category": "status-cures",
+    "Cost": 200,
+    "FlingPower": 30
+  },
+  {
+    "Id": 23,
+    "Name": "Full Restore",
+    "Category": "healing",
+    "Cost": 3000,
+    "FlingPower": 30
+  },
+  {
+    "Id": 24,
+    "Name": "Max Potion",
+    "Category": "healing",
+    "Cost": 2500,
+    "FlingPower": 30
+  },
+  {
+    "Id": 25,
+    "Name": "Hyper Potion",
+    "Category": "healing",
+    "Cost": 1500,
+    "FlingPower": 30
+  },
+  {
+    "Id": 26,
+    "Name": "Super Potion",
+    "Category": "healing",
+    "Cost": 700,
+    "FlingPower": 30
+  },
+  {
+    "Id": 27,
+    "Name": "Full Heal",
+    "Category": "status-cures",
+    "Cost": 400,
+    "FlingPower": 30
+  },
+  {
+    "Id": 28,
+    "Name": "Revive",
+    "Category": "revival",
+    "Cost": 2000,
+    "FlingPower": 30
+  },
+  {
+    "Id": 29,
+    "Name": "Max Revive",
+    "Category": "revival",
+    "Cost": 4000,
+    "FlingPower": 30
+  },
+  {
+    "Id": 30,
+    "Name": "Fresh Water",
+    "Category": "healing",
+    "Cost": 200,
+    "FlingPower": 30
+  },
+  {
+    "Id": 31,
+    "Name": "Soda Pop",
+    "Category": "healing",
+    "Cost": 300,
+    "FlingPower": 30
+  },
+  {
+    "Id": 32,
+    "Name": "Lemonade",
+    "Category": "healing",
+    "Cost": 400,
+    "FlingPower": 30
+  },
+  {
+    "Id": 33,
+    "Name": "Moomoo Milk",
+    "Category": "healing",
+    "Cost": 600,
+    "FlingPower": 30
+  },
+  {
+    "Id": 34,
+    "Name": "Energy Powder",
+    "Category": "healing",
+    "Cost": 500,
+    "FlingPower": 30
+  },
+  {
+    "Id": 35,
+    "Name": "Energy Root",
+    "Category": "healing",
+    "Cost": 1200,
+    "FlingPower": 30
+  },
+  {
+    "Id": 36,
+    "Name": "Heal Powder",
+    "Category": "status-cures",
+    "Cost": 300,
+    "FlingPower": 30
+  },
+  {
+    "Id": 37,
+    "Name": "Revival Herb",
+    "Category": "revival",
+    "Cost": 2800,
+    "FlingPower": 30
+  },
+  {
+    "Id": 38,
+    "Name": "Ether",
+    "Category": "pp-recovery",
+    "Cost": 1200,
+    "FlingPower": 30
+  },
+  {
+    "Id": 39,
+    "Name": "Max Ether",
+    "Category": "pp-recovery",
+    "Cost": 2000,
+    "FlingPower": 30
+  },
+  {
+    "Id": 40,
+    "Name": "Elixir",
+    "Category": "pp-recovery",
+    "Cost": 3000,
+    "FlingPower": 30
+  },
+  {
+    "Id": 41,
+    "Name": "Max Elixir",
+    "Category": "pp-recovery",
+    "Cost": 4500,
+    "FlingPower": 30
+  },
+  {
+    "Id": 42,
+    "Name": "Lava Cookie",
+    "Category": "status-cures",
+    "Cost": 350,
+    "FlingPower": 30
+  },
+  {
+    "Id": 43,
+    "Name": "Berry Juice",
+    "Category": "healing",
+    "Cost": 200,
+    "FlingPower": 30
+  },
+  {
+    "Id": 44,
+    "Name": "Sacred Ash",
+    "Category": "revival",
+    "Cost": 50000,
+    "FlingPower": 30
+  },
+  {
+    "Id": 45,
+    "Name": "HP Up",
+    "Category": "vitamins",
+    "Cost": 10000,
+    "FlingPower": 30
+  },
+  {
+    "Id": 46,
+    "Name": "Protein",
+    "Category": "vitamins",
+    "Cost": 10000,
+    "FlingPower": 30
+  },
+  {
+    "Id": 47,
+    "Name": "Iron",
+    "Category": "vitamins",
+    "Cost": 10000,
+    "FlingPower": 30
+  },
+  {
+    "Id": 48,
+    "Name": "Carbos",
+    "Category": "vitamins",
+    "Cost": 10000,
+    "FlingPower": 30
+  },
+  {
+    "Id": 49,
+    "Name": "Calcium",
+    "Category": "vitamins",
+    "Cost": 10000,
+    "FlingPower": 30
+  },
+  {
+    "Id": 50,
+    "Name": "Rare Candy",
+    "Category": "vitamins",
+    "Cost": 10000,
+    "FlingPower": 30
+  },
+  {
+    "Id": 51,
+    "Name": "PP Up",
+    "Category": "vitamins",
+    "Cost": 10000,
+    "FlingPower": 30
+  },
+  {
+    "Id": 52,
+    "Name": "Zinc",
+    "Category": "vitamins",
+    "Cost": 10000,
+    "FlingPower": 30
+  },
+  {
+    "Id": 53,
+    "Name": "PP Max",
+    "Category": "vitamins",
+    "Cost": 10000,
+    "FlingPower": 30
+  },
+  {
+    "Id": 54,
+    "Name": "Old Gateau",
+    "Category": "status-cures",
+    "Cost": 350,
+    "FlingPower": 30
+  },
+  {
+    "Id": 63,
+    "Name": "Pok\u00E9 Doll",
+    "Category": "spelunking",
+    "Cost": 300,
+    "FlingPower": 30
+  },
+  {
+    "Id": 64,
+    "Name": "Fluffy Tail",
+    "Category": "spelunking",
+    "Cost": 100,
+    "FlingPower": 30
+  },
+  {
+    "Id": 68,
+    "Name": "Black Flute",
+    "Category": "spelunking",
+    "Cost": 20,
+    "FlingPower": 30
+  },
+  {
+    "Id": 69,
+    "Name": "White Flute",
+    "Category": "spelunking",
+    "Cost": 20,
+    "FlingPower": 30
+  },
+  {
+    "Id": 76,
+    "Name": "Super Repel",
+    "Category": "spelunking",
+    "Cost": 700,
+    "FlingPower": 30
+  },
+  {
+    "Id": 77,
+    "Name": "Max Repel",
+    "Category": "spelunking",
+    "Cost": 900,
+    "FlingPower": 30
+  },
+  {
+    "Id": 78,
+    "Name": "Escape Rope",
+    "Category": "spelunking",
+    "Cost": 300,
+    "FlingPower": 30
+  },
+  {
+    "Id": 79,
+    "Name": "Repel",
+    "Category": "spelunking",
+    "Cost": 400,
+    "FlingPower": 30
+  },
+  {
+    "Id": 80,
+    "Name": "Sun Stone",
+    "Category": "evolution",
+    "Cost": 3000,
+    "FlingPower": 30
+  },
+  {
+    "Id": 81,
+    "Name": "Moon Stone",
+    "Category": "evolution",
+    "Cost": 3000,
+    "FlingPower": 30
+  },
+  {
+    "Id": 82,
+    "Name": "Fire Stone",
+    "Category": "evolution",
+    "Cost": 3000,
+    "FlingPower": 30
+  },
+  {
+    "Id": 83,
+    "Name": "Thunder Stone",
+    "Category": "evolution",
+    "Cost": 3000,
+    "FlingPower": 30
+  },
+  {
+    "Id": 84,
+    "Name": "Water Stone",
+    "Category": "evolution",
+    "Cost": 3000,
+    "FlingPower": 30
+  },
+  {
+    "Id": 85,
+    "Name": "Leaf Stone",
+    "Category": "evolution",
+    "Cost": 3000,
+    "FlingPower": 30
+  },
+  {
+    "Id": 107,
+    "Name": "Shiny Stone",
+    "Category": "evolution",
+    "Cost": 3000,
+    "FlingPower": 80
+  },
+  {
+    "Id": 108,
+    "Name": "Dusk Stone",
+    "Category": "evolution",
+    "Cost": 3000,
+    "FlingPower": 80
+  },
+  {
+    "Id": 109,
+    "Name": "Dawn Stone",
+    "Category": "evolution",
+    "Cost": 3000,
+    "FlingPower": 80
+  },
+  {
+    "Id": 110,
+    "Name": "Oval Stone",
+    "Category": "evolution",
+    "Cost": 2000,
+    "FlingPower": 80
+  },
+  {
+    "Id": 112,
+    "Name": "Adamant Orb",
+    "Category": "species-specific",
+    "Cost": 0,
+    "FlingPower": 60
+  },
+  {
+    "Id": 113,
+    "Name": "Lustrous Orb",
+    "Category": "species-specific",
+    "Cost": 0,
+    "FlingPower": 60
+  },
+  {
+    "Id": 178,
+    "Name": "Liechi Berry",
+    "Category": "in-a-pinch",
+    "Cost": 80,
+    "FlingPower": 10
+  },
+  {
+    "Id": 179,
+    "Name": "Ganlon Berry",
+    "Category": "in-a-pinch",
+    "Cost": 80,
+    "FlingPower": 10
+  },
+  {
+    "Id": 180,
+    "Name": "Salac Berry",
+    "Category": "in-a-pinch",
+    "Cost": 80,
+    "FlingPower": 10
+  },
+  {
+    "Id": 181,
+    "Name": "Petaya Berry",
+    "Category": "in-a-pinch",
+    "Cost": 80,
+    "FlingPower": 10
+  },
+  {
+    "Id": 182,
+    "Name": "Apicot Berry",
+    "Category": "in-a-pinch",
+    "Cost": 80,
+    "FlingPower": 10
+  },
+  {
+    "Id": 183,
+    "Name": "Lansat Berry",
+    "Category": "in-a-pinch",
+    "Cost": 80,
+    "FlingPower": 10
+  },
+  {
+    "Id": 184,
+    "Name": "Starf Berry",
+    "Category": "in-a-pinch",
+    "Cost": 80,
+    "FlingPower": 10
+  },
+  {
+    "Id": 186,
+    "Name": "Micle Berry",
+    "Category": "in-a-pinch",
+    "Cost": 80,
+    "FlingPower": 10
+  },
+  {
+    "Id": 187,
+    "Name": "Custap Berry",
+    "Category": "in-a-pinch",
+    "Cost": 80,
+    "FlingPower": 10
+  },
+  {
+    "Id": 190,
+    "Name": "Bright Powder",
+    "Category": "held-items",
+    "Cost": 4000,
+    "FlingPower": 10
+  },
+  {
+    "Id": 191,
+    "Name": "White Herb",
+    "Category": "held-items",
+    "Cost": 4000,
+    "FlingPower": 10
+  },
+  {
+    "Id": 192,
+    "Name": "Macho Brace",
+    "Category": "effort-training",
+    "Cost": 3000,
+    "FlingPower": 60
+  },
+  {
+    "Id": 193,
+    "Name": "Exp. Share",
+    "Category": "training",
+    "Cost": 0
+  },
+  {
+    "Id": 194,
+    "Name": "Quick Claw",
+    "Category": "held-items",
+    "Cost": 4000,
+    "FlingPower": 80
+  },
+  {
+    "Id": 195,
+    "Name": "Soothe Bell",
+    "Category": "training",
+    "Cost": 4000,
+    "FlingPower": 10
+  },
+  {
+    "Id": 196,
+    "Name": "Mental Herb",
+    "Category": "held-items",
+    "Cost": 4000,
+    "FlingPower": 10
+  },
+  {
+    "Id": 197,
+    "Name": "Choice Band",
+    "Category": "choice",
+    "Cost": 4000,
+    "FlingPower": 10
+  },
+  {
+    "Id": 198,
+    "Name": "King\u2019s Rock",
+    "Category": "held-items",
+    "Cost": 5000,
+    "FlingPower": 30
+  },
+  {
+    "Id": 199,
+    "Name": "Silver Powder",
+    "Category": "type-enhancement",
+    "Cost": 1000,
+    "FlingPower": 10
+  },
+  {
+    "Id": 200,
+    "Name": "Amulet Coin",
+    "Category": "training",
+    "Cost": 10000,
+    "FlingPower": 30
+  },
+  {
+    "Id": 201,
+    "Name": "Cleanse Tag",
+    "Category": "training",
+    "Cost": 5000,
+    "FlingPower": 30
+  },
+  {
+    "Id": 202,
+    "Name": "Soul Dew",
+    "Category": "species-specific",
+    "Cost": 0,
+    "FlingPower": 30
+  },
+  {
+    "Id": 203,
+    "Name": "Deep Sea Tooth",
+    "Category": "species-specific",
+    "Cost": 2000,
+    "FlingPower": 90
+  },
+  {
+    "Id": 204,
+    "Name": "Deep Sea Scale",
+    "Category": "species-specific",
+    "Cost": 2000,
+    "FlingPower": 30
+  },
+  {
+    "Id": 205,
+    "Name": "Smoke Ball",
+    "Category": "held-items",
+    "Cost": 4000,
+    "FlingPower": 30
+  },
+  {
+    "Id": 206,
+    "Name": "Everstone",
+    "Category": "training",
+    "Cost": 3000,
+    "FlingPower": 30
+  },
+  {
+    "Id": 207,
+    "Name": "Focus Band",
+    "Category": "held-items",
+    "Cost": 4000,
+    "FlingPower": 10
+  },
+  {
+    "Id": 208,
+    "Name": "Lucky Egg",
+    "Category": "training",
+    "Cost": 10000,
+    "FlingPower": 30
+  },
+  {
+    "Id": 209,
+    "Name": "Scope Lens",
+    "Category": "held-items",
+    "Cost": 4000,
+    "FlingPower": 30
+  },
+  {
+    "Id": 210,
+    "Name": "Metal Coat",
+    "Category": "type-enhancement",
+    "Cost": 2000,
+    "FlingPower": 30
+  },
+  {
+    "Id": 211,
+    "Name": "Leftovers",
+    "Category": "held-items",
+    "Cost": 4000,
+    "FlingPower": 10
+  },
+  {
+    "Id": 212,
+    "Name": "Dragon Scale",
+    "Category": "evolution",
+    "Cost": 2000,
+    "FlingPower": 30
+  },
+  {
+    "Id": 213,
+    "Name": "Light Ball",
+    "Category": "species-specific",
+    "Cost": 1000,
+    "FlingPower": 30
+  },
+  {
+    "Id": 214,
+    "Name": "Soft Sand",
+    "Category": "type-enhancement",
+    "Cost": 1000,
+    "FlingPower": 10
+  },
+  {
+    "Id": 215,
+    "Name": "Hard Stone",
+    "Category": "type-enhancement",
+    "Cost": 1000,
+    "FlingPower": 100
+  },
+  {
+    "Id": 216,
+    "Name": "Miracle Seed",
+    "Category": "type-enhancement",
+    "Cost": 1000,
+    "FlingPower": 30
+  },
+  {
+    "Id": 217,
+    "Name": "Black Glasses",
+    "Category": "type-enhancement",
+    "Cost": 1000,
+    "FlingPower": 30
+  },
+  {
+    "Id": 218,
+    "Name": "Black Belt",
+    "Category": "type-enhancement",
+    "Cost": 1000,
+    "FlingPower": 30
+  },
+  {
+    "Id": 219,
+    "Name": "Magnet",
+    "Category": "type-enhancement",
+    "Cost": 1000,
+    "FlingPower": 30
+  },
+  {
+    "Id": 220,
+    "Name": "Mystic Water",
+    "Category": "type-enhancement",
+    "Cost": 1000,
+    "FlingPower": 30
+  },
+  {
+    "Id": 221,
+    "Name": "Sharp Beak",
+    "Category": "type-enhancement",
+    "Cost": 1000,
+    "FlingPower": 50
+  },
+  {
+    "Id": 222,
+    "Name": "Poison Barb",
+    "Category": "type-enhancement",
+    "Cost": 1000,
+    "FlingPower": 70
+  },
+  {
+    "Id": 223,
+    "Name": "Never-Melt Ice",
+    "Category": "type-enhancement",
+    "Cost": 1000,
+    "FlingPower": 30
+  },
+  {
+    "Id": 224,
+    "Name": "Spell Tag",
+    "Category": "type-enhancement",
+    "Cost": 1000,
+    "FlingPower": 30
+  },
+  {
+    "Id": 225,
+    "Name": "Twisted Spoon",
+    "Category": "type-enhancement",
+    "Cost": 1000,
+    "FlingPower": 30
+  },
+  {
+    "Id": 226,
+    "Name": "Charcoal",
+    "Category": "type-enhancement",
+    "Cost": 1000,
+    "FlingPower": 30
+  },
+  {
+    "Id": 227,
+    "Name": "Dragon Fang",
+    "Category": "type-enhancement",
+    "Cost": 1000,
+    "FlingPower": 70
+  },
+  {
+    "Id": 228,
+    "Name": "Silk Scarf",
+    "Category": "type-enhancement",
+    "Cost": 1000,
+    "FlingPower": 10
+  },
+  {
+    "Id": 229,
+    "Name": "Upgrade",
+    "Category": "evolution",
+    "Cost": 2000,
+    "FlingPower": 30
+  },
+  {
+    "Id": 230,
+    "Name": "Shell Bell",
+    "Category": "held-items",
+    "Cost": 4000,
+    "FlingPower": 30
+  },
+  {
+    "Id": 231,
+    "Name": "Sea Incense",
+    "Category": "type-enhancement",
+    "Cost": 2000,
+    "FlingPower": 10
+  },
+  {
+    "Id": 232,
+    "Name": "Lax Incense",
+    "Category": "held-items",
+    "Cost": 5000,
+    "FlingPower": 10
+  },
+  {
+    "Id": 233,
+    "Name": "Lucky Punch",
+    "Category": "species-specific",
+    "Cost": 1000,
+    "FlingPower": 40
+  },
+  {
+    "Id": 234,
+    "Name": "Metal Powder",
+    "Category": "species-specific",
+    "Cost": 1000,
+    "FlingPower": 10
+  },
+  {
+    "Id": 235,
+    "Name": "Thick Club",
+    "Category": "species-specific",
+    "Cost": 1000,
+    "FlingPower": 90
+  },
+  {
+    "Id": 236,
+    "Name": "Leek",
+    "Category": "species-specific",
+    "Cost": 1000,
+    "FlingPower": 60
+  },
+  {
+    "Id": 237,
+    "Name": "Red Scarf",
+    "Category": "scarves",
+    "Cost": 100,
+    "FlingPower": 10
+  },
+  {
+    "Id": 238,
+    "Name": "Blue Scarf",
+    "Category": "scarves",
+    "Cost": 100,
+    "FlingPower": 10
+  },
+  {
+    "Id": 239,
+    "Name": "Pink Scarf",
+    "Category": "scarves",
+    "Cost": 100,
+    "FlingPower": 10
+  },
+  {
+    "Id": 240,
+    "Name": "Green Scarf",
+    "Category": "scarves",
+    "Cost": 100,
+    "FlingPower": 10
+  },
+  {
+    "Id": 241,
+    "Name": "Yellow Scarf",
+    "Category": "scarves",
+    "Cost": 100,
+    "FlingPower": 10
+  },
+  {
+    "Id": 242,
+    "Name": "Wide Lens",
+    "Category": "held-items",
+    "Cost": 4000,
+    "FlingPower": 10
+  },
+  {
+    "Id": 243,
+    "Name": "Muscle Band",
+    "Category": "held-items",
+    "Cost": 4000,
+    "FlingPower": 10
+  },
+  {
+    "Id": 244,
+    "Name": "Wise Glasses",
+    "Category": "held-items",
+    "Cost": 4000,
+    "FlingPower": 10
+  },
+  {
+    "Id": 245,
+    "Name": "Expert Belt",
+    "Category": "held-items",
+    "Cost": 4000,
+    "FlingPower": 10
+  },
+  {
+    "Id": 246,
+    "Name": "Light Clay",
+    "Category": "held-items",
+    "Cost": 4000,
+    "FlingPower": 30
+  },
+  {
+    "Id": 247,
+    "Name": "Life Orb",
+    "Category": "held-items",
+    "Cost": 4000,
+    "FlingPower": 30
+  },
+  {
+    "Id": 248,
+    "Name": "Power Herb",
+    "Category": "held-items",
+    "Cost": 4000,
+    "FlingPower": 10
+  },
+  {
+    "Id": 249,
+    "Name": "Toxic Orb",
+    "Category": "bad-held-items",
+    "Cost": 4000,
+    "FlingPower": 30
+  },
+  {
+    "Id": 250,
+    "Name": "Flame Orb",
+    "Category": "bad-held-items",
+    "Cost": 4000,
+    "FlingPower": 30
+  },
+  {
+    "Id": 251,
+    "Name": "Quick Powder",
+    "Category": "species-specific",
+    "Cost": 1000,
+    "FlingPower": 10
+  },
+  {
+    "Id": 252,
+    "Name": "Focus Sash",
+    "Category": "held-items",
+    "Cost": 4000,
+    "FlingPower": 10
+  },
+  {
+    "Id": 253,
+    "Name": "Zoom Lens",
+    "Category": "held-items",
+    "Cost": 4000,
+    "FlingPower": 10
+  },
+  {
+    "Id": 254,
+    "Name": "Metronome",
+    "Category": "held-items",
+    "Cost": 4000,
+    "FlingPower": 30
+  },
+  {
+    "Id": 255,
+    "Name": "Iron Ball",
+    "Category": "bad-held-items",
+    "Cost": 4000,
+    "FlingPower": 130
+  },
+  {
+    "Id": 256,
+    "Name": "Lagging Tail",
+    "Category": "bad-held-items",
+    "Cost": 4000,
+    "FlingPower": 10
+  },
+  {
+    "Id": 257,
+    "Name": "Destiny Knot",
+    "Category": "held-items",
+    "Cost": 4000,
+    "FlingPower": 10
+  },
+  {
+    "Id": 258,
+    "Name": "Black Sludge",
+    "Category": "held-items",
+    "Cost": 4000,
+    "FlingPower": 30
+  },
+  {
+    "Id": 259,
+    "Name": "Icy Rock",
+    "Category": "held-items",
+    "Cost": 4000,
+    "FlingPower": 40
+  },
+  {
+    "Id": 260,
+    "Name": "Smooth Rock",
+    "Category": "held-items",
+    "Cost": 4000,
+    "FlingPower": 10
+  },
+  {
+    "Id": 261,
+    "Name": "Heat Rock",
+    "Category": "held-items",
+    "Cost": 4000,
+    "FlingPower": 60
+  },
+  {
+    "Id": 262,
+    "Name": "Damp Rock",
+    "Category": "held-items",
+    "Cost": 4000,
+    "FlingPower": 60
+  },
+  {
+    "Id": 263,
+    "Name": "Grip Claw",
+    "Category": "held-items",
+    "Cost": 4000,
+    "FlingPower": 90
+  },
+  {
+    "Id": 264,
+    "Name": "Choice Scarf",
+    "Category": "choice",
+    "Cost": 4000,
+    "FlingPower": 10
+  },
+  {
+    "Id": 265,
+    "Name": "Sticky Barb",
+    "Category": "bad-held-items",
+    "Cost": 4000,
+    "FlingPower": 80
+  },
+  {
+    "Id": 266,
+    "Name": "Power Bracer",
+    "Category": "effort-training",
+    "Cost": 3000,
+    "FlingPower": 70
+  },
+  {
+    "Id": 267,
+    "Name": "Power Belt",
+    "Category": "effort-training",
+    "Cost": 3000,
+    "FlingPower": 70
+  },
+  {
+    "Id": 268,
+    "Name": "Power Lens",
+    "Category": "effort-training",
+    "Cost": 3000,
+    "FlingPower": 70
+  },
+  {
+    "Id": 269,
+    "Name": "Power Band",
+    "Category": "effort-training",
+    "Cost": 3000,
+    "FlingPower": 70
+  },
+  {
+    "Id": 270,
+    "Name": "Power Anklet",
+    "Category": "effort-training",
+    "Cost": 3000,
+    "FlingPower": 70
+  },
+  {
+    "Id": 271,
+    "Name": "Power Weight",
+    "Category": "effort-training",
+    "Cost": 3000,
+    "FlingPower": 70
+  },
+  {
+    "Id": 272,
+    "Name": "Shed Shell",
+    "Category": "held-items",
+    "Cost": 4000,
+    "FlingPower": 10
+  },
+  {
+    "Id": 273,
+    "Name": "Big Root",
+    "Category": "held-items",
+    "Cost": 4000,
+    "FlingPower": 10
+  },
+  {
+    "Id": 274,
+    "Name": "Choice Specs",
+    "Category": "choice",
+    "Cost": 4000,
+    "FlingPower": 10
+  },
+  {
+    "Id": 291,
+    "Name": "Odd Incense",
+    "Category": "type-enhancement",
+    "Cost": 2000,
+    "FlingPower": 10
+  },
+  {
+    "Id": 292,
+    "Name": "Rock Incense",
+    "Category": "type-enhancement",
+    "Cost": 2000,
+    "FlingPower": 10
+  },
+  {
+    "Id": 293,
+    "Name": "Full Incense",
+    "Category": "bad-held-items",
+    "Cost": 5000,
+    "FlingPower": 10
+  },
+  {
+    "Id": 294,
+    "Name": "Wave Incense",
+    "Category": "type-enhancement",
+    "Cost": 2000,
+    "FlingPower": 10
+  },
+  {
+    "Id": 295,
+    "Name": "Rose Incense",
+    "Category": "type-enhancement",
+    "Cost": 2000,
+    "FlingPower": 10
+  },
+  {
+    "Id": 296,
+    "Name": "Luck Incense",
+    "Category": "training",
+    "Cost": 11000,
+    "FlingPower": 10
+  },
+  {
+    "Id": 297,
+    "Name": "Pure Incense",
+    "Category": "training",
+    "Cost": 6000,
+    "FlingPower": 10
+  },
+  {
+    "Id": 298,
+    "Name": "Protector",
+    "Category": "evolution",
+    "Cost": 2000,
+    "FlingPower": 80
+  },
+  {
+    "Id": 299,
+    "Name": "Electirizer",
+    "Category": "evolution",
+    "Cost": 2000,
+    "FlingPower": 80
+  },
+  {
+    "Id": 300,
+    "Name": "Magmarizer",
+    "Category": "evolution",
+    "Cost": 2000,
+    "FlingPower": 80
+  },
+  {
+    "Id": 301,
+    "Name": "Dubious Disc",
+    "Category": "evolution",
+    "Cost": 2000,
+    "FlingPower": 50
+  },
+  {
+    "Id": 302,
+    "Name": "Reaper Cloth",
+    "Category": "evolution",
+    "Cost": 2000,
+    "FlingPower": 10
+  },
+  {
+    "Id": 303,
+    "Name": "Razor Claw",
+    "Category": "held-items",
+    "Cost": 5000,
+    "FlingPower": 80
+  },
+  {
+    "Id": 304,
+    "Name": "Razor Fang",
+    "Category": "held-items",
+    "Cost": 5000,
+    "FlingPower": 30
+  },
+  {
+    "Id": 305,
+    "Name": "TM01",
+    "Category": "all-machines",
+    "Cost": 40000
+  },
+  {
+    "Id": 306,
+    "Name": "TM02",
+    "Category": "all-machines",
+    "Cost": 1000
+  },
+  {
+    "Id": 307,
+    "Name": "TM03",
+    "Category": "all-machines",
+    "Cost": 50000
+  },
+  {
+    "Id": 308,
+    "Name": "TM04",
+    "Category": "all-machines",
+    "Cost": 50000
+  },
+  {
+    "Id": 309,
+    "Name": "TM05",
+    "Category": "all-machines",
+    "Cost": 50000
+  },
+  {
+    "Id": 310,
+    "Name": "TM06",
+    "Category": "all-machines",
+    "Cost": 1000
+  },
+  {
+    "Id": 311,
+    "Name": "TM07",
+    "Category": "all-machines",
+    "Cost": 1000
+  },
+  {
+    "Id": 312,
+    "Name": "TM08",
+    "Category": "all-machines",
+    "Cost": 50000
+  },
+  {
+    "Id": 313,
+    "Name": "TM09",
+    "Category": "all-machines",
+    "Cost": 50000
+  },
+  {
+    "Id": 314,
+    "Name": "TM10",
+    "Category": "all-machines",
+    "Cost": 1000
+  },
+  {
+    "Id": 315,
+    "Name": "TM11",
+    "Category": "all-machines",
+    "Cost": 1000
+  },
+  {
+    "Id": 316,
+    "Name": "TM12",
+    "Category": "all-machines",
+    "Cost": 50000
+  },
+  {
+    "Id": 317,
+    "Name": "TM13",
+    "Category": "all-machines",
+    "Cost": 10000
+  },
+  {
+    "Id": 318,
+    "Name": "TM14",
+    "Category": "all-machines",
+    "Cost": 1000
+  },
+  {
+    "Id": 319,
+    "Name": "TM15",
+    "Category": "all-machines",
+    "Cost": 1000
+  },
+  {
+    "Id": 320,
+    "Name": "TM16",
+    "Category": "all-machines",
+    "Cost": 1000
+  },
+  {
+    "Id": 321,
+    "Name": "TM17",
+    "Category": "all-machines",
+    "Cost": 10000
+  },
+  {
+    "Id": 322,
+    "Name": "TM18",
+    "Category": "all-machines",
+    "Cost": 10000
+  },
+  {
+    "Id": 323,
+    "Name": "TM19",
+    "Category": "all-machines",
+    "Cost": 10000
+  },
+  {
+    "Id": 324,
+    "Name": "TM20",
+    "Category": "all-machines",
+    "Cost": 100000
+  },
+  {
+    "Id": 325,
+    "Name": "TM21",
+    "Category": "all-machines",
+    "Cost": 1000
+  },
+  {
+    "Id": 326,
+    "Name": "TM22",
+    "Category": "all-machines",
+    "Cost": 1000
+  },
+  {
+    "Id": 327,
+    "Name": "TM23",
+    "Category": "all-machines",
+    "Cost": 10000
+  },
+  {
+    "Id": 328,
+    "Name": "TM24",
+    "Category": "all-machines",
+    "Cost": 1000
+  },
+  {
+    "Id": 329,
+    "Name": "TM25",
+    "Category": "all-machines",
+    "Cost": 10000
+  },
+  {
+    "Id": 330,
+    "Name": "TM26",
+    "Category": "all-machines",
+    "Cost": 1000
+  },
+  {
+    "Id": 331,
+    "Name": "TM27",
+    "Category": "all-machines",
+    "Cost": 1000
+  },
+  {
+    "Id": 332,
+    "Name": "TM28",
+    "Category": "all-machines",
+    "Cost": 100000
+  },
+  {
+    "Id": 333,
+    "Name": "TM29",
+    "Category": "all-machines",
+    "Cost": 1000
+  },
+  {
+    "Id": 334,
+    "Name": "TM30",
+    "Category": "all-machines",
+    "Cost": 1000
+  },
+  {
+    "Id": 335,
+    "Name": "TM31",
+    "Category": "all-machines",
+    "Cost": 1000
+  },
+  {
+    "Id": 336,
+    "Name": "TM32",
+    "Category": "all-machines",
+    "Cost": 10000
+  },
+  {
+    "Id": 337,
+    "Name": "TM33",
+    "Category": "all-machines",
+    "Cost": 10000
+  },
+  {
+    "Id": 338,
+    "Name": "TM34",
+    "Category": "all-machines",
+    "Cost": 10000
+  },
+  {
+    "Id": 339,
+    "Name": "TM35",
+    "Category": "all-machines",
+    "Cost": 10000
+  },
+  {
+    "Id": 340,
+    "Name": "TM36",
+    "Category": "all-machines",
+    "Cost": 1000
+  },
+  {
+    "Id": 341,
+    "Name": "TM37",
+    "Category": "all-machines",
+    "Cost": 1000
+  },
+  {
+    "Id": 342,
+    "Name": "TM38",
+    "Category": "all-machines",
+    "Cost": 1000
+  },
+  {
+    "Id": 343,
+    "Name": "TM39",
+    "Category": "all-machines",
+    "Cost": 1000
+  },
+  {
+    "Id": 344,
+    "Name": "TM40",
+    "Category": "all-machines",
+    "Cost": 1000
+  },
+  {
+    "Id": 345,
+    "Name": "TM41",
+    "Category": "all-machines",
+    "Cost": 10000
+  },
+  {
+    "Id": 346,
+    "Name": "TM42",
+    "Category": "all-machines",
+    "Cost": 1000
+  },
+  {
+    "Id": 347,
+    "Name": "TM43",
+    "Category": "all-machines",
+    "Cost": 1000
+  },
+  {
+    "Id": 348,
+    "Name": "TM44",
+    "Category": "all-machines",
+    "Cost": 100000
+  },
+  {
+    "Id": 349,
+    "Name": "TM45",
+    "Category": "all-machines",
+    "Cost": 1000
+  },
+  {
+    "Id": 350,
+    "Name": "TM46",
+    "Category": "all-machines",
+    "Cost": 30000
+  },
+  {
+    "Id": 351,
+    "Name": "TM47",
+    "Category": "all-machines",
+    "Cost": 1000
+  },
+  {
+    "Id": 352,
+    "Name": "TM48",
+    "Category": "all-machines",
+    "Cost": 1000
+  },
+  {
+    "Id": 353,
+    "Name": "TM49",
+    "Category": "all-machines",
+    "Cost": 1000
+  },
+  {
+    "Id": 354,
+    "Name": "TM50",
+    "Category": "all-machines",
+    "Cost": 10000
+  },
+  {
+    "Id": 355,
+    "Name": "TM51",
+    "Category": "all-machines",
+    "Cost": 1000
+  },
+  {
+    "Id": 356,
+    "Name": "TM52",
+    "Category": "all-machines",
+    "Cost": 100000
+  },
+  {
+    "Id": 357,
+    "Name": "TM53",
+    "Category": "all-machines",
+    "Cost": 1000
+  },
+  {
+    "Id": 358,
+    "Name": "TM54",
+    "Category": "all-machines",
+    "Cost": 1000
+  },
+  {
+    "Id": 359,
+    "Name": "TM55",
+    "Category": "all-machines",
+    "Cost": 10000
+  },
+  {
+    "Id": 360,
+    "Name": "TM56",
+    "Category": "all-machines",
+    "Cost": 1000
+  },
+  {
+    "Id": 361,
+    "Name": "TM57",
+    "Category": "all-machines",
+    "Cost": 1000
+  },
+  {
+    "Id": 362,
+    "Name": "TM58",
+    "Category": "all-machines",
+    "Cost": 1000
+  },
+  {
+    "Id": 363,
+    "Name": "TM59",
+    "Category": "all-machines",
+    "Cost": 100000
+  },
+  {
+    "Id": 364,
+    "Name": "TM60",
+    "Category": "all-machines",
+    "Cost": 30000
+  },
+  {
+    "Id": 365,
+    "Name": "TM61",
+    "Category": "all-machines",
+    "Cost": 30000
+  },
+  {
+    "Id": 366,
+    "Name": "TM62",
+    "Category": "all-machines",
+    "Cost": 30000
+  },
+  {
+    "Id": 367,
+    "Name": "TM63",
+    "Category": "all-machines",
+    "Cost": 50000
+  },
+  {
+    "Id": 368,
+    "Name": "TM64",
+    "Category": "all-machines",
+    "Cost": 1000
+  },
+  {
+    "Id": 369,
+    "Name": "TM65",
+    "Category": "all-machines",
+    "Cost": 1000
+  },
+  {
+    "Id": 370,
+    "Name": "TM66",
+    "Category": "all-machines",
+    "Cost": 30000
+  },
+  {
+    "Id": 371,
+    "Name": "TM67",
+    "Category": "all-machines",
+    "Cost": 30000
+  },
+  {
+    "Id": 372,
+    "Name": "TM68",
+    "Category": "all-machines",
+    "Cost": 30000
+  },
+  {
+    "Id": 373,
+    "Name": "TM69",
+    "Category": "all-machines",
+    "Cost": 1000
+  },
+  {
+    "Id": 374,
+    "Name": "TM70",
+    "Category": "all-machines",
+    "Cost": 50000
+  },
+  {
+    "Id": 375,
+    "Name": "TM71",
+    "Category": "all-machines",
+    "Cost": 50000
+  },
+  {
+    "Id": 376,
+    "Name": "TM72",
+    "Category": "all-machines",
+    "Cost": 50000
+  },
+  {
+    "Id": 377,
+    "Name": "TM73",
+    "Category": "all-machines",
+    "Cost": 1000
+  },
+  {
+    "Id": 378,
+    "Name": "TM74",
+    "Category": "all-machines",
+    "Cost": 1000
+  },
+  {
+    "Id": 379,
+    "Name": "TM75",
+    "Category": "all-machines",
+    "Cost": 1000
+  },
+  {
+    "Id": 380,
+    "Name": "TM76",
+    "Category": "all-machines",
+    "Cost": 10000
+  },
+  {
+    "Id": 381,
+    "Name": "TM77",
+    "Category": "all-machines",
+    "Cost": 1000
+  },
+  {
+    "Id": 382,
+    "Name": "TM78",
+    "Category": "all-machines",
+    "Cost": 1000
+  },
+  {
+    "Id": 383,
+    "Name": "TM79",
+    "Category": "all-machines",
+    "Cost": 1000
+  },
+  {
+    "Id": 384,
+    "Name": "TM80",
+    "Category": "all-machines",
+    "Cost": 1000
+  },
+  {
+    "Id": 385,
+    "Name": "TM81",
+    "Category": "all-machines",
+    "Cost": 1000
+  },
+  {
+    "Id": 386,
+    "Name": "TM82",
+    "Category": "all-machines",
+    "Cost": 1000
+  },
+  {
+    "Id": 387,
+    "Name": "TM83",
+    "Category": "all-machines",
+    "Cost": 100000
+  },
+  {
+    "Id": 388,
+    "Name": "TM84",
+    "Category": "all-machines",
+    "Cost": 1000
+  },
+  {
+    "Id": 389,
+    "Name": "TM85",
+    "Category": "all-machines",
+    "Cost": 1000
+  },
+  {
+    "Id": 390,
+    "Name": "TM86",
+    "Category": "all-machines",
+    "Cost": 1000
+  },
+  {
+    "Id": 391,
+    "Name": "TM87",
+    "Category": "all-machines",
+    "Cost": 1000
+  },
+  {
+    "Id": 392,
+    "Name": "TM88",
+    "Category": "all-machines",
+    "Cost": 20000
+  },
+  {
+    "Id": 393,
+    "Name": "TM89",
+    "Category": "all-machines",
+    "Cost": 20000
+  },
+  {
+    "Id": 394,
+    "Name": "TM90",
+    "Category": "all-machines",
+    "Cost": 20000
+  },
+  {
+    "Id": 395,
+    "Name": "TM91",
+    "Category": "all-machines",
+    "Cost": 20000
+  },
+  {
+    "Id": 396,
+    "Name": "TM92",
+    "Category": "all-machines",
+    "Cost": 100000
+  },
+  {
+    "Id": 397,
+    "Name": "HM01",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 398,
+    "Name": "HM02",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 399,
+    "Name": "HM03",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 400,
+    "Name": "HM04",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 401,
+    "Name": "HM05",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 402,
+    "Name": "HM06",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 403,
+    "Name": "HM07",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 404,
+    "Name": "HM08",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 442,
+    "Name": "Griseous Orb",
+    "Category": "species-specific",
+    "Cost": 0,
+    "FlingPower": 60
+  },
+  {
+    "Id": 456,
+    "Name": "Park Ball",
+    "Category": "standard-balls",
+    "Cost": 0
+  },
+  {
+    "Id": 457,
+    "Name": "Sport Ball",
+    "Category": "standard-balls",
+    "Cost": 300
+  },
+  {
+    "Id": 563,
+    "Name": "Douse Drive",
+    "Category": "species-specific",
+    "Cost": 0,
+    "FlingPower": 70
+  },
+  {
+    "Id": 564,
+    "Name": "Shock Drive",
+    "Category": "species-specific",
+    "Cost": 0,
+    "FlingPower": 70
+  },
+  {
+    "Id": 565,
+    "Name": "Burn Drive",
+    "Category": "species-specific",
+    "Cost": 0,
+    "FlingPower": 70
+  },
+  {
+    "Id": 566,
+    "Name": "Chill Drive",
+    "Category": "species-specific",
+    "Cost": 0,
+    "FlingPower": 70
+  },
+  {
+    "Id": 567,
+    "Name": "Sweet Heart",
+    "Category": "healing",
+    "Cost": 3000,
+    "FlingPower": 30
+  },
+  {
+    "Id": 580,
+    "Name": "Prism Scale",
+    "Category": "evolution",
+    "Cost": 2000,
+    "FlingPower": 30
+  },
+  {
+    "Id": 581,
+    "Name": "Eviolite",
+    "Category": "held-items",
+    "Cost": 4000,
+    "FlingPower": 40
+  },
+  {
+    "Id": 582,
+    "Name": "Float Stone",
+    "Category": "held-items",
+    "Cost": 4000,
+    "FlingPower": 30
+  },
+  {
+    "Id": 583,
+    "Name": "Rocky Helmet",
+    "Category": "held-items",
+    "Cost": 4000,
+    "FlingPower": 60
+  },
+  {
+    "Id": 584,
+    "Name": "Air Balloon",
+    "Category": "held-items",
+    "Cost": 4000,
+    "FlingPower": 10
+  },
+  {
+    "Id": 585,
+    "Name": "Red Card",
+    "Category": "held-items",
+    "Cost": 4000,
+    "FlingPower": 10
+  },
+  {
+    "Id": 586,
+    "Name": "Ring Target",
+    "Category": "held-items",
+    "Cost": 4000,
+    "FlingPower": 10
+  },
+  {
+    "Id": 587,
+    "Name": "Binding Band",
+    "Category": "held-items",
+    "Cost": 4000,
+    "FlingPower": 30
+  },
+  {
+    "Id": 588,
+    "Name": "Absorb Bulb",
+    "Category": "held-items",
+    "Cost": 4000,
+    "FlingPower": 30
+  },
+  {
+    "Id": 589,
+    "Name": "Cell Battery",
+    "Category": "held-items",
+    "Cost": 4000,
+    "FlingPower": 30
+  },
+  {
+    "Id": 590,
+    "Name": "Eject Button",
+    "Category": "held-items",
+    "Cost": 4000,
+    "FlingPower": 30
+  },
+  {
+    "Id": 606,
+    "Name": "Health Feather",
+    "Category": "vitamins",
+    "Cost": 300,
+    "FlingPower": 20
+  },
+  {
+    "Id": 607,
+    "Name": "Muscle Feather",
+    "Category": "vitamins",
+    "Cost": 300,
+    "FlingPower": 20
+  },
+  {
+    "Id": 608,
+    "Name": "Resist Feather",
+    "Category": "vitamins",
+    "Cost": 300,
+    "FlingPower": 20
+  },
+  {
+    "Id": 609,
+    "Name": "Genius Feather",
+    "Category": "vitamins",
+    "Cost": 300,
+    "FlingPower": 20
+  },
+  {
+    "Id": 610,
+    "Name": "Clever Feather",
+    "Category": "vitamins",
+    "Cost": 300,
+    "FlingPower": 20
+  },
+  {
+    "Id": 611,
+    "Name": "Swift Feather",
+    "Category": "vitamins",
+    "Cost": 300,
+    "FlingPower": 20
+  },
+  {
+    "Id": 616,
+    "Name": "Pass Orb",
+    "Category": "held-items",
+    "Cost": 200,
+    "FlingPower": 30
+  },
+  {
+    "Id": 617,
+    "Name": "Dream Ball",
+    "Category": "special-balls",
+    "Cost": 0
+  },
+  {
+    "Id": 618,
+    "Name": "Pok\u00E9 Toy",
+    "Category": "spelunking",
+    "Cost": 100,
+    "FlingPower": 30
+  },
+  {
+    "Id": 632,
+    "Name": "Casteliacone",
+    "Category": "status-cures",
+    "Cost": 350,
+    "FlingPower": 30
+  },
+  {
+    "Id": 659,
+    "Name": "TM93",
+    "Category": "all-machines",
+    "Cost": 1000
+  },
+  {
+    "Id": 660,
+    "Name": "TM94",
+    "Category": "all-machines",
+    "Cost": 10000
+  },
+  {
+    "Id": 661,
+    "Name": "TM95",
+    "Category": "all-machines",
+    "Cost": 1000
+  },
+  {
+    "Id": 682,
+    "Name": "Weakness Policy",
+    "Category": "held-items",
+    "Cost": 1000,
+    "FlingPower": 80
+  },
+  {
+    "Id": 683,
+    "Name": "Assault Vest",
+    "Category": "held-items",
+    "Cost": 1000,
+    "FlingPower": 80
+  },
+  {
+    "Id": 685,
+    "Name": "Ability Capsule",
+    "Category": "vitamins",
+    "Cost": 10000
+  },
+  {
+    "Id": 686,
+    "Name": "Whipped Dream",
+    "Category": "evolution",
+    "Cost": 2000,
+    "FlingPower": 80
+  },
+  {
+    "Id": 687,
+    "Name": "Sachet",
+    "Category": "evolution",
+    "Cost": 2000,
+    "FlingPower": 80
+  },
+  {
+    "Id": 688,
+    "Name": "Luminous Moss",
+    "Category": "held-items",
+    "Cost": 4000,
+    "FlingPower": 30
+  },
+  {
+    "Id": 689,
+    "Name": "Snowball",
+    "Category": "held-items",
+    "Cost": 4000,
+    "FlingPower": 30
+  },
+  {
+    "Id": 690,
+    "Name": "Safety Goggles",
+    "Category": "held-items",
+    "Cost": 4000,
+    "FlingPower": 80
+  },
+  {
+    "Id": 728,
+    "Name": "Lumiose Galette",
+    "Category": "status-cures",
+    "Cost": 350,
+    "FlingPower": 30
+  },
+  {
+    "Id": 745,
+    "Name": "TM96",
+    "Category": "all-machines",
+    "Cost": 1000
+  },
+  {
+    "Id": 746,
+    "Name": "TM97",
+    "Category": "all-machines",
+    "Cost": 1000
+  },
+  {
+    "Id": 747,
+    "Name": "TM98",
+    "Category": "all-machines",
+    "Cost": 1000
+  },
+  {
+    "Id": 748,
+    "Name": "TM99",
+    "Category": "all-machines",
+    "Cost": 1000
+  },
+  {
+    "Id": 749,
+    "Name": "TM100",
+    "Category": "all-machines",
+    "Cost": 5000
+  },
+  {
+    "Id": 765,
+    "Name": "Shalour Sable",
+    "Category": "status-cures",
+    "Cost": 350,
+    "FlingPower": 30
+  },
+  {
+    "Id": 883,
+    "Name": "Adrenaline Orb",
+    "Category": "held-items",
+    "Cost": 4000,
+    "FlingPower": 30
+  },
+  {
+    "Id": 885,
+    "Name": "Ice Stone",
+    "Category": "evolution",
+    "Cost": 3000,
+    "FlingPower": 30
+  },
+  {
+    "Id": 887,
+    "Name": "Beast Ball",
+    "Category": "special-balls",
+    "Cost": 0
+  },
+  {
+    "Id": 888,
+    "Name": "Big Malasada",
+    "Category": "status-cures",
+    "Cost": 350,
+    "FlingPower": 30
+  },
+  {
+    "Id": 889,
+    "Name": "Red Nectar",
+    "Category": "species-specific",
+    "Cost": 300,
+    "FlingPower": 10
+  },
+  {
+    "Id": 890,
+    "Name": "Yellow Nectar",
+    "Category": "species-specific",
+    "Cost": 300,
+    "FlingPower": 10
+  },
+  {
+    "Id": 891,
+    "Name": "Pink Nectar",
+    "Category": "species-specific",
+    "Cost": 300,
+    "FlingPower": 10
+  },
+  {
+    "Id": 892,
+    "Name": "Purple Nectar",
+    "Category": "species-specific",
+    "Cost": 300,
+    "FlingPower": 10
+  },
+  {
+    "Id": 896,
+    "Name": "Terrain Extender",
+    "Category": "held-items",
+    "Cost": 4000,
+    "FlingPower": 60
+  },
+  {
+    "Id": 897,
+    "Name": "Protective Pads",
+    "Category": "held-items",
+    "Cost": 4000,
+    "FlingPower": 30
+  },
+  {
+    "Id": 898,
+    "Name": "Electric Seed",
+    "Category": "held-items",
+    "Cost": 4000,
+    "FlingPower": 10
+  },
+  {
+    "Id": 899,
+    "Name": "Psychic Seed",
+    "Category": "held-items",
+    "Cost": 4000,
+    "FlingPower": 10
+  },
+  {
+    "Id": 900,
+    "Name": "Misty Seed",
+    "Category": "held-items",
+    "Cost": 4000,
+    "FlingPower": 10
+  },
+  {
+    "Id": 901,
+    "Name": "Grassy Seed",
+    "Category": "held-items",
+    "Cost": 4000,
+    "FlingPower": 10
+  },
+  {
+    "Id": 1036,
+    "Name": "Lure",
+    "Category": "spelunking",
+    "Cost": 400,
+    "FlingPower": 30
+  },
+  {
+    "Id": 1037,
+    "Name": "Super Lure",
+    "Category": "spelunking",
+    "Cost": 700,
+    "FlingPower": 30
+  },
+  {
+    "Id": 1038,
+    "Name": "Max Lure",
+    "Category": "spelunking",
+    "Cost": 900,
+    "FlingPower": 30
+  },
+  {
+    "Id": 1039,
+    "Name": "Pewter Crunchies",
+    "Category": "status-cures",
+    "Cost": 250,
+    "FlingPower": 30
+  },
+  {
+    "Id": 1040,
+    "Name": "Health Candy",
+    "Category": "vitamins",
+    "Cost": 20
+  },
+  {
+    "Id": 1041,
+    "Name": "Mighty Candy",
+    "Category": "vitamins",
+    "Cost": 20
+  },
+  {
+    "Id": 1042,
+    "Name": "Tough Candy",
+    "Category": "vitamins",
+    "Cost": 20
+  },
+  {
+    "Id": 1043,
+    "Name": "Smart Candy",
+    "Category": "vitamins",
+    "Cost": 20
+  },
+  {
+    "Id": 1044,
+    "Name": "Courage Candy",
+    "Category": "vitamins",
+    "Cost": 20
+  },
+  {
+    "Id": 1045,
+    "Name": "Quick Candy",
+    "Category": "vitamins",
+    "Cost": 20
+  },
+  {
+    "Id": 1046,
+    "Name": "Health Candy L",
+    "Category": "vitamins",
+    "Cost": 20
+  },
+  {
+    "Id": 1047,
+    "Name": "Mighty Candy L",
+    "Category": "vitamins",
+    "Cost": 20
+  },
+  {
+    "Id": 1048,
+    "Name": "Tough Candy L",
+    "Category": "vitamins",
+    "Cost": 20
+  },
+  {
+    "Id": 1049,
+    "Name": "Smart Candy L",
+    "Category": "vitamins",
+    "Cost": 20
+  },
+  {
+    "Id": 1050,
+    "Name": "Courage Candy L",
+    "Category": "vitamins",
+    "Cost": 20
+  },
+  {
+    "Id": 1051,
+    "Name": "Quick Candy L",
+    "Category": "vitamins",
+    "Cost": 20
+  },
+  {
+    "Id": 1052,
+    "Name": "Health Candy XL",
+    "Category": "vitamins",
+    "Cost": 20
+  },
+  {
+    "Id": 1053,
+    "Name": "Mighty Candy XL",
+    "Category": "vitamins",
+    "Cost": 20
+  },
+  {
+    "Id": 1054,
+    "Name": "Tough Candy XL",
+    "Category": "vitamins",
+    "Cost": 20
+  },
+  {
+    "Id": 1055,
+    "Name": "Smart Candy XL",
+    "Category": "vitamins",
+    "Cost": 20
+  },
+  {
+    "Id": 1056,
+    "Name": "Courage Candy XL",
+    "Category": "vitamins",
+    "Cost": 20
+  },
+  {
+    "Id": 1057,
+    "Name": "Quick Candy XL",
+    "Category": "vitamins",
+    "Cost": 20
+  },
+  {
+    "Id": 1161,
+    "Name": "Rusted Sword",
+    "Category": "species-specific",
+    "Cost": 0
+  },
+  {
+    "Id": 1162,
+    "Name": "Rusted Shield",
+    "Category": "species-specific",
+    "Cost": 0
+  },
+  {
+    "Id": 1167,
+    "Name": "Strawberry Sweet",
+    "Category": "evolution",
+    "Cost": 500,
+    "FlingPower": 10
+  },
+  {
+    "Id": 1168,
+    "Name": "Love Sweet",
+    "Category": "evolution",
+    "Cost": 500,
+    "FlingPower": 10
+  },
+  {
+    "Id": 1169,
+    "Name": "Berry Sweet",
+    "Category": "evolution",
+    "Cost": 500,
+    "FlingPower": 10
+  },
+  {
+    "Id": 1170,
+    "Name": "Clover Sweet",
+    "Category": "evolution",
+    "Cost": 500,
+    "FlingPower": 10
+  },
+  {
+    "Id": 1171,
+    "Name": "Flower Sweet",
+    "Category": "evolution",
+    "Cost": 500,
+    "FlingPower": 10
+  },
+  {
+    "Id": 1172,
+    "Name": "Star Sweet",
+    "Category": "evolution",
+    "Cost": 500,
+    "FlingPower": 10
+  },
+  {
+    "Id": 1173,
+    "Name": "Ribbon Sweet",
+    "Category": "evolution",
+    "Cost": 500,
+    "FlingPower": 10
+  },
+  {
+    "Id": 1174,
+    "Name": "Sweet Apple",
+    "Category": "evolution",
+    "Cost": 2200,
+    "FlingPower": 30
+  },
+  {
+    "Id": 1175,
+    "Name": "Tart Apple",
+    "Category": "evolution",
+    "Cost": 2200,
+    "FlingPower": 30
+  },
+  {
+    "Id": 1176,
+    "Name": "Throat Spray",
+    "Category": "held-items",
+    "Cost": 4000,
+    "FlingPower": 30
+  },
+  {
+    "Id": 1177,
+    "Name": "Eject Pack",
+    "Category": "held-items",
+    "Cost": 4000,
+    "FlingPower": 50
+  },
+  {
+    "Id": 1178,
+    "Name": "Heavy-Duty Boots",
+    "Category": "held-items",
+    "Cost": 4000,
+    "FlingPower": 80
+  },
+  {
+    "Id": 1179,
+    "Name": "Blunder Policy",
+    "Category": "held-items",
+    "Cost": 4000,
+    "FlingPower": 80
+  },
+  {
+    "Id": 1180,
+    "Name": "Room Service",
+    "Category": "held-items",
+    "Cost": 4000,
+    "FlingPower": 100
+  },
+  {
+    "Id": 1181,
+    "Name": "Utility Umbrella",
+    "Category": "held-items",
+    "Cost": 4000,
+    "FlingPower": 60
+  },
+  {
+    "Id": 1182,
+    "Name": "Exp. Candy XS",
+    "Category": "vitamins",
+    "Cost": 20,
+    "FlingPower": 30
+  },
+  {
+    "Id": 1183,
+    "Name": "Exp. Candy S",
+    "Category": "vitamins",
+    "Cost": 240,
+    "FlingPower": 30
+  },
+  {
+    "Id": 1184,
+    "Name": "Exp. Candy M",
+    "Category": "vitamins",
+    "Cost": 1000,
+    "FlingPower": 30
+  },
+  {
+    "Id": 1185,
+    "Name": "Exp. Candy L",
+    "Category": "vitamins",
+    "Cost": 3000,
+    "FlingPower": 30
+  },
+  {
+    "Id": 1186,
+    "Name": "Exp. Candy XL",
+    "Category": "vitamins",
+    "Cost": 10000,
+    "FlingPower": 30
+  },
+  {
+    "Id": 1187,
+    "Name": "Dynamax Candy",
+    "Category": "vitamins",
+    "Cost": 0,
+    "FlingPower": 30
+  },
+  {
+    "Id": 1188,
+    "Name": "TR00",
+    "Category": "all-machines",
+    "Cost": 4000,
+    "FlingPower": 10
+  },
+  {
+    "Id": 1189,
+    "Name": "TR01",
+    "Category": "all-machines",
+    "Cost": 6000,
+    "FlingPower": 85
+  },
+  {
+    "Id": 1190,
+    "Name": "TR02",
+    "Category": "all-machines",
+    "Cost": 10000,
+    "FlingPower": 90
+  },
+  {
+    "Id": 1191,
+    "Name": "TR03",
+    "Category": "all-machines",
+    "Cost": 16000,
+    "FlingPower": 110
+  },
+  {
+    "Id": 1192,
+    "Name": "TR04",
+    "Category": "all-machines",
+    "Cost": 10000,
+    "FlingPower": 90
+  },
+  {
+    "Id": 1193,
+    "Name": "TR05",
+    "Category": "all-machines",
+    "Cost": 10000,
+    "FlingPower": 90
+  },
+  {
+    "Id": 1194,
+    "Name": "TR06",
+    "Category": "all-machines",
+    "Cost": 16000,
+    "FlingPower": 110
+  },
+  {
+    "Id": 1195,
+    "Name": "TR07",
+    "Category": "all-machines",
+    "Cost": 6000,
+    "FlingPower": 10
+  },
+  {
+    "Id": 1196,
+    "Name": "TR08",
+    "Category": "all-machines",
+    "Cost": 10000,
+    "FlingPower": 90
+  },
+  {
+    "Id": 1197,
+    "Name": "TR09",
+    "Category": "all-machines",
+    "Cost": 16000,
+    "FlingPower": 110
+  },
+  {
+    "Id": 1198,
+    "Name": "TR10",
+    "Category": "all-machines",
+    "Cost": 16000,
+    "FlingPower": 100
+  },
+  {
+    "Id": 1199,
+    "Name": "TR11",
+    "Category": "all-machines",
+    "Cost": 10000,
+    "FlingPower": 90
+  },
+  {
+    "Id": 1200,
+    "Name": "TR12",
+    "Category": "all-machines",
+    "Cost": 4000,
+    "FlingPower": 10
+  },
+  {
+    "Id": 1201,
+    "Name": "TR13",
+    "Category": "all-machines",
+    "Cost": 2000,
+    "FlingPower": 10
+  },
+  {
+    "Id": 1202,
+    "Name": "TR14",
+    "Category": "all-machines",
+    "Cost": 2000,
+    "FlingPower": 10
+  },
+  {
+    "Id": 1203,
+    "Name": "TR15",
+    "Category": "all-machines",
+    "Cost": 16000,
+    "FlingPower": 110
+  },
+  {
+    "Id": 1204,
+    "Name": "TR16",
+    "Category": "all-machines",
+    "Cost": 6000,
+    "FlingPower": 80
+  },
+  {
+    "Id": 1205,
+    "Name": "TR17",
+    "Category": "all-machines",
+    "Cost": 4000,
+    "FlingPower": 10
+  },
+  {
+    "Id": 1206,
+    "Name": "TR18",
+    "Category": "all-machines",
+    "Cost": 6000,
+    "FlingPower": 80
+  },
+  {
+    "Id": 1207,
+    "Name": "TR19",
+    "Category": "all-machines",
+    "Cost": 4000,
+    "FlingPower": 80
+  },
+  {
+    "Id": 1208,
+    "Name": "TR20",
+    "Category": "all-machines",
+    "Cost": 6000,
+    "FlingPower": 10
+  },
+  {
+    "Id": 1209,
+    "Name": "TR21",
+    "Category": "all-machines",
+    "Cost": 4000,
+    "FlingPower": 10
+  },
+  {
+    "Id": 1210,
+    "Name": "TR22",
+    "Category": "all-machines",
+    "Cost": 10000,
+    "FlingPower": 90
+  },
+  {
+    "Id": 1211,
+    "Name": "TR23",
+    "Category": "all-machines",
+    "Cost": 4000,
+    "FlingPower": 10
+  },
+  {
+    "Id": 1212,
+    "Name": "TR24",
+    "Category": "all-machines",
+    "Cost": 16000,
+    "FlingPower": 120
+  },
+  {
+    "Id": 1213,
+    "Name": "TR25",
+    "Category": "all-machines",
+    "Cost": 6000,
+    "FlingPower": 80
+  },
+  {
+    "Id": 1214,
+    "Name": "TR26",
+    "Category": "all-machines",
+    "Cost": 2000,
+    "FlingPower": 10
+  },
+  {
+    "Id": 1215,
+    "Name": "TR27",
+    "Category": "all-machines",
+    "Cost": 4000,
+    "FlingPower": 10
+  },
+  {
+    "Id": 1216,
+    "Name": "TR28",
+    "Category": "all-machines",
+    "Cost": 16000,
+    "FlingPower": 120
+  },
+  {
+    "Id": 1217,
+    "Name": "TR29",
+    "Category": "all-machines",
+    "Cost": 4000,
+    "FlingPower": 10
+  },
+  {
+    "Id": 1218,
+    "Name": "TR30",
+    "Category": "all-machines",
+    "Cost": 4000,
+    "FlingPower": 10
+  },
+  {
+    "Id": 1219,
+    "Name": "TR31",
+    "Category": "all-machines",
+    "Cost": 10000,
+    "FlingPower": 100
+  },
+  {
+    "Id": 1220,
+    "Name": "TR32",
+    "Category": "all-machines",
+    "Cost": 6000,
+    "FlingPower": 80
+  },
+  {
+    "Id": 1221,
+    "Name": "TR33",
+    "Category": "all-machines",
+    "Cost": 6000,
+    "FlingPower": 80
+  },
+  {
+    "Id": 1222,
+    "Name": "TR34",
+    "Category": "all-machines",
+    "Cost": 6000,
+    "FlingPower": 120
+  },
+  {
+    "Id": 1223,
+    "Name": "TR35",
+    "Category": "all-machines",
+    "Cost": 6000,
+    "FlingPower": 90
+  },
+  {
+    "Id": 1224,
+    "Name": "TR36",
+    "Category": "all-machines",
+    "Cost": 10000,
+    "FlingPower": 95
+  },
+  {
+    "Id": 1225,
+    "Name": "TR37",
+    "Category": "all-machines",
+    "Cost": 4000,
+    "FlingPower": 10
+  },
+  {
+    "Id": 1226,
+    "Name": "TR38",
+    "Category": "all-machines",
+    "Cost": 4000,
+    "FlingPower": 10
+  },
+  {
+    "Id": 1227,
+    "Name": "TR39",
+    "Category": "all-machines",
+    "Cost": 16000,
+    "FlingPower": 120
+  },
+  {
+    "Id": 1228,
+    "Name": "TR40",
+    "Category": "all-machines",
+    "Cost": 2000,
+    "FlingPower": 10
+  },
+  {
+    "Id": 1229,
+    "Name": "TR41",
+    "Category": "all-machines",
+    "Cost": 6000,
+    "FlingPower": 85
+  },
+  {
+    "Id": 1230,
+    "Name": "TR42",
+    "Category": "all-machines",
+    "Cost": 10000,
+    "FlingPower": 90
+  },
+  {
+    "Id": 1231,
+    "Name": "TR43",
+    "Category": "all-machines",
+    "Cost": 16000,
+    "FlingPower": 130
+  },
+  {
+    "Id": 1232,
+    "Name": "TR44",
+    "Category": "all-machines",
+    "Cost": 4000,
+    "FlingPower": 10
+  },
+  {
+    "Id": 1233,
+    "Name": "TR45",
+    "Category": "all-machines",
+    "Cost": 10000,
+    "FlingPower": 90
+  },
+  {
+    "Id": 1234,
+    "Name": "TR46",
+    "Category": "all-machines",
+    "Cost": 4000,
+    "FlingPower": 10
+  },
+  {
+    "Id": 1235,
+    "Name": "TR47",
+    "Category": "all-machines",
+    "Cost": 6000,
+    "FlingPower": 80
+  },
+  {
+    "Id": 1236,
+    "Name": "TR48",
+    "Category": "all-machines",
+    "Cost": 4000,
+    "FlingPower": 10
+  },
+  {
+    "Id": 1237,
+    "Name": "TR49",
+    "Category": "all-machines",
+    "Cost": 4000,
+    "FlingPower": 10
+  },
+  {
+    "Id": 1238,
+    "Name": "TR50",
+    "Category": "all-machines",
+    "Cost": 10000,
+    "FlingPower": 90
+  },
+  {
+    "Id": 1239,
+    "Name": "TR51",
+    "Category": "all-machines",
+    "Cost": 4000,
+    "FlingPower": 10
+  },
+  {
+    "Id": 1240,
+    "Name": "TR52",
+    "Category": "all-machines",
+    "Cost": 6000,
+    "FlingPower": 10
+  },
+  {
+    "Id": 1241,
+    "Name": "TR53",
+    "Category": "all-machines",
+    "Cost": 16000,
+    "FlingPower": 120
+  },
+  {
+    "Id": 1242,
+    "Name": "TR54",
+    "Category": "all-machines",
+    "Cost": 4000,
+    "FlingPower": 10
+  },
+  {
+    "Id": 1243,
+    "Name": "TR55",
+    "Category": "all-machines",
+    "Cost": 16000,
+    "FlingPower": 120
+  },
+  {
+    "Id": 1244,
+    "Name": "TR56",
+    "Category": "all-machines",
+    "Cost": 6000,
+    "FlingPower": 80
+  },
+  {
+    "Id": 1245,
+    "Name": "TR57",
+    "Category": "all-machines",
+    "Cost": 6000,
+    "FlingPower": 80
+  },
+  {
+    "Id": 1246,
+    "Name": "TR58",
+    "Category": "all-machines",
+    "Cost": 6000,
+    "FlingPower": 80
+  },
+  {
+    "Id": 1247,
+    "Name": "TR59",
+    "Category": "all-machines",
+    "Cost": 6000,
+    "FlingPower": 80
+  },
+  {
+    "Id": 1248,
+    "Name": "TR60",
+    "Category": "all-machines",
+    "Cost": 6000,
+    "FlingPower": 80
+  },
+  {
+    "Id": 1249,
+    "Name": "TR61",
+    "Category": "all-machines",
+    "Cost": 10000,
+    "FlingPower": 90
+  },
+  {
+    "Id": 1250,
+    "Name": "TR62",
+    "Category": "all-machines",
+    "Cost": 6000,
+    "FlingPower": 85
+  },
+  {
+    "Id": 1251,
+    "Name": "TR63",
+    "Category": "all-machines",
+    "Cost": 6000,
+    "FlingPower": 80
+  },
+  {
+    "Id": 1252,
+    "Name": "TR64",
+    "Category": "all-machines",
+    "Cost": 16000,
+    "FlingPower": 120
+  },
+  {
+    "Id": 1253,
+    "Name": "TR65",
+    "Category": "all-machines",
+    "Cost": 10000,
+    "FlingPower": 90
+  },
+  {
+    "Id": 1254,
+    "Name": "TR66",
+    "Category": "all-machines",
+    "Cost": 16000,
+    "FlingPower": 120
+  },
+  {
+    "Id": 1255,
+    "Name": "TR67",
+    "Category": "all-machines",
+    "Cost": 10000,
+    "FlingPower": 90
+  },
+  {
+    "Id": 1256,
+    "Name": "TR68",
+    "Category": "all-machines",
+    "Cost": 4000,
+    "FlingPower": 10
+  },
+  {
+    "Id": 1257,
+    "Name": "TR69",
+    "Category": "all-machines",
+    "Cost": 6000,
+    "FlingPower": 80
+  },
+  {
+    "Id": 1258,
+    "Name": "TR70",
+    "Category": "all-machines",
+    "Cost": 10000,
+    "FlingPower": 80
+  },
+  {
+    "Id": 1259,
+    "Name": "TR71",
+    "Category": "all-machines",
+    "Cost": 16000,
+    "FlingPower": 130
+  },
+  {
+    "Id": 1260,
+    "Name": "TR72",
+    "Category": "all-machines",
+    "Cost": 16000,
+    "FlingPower": 120
+  },
+  {
+    "Id": 1261,
+    "Name": "TR73",
+    "Category": "all-machines",
+    "Cost": 16000,
+    "FlingPower": 120
+  },
+  {
+    "Id": 1262,
+    "Name": "TR74",
+    "Category": "all-machines",
+    "Cost": 10000,
+    "FlingPower": 80
+  },
+  {
+    "Id": 1263,
+    "Name": "TR75",
+    "Category": "all-machines",
+    "Cost": 16000,
+    "FlingPower": 100
+  },
+  {
+    "Id": 1264,
+    "Name": "TR76",
+    "Category": "all-machines",
+    "Cost": 6000,
+    "FlingPower": 10
+  },
+  {
+    "Id": 1265,
+    "Name": "TR77",
+    "Category": "all-machines",
+    "Cost": 6000,
+    "FlingPower": 10
+  },
+  {
+    "Id": 1266,
+    "Name": "TR78",
+    "Category": "all-machines",
+    "Cost": 10000,
+    "FlingPower": 95
+  },
+  {
+    "Id": 1267,
+    "Name": "TR79",
+    "Category": "all-machines",
+    "Cost": 6000,
+    "FlingPower": 10
+  },
+  {
+    "Id": 1268,
+    "Name": "TR80",
+    "Category": "all-machines",
+    "Cost": 6000,
+    "FlingPower": 10
+  },
+  {
+    "Id": 1269,
+    "Name": "TR81",
+    "Category": "all-machines",
+    "Cost": 6000,
+    "FlingPower": 95
+  },
+  {
+    "Id": 1270,
+    "Name": "TR82",
+    "Category": "all-machines",
+    "Cost": 4000,
+    "FlingPower": 20
+  },
+  {
+    "Id": 1271,
+    "Name": "TR83",
+    "Category": "all-machines",
+    "Cost": 4000,
+    "FlingPower": 10
+  },
+  {
+    "Id": 1272,
+    "Name": "TR84",
+    "Category": "all-machines",
+    "Cost": 6000,
+    "FlingPower": 80
+  },
+  {
+    "Id": 1273,
+    "Name": "TR85",
+    "Category": "all-machines",
+    "Cost": 2000,
+    "FlingPower": 10
+  },
+  {
+    "Id": 1274,
+    "Name": "TR86",
+    "Category": "all-machines",
+    "Cost": 10000,
+    "FlingPower": 90
+  },
+  {
+    "Id": 1275,
+    "Name": "TR87",
+    "Category": "all-machines",
+    "Cost": 6000,
+    "FlingPower": 80
+  },
+  {
+    "Id": 1276,
+    "Name": "TR88",
+    "Category": "all-machines",
+    "Cost": 6000,
+    "FlingPower": 10
+  },
+  {
+    "Id": 1277,
+    "Name": "TR89",
+    "Category": "all-machines",
+    "Cost": 16000,
+    "FlingPower": 110
+  },
+  {
+    "Id": 1278,
+    "Name": "TR90",
+    "Category": "all-machines",
+    "Cost": 10000,
+    "FlingPower": 90
+  },
+  {
+    "Id": 1279,
+    "Name": "TR91",
+    "Category": "all-machines",
+    "Cost": 4000,
+    "FlingPower": 10
+  },
+  {
+    "Id": 1280,
+    "Name": "TR92",
+    "Category": "all-machines",
+    "Cost": 6000,
+    "FlingPower": 80
+  },
+  {
+    "Id": 1281,
+    "Name": "TR93",
+    "Category": "all-machines",
+    "Cost": 10000,
+    "FlingPower": 85
+  },
+  {
+    "Id": 1282,
+    "Name": "TR94",
+    "Category": "all-machines",
+    "Cost": 10000,
+    "FlingPower": 95
+  },
+  {
+    "Id": 1283,
+    "Name": "TR95",
+    "Category": "all-machines",
+    "Cost": 6000,
+    "FlingPower": 80
+  },
+  {
+    "Id": 1284,
+    "Name": "TR96",
+    "Category": "all-machines",
+    "Cost": 10000,
+    "FlingPower": 90
+  },
+  {
+    "Id": 1285,
+    "Name": "TR97",
+    "Category": "all-machines",
+    "Cost": 10000,
+    "FlingPower": 85
+  },
+  {
+    "Id": 1286,
+    "Name": "TR98",
+    "Category": "all-machines",
+    "Cost": 6000,
+    "FlingPower": 85
+  },
+  {
+    "Id": 1287,
+    "Name": "TR99",
+    "Category": "all-machines",
+    "Cost": 6000,
+    "FlingPower": 80
+  },
+  {
+    "Id": 1288,
+    "Name": "TM00",
+    "Category": "all-machines",
+    "Cost": 10000
+  },
+  {
+    "Id": 1311,
+    "Name": "Cracked Pot",
+    "Category": "evolution",
+    "Cost": 1600,
+    "FlingPower": 80
+  },
+  {
+    "Id": 1312,
+    "Name": "Chipped Pot",
+    "Category": "evolution",
+    "Cost": 38000,
+    "FlingPower": 80
+  },
+  {
+    "Id": 1630,
+    "Name": "Max Honey",
+    "Category": "revival",
+    "Cost": 4000,
+    "FlingPower": 30
+  },
+  {
+    "Id": 1633,
+    "Name": "Galarica Cuff",
+    "Category": "collectibles",
+    "Cost": 3000,
+    "FlingPower": 30
+  },
+  {
+    "Id": 1643,
+    "Name": "Galarica Wreath",
+    "Category": "collectibles",
+    "Cost": 3000,
+    "FlingPower": 30
+  },
+  {
+    "Id": 1657,
+    "Name": "Ability Patch",
+    "Category": "vitamins",
+    "Cost": 20
+  },
+  {
+    "Id": 1675,
+    "Name": "Scroll of Darkness",
+    "Category": "gameplay",
+    "Cost": 0
+  },
+  {
+    "Id": 1676,
+    "Name": "Scroll of Waters",
+    "Category": "gameplay",
+    "Cost": 0
+  },
+  {
+    "Id": 1677,
+    "Name": "Malicious Armor",
+    "Category": "evolution",
+    "Cost": 750
+  },
+  {
+    "Id": 1696,
+    "Name": "Booster Energy",
+    "Category": "held-items",
+    "Cost": 0
+  },
+  {
+    "Id": 1697,
+    "Name": "Ability Shield",
+    "Category": "held-items",
+    "Cost": 20000
+  },
+  {
+    "Id": 1698,
+    "Name": "Clear Amulet",
+    "Category": "held-items",
+    "Cost": 30000
+  },
+  {
+    "Id": 1699,
+    "Name": "Mirror Herb",
+    "Category": "held-items",
+    "Cost": 30000
+  },
+  {
+    "Id": 1700,
+    "Name": "Punching Glove",
+    "Category": "held-items",
+    "Cost": 15000
+  },
+  {
+    "Id": 1701,
+    "Name": "Covert Cloak",
+    "Category": "held-items",
+    "Cost": 20000
+  },
+  {
+    "Id": 1702,
+    "Name": "Loaded Dice",
+    "Category": "held-items",
+    "Cost": 20000
+  },
+  {
+    "Id": 1944,
+    "Name": "TM101",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 1945,
+    "Name": "TM102",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 1946,
+    "Name": "TM103",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 1947,
+    "Name": "TM104",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 1948,
+    "Name": "TM105",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 1949,
+    "Name": "TM106",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 1950,
+    "Name": "TM107",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 1951,
+    "Name": "TM108",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 1952,
+    "Name": "TM109",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 1953,
+    "Name": "TM110",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 1954,
+    "Name": "TM111",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 1955,
+    "Name": "TM112",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 1956,
+    "Name": "TM113",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 1957,
+    "Name": "TM114",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 1958,
+    "Name": "TM115",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 1959,
+    "Name": "TM116",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 1960,
+    "Name": "TM117",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 1961,
+    "Name": "TM118",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 1962,
+    "Name": "TM119",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 1963,
+    "Name": "TM120",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 1964,
+    "Name": "TM121",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 1965,
+    "Name": "TM122",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 1966,
+    "Name": "TM123",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 1967,
+    "Name": "TM124",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 1968,
+    "Name": "TM125",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 1969,
+    "Name": "TM126",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 1970,
+    "Name": "TM127",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 1971,
+    "Name": "TM128",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 1972,
+    "Name": "TM129",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 1973,
+    "Name": "TM130",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 1974,
+    "Name": "TM131",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 1975,
+    "Name": "TM132",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 1976,
+    "Name": "TM133",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 1977,
+    "Name": "TM134",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 1978,
+    "Name": "TM135",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 1979,
+    "Name": "TM136",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 1980,
+    "Name": "TM137",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 1981,
+    "Name": "TM138",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 1982,
+    "Name": "TM139",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 1983,
+    "Name": "TM140",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 1984,
+    "Name": "TM141",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 1985,
+    "Name": "TM142",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 1986,
+    "Name": "TM143",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 1987,
+    "Name": "TM144",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 1988,
+    "Name": "TM145",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 1989,
+    "Name": "TM146",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 1990,
+    "Name": "TM147",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 1991,
+    "Name": "TM148",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 1992,
+    "Name": "TM149",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 1993,
+    "Name": "TM150",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 1994,
+    "Name": "TM151",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 1995,
+    "Name": "TM152",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 1996,
+    "Name": "TM153",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 1997,
+    "Name": "TM154",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 1998,
+    "Name": "TM155",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 1999,
+    "Name": "TM156",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 2000,
+    "Name": "TM157",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 2001,
+    "Name": "TM158",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 2002,
+    "Name": "TM159",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 2003,
+    "Name": "TM160",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 2004,
+    "Name": "TM161",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 2005,
+    "Name": "TM162",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 2006,
+    "Name": "TM163",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 2007,
+    "Name": "TM164",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 2008,
+    "Name": "TM165",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 2009,
+    "Name": "TM166",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 2010,
+    "Name": "TM167",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 2011,
+    "Name": "TM168",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 2012,
+    "Name": "TM169",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 2013,
+    "Name": "TM170",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 2014,
+    "Name": "TM171",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 2045,
+    "Name": "Auspicious Armor",
+    "Category": "picnic",
+    "Cost": 3000
+  },
+  {
+    "Id": 2105,
+    "Name": "Fairy Feather",
+    "Category": "held-items",
+    "Cost": 750
+  },
+  {
+    "Id": 2106,
+    "Name": "Wellspring Mask",
+    "Category": "held-items",
+    "Cost": 0
+  },
+  {
+    "Id": 2107,
+    "Name": "Hearthflame Mask",
+    "Category": "held-items",
+    "Cost": 0
+  },
+  {
+    "Id": 2108,
+    "Name": "Cornerstone Mask",
+    "Category": "held-items",
+    "Cost": 0
+  },
+  {
+    "Id": 2109,
+    "Name": "Syrupy Apple",
+    "Category": "evolution",
+    "Cost": 500
+  },
+  {
+    "Id": 2110,
+    "Name": "Unremarkable Teacup",
+    "Category": "evolution",
+    "Cost": 400
+  },
+  {
+    "Id": 2111,
+    "Name": "Masterpiece Teacup",
+    "Category": "evolution",
+    "Cost": 9500
+  },
+  {
+    "Id": 2112,
+    "Name": "Health Mochi",
+    "Category": "vitamins",
+    "Cost": 125
+  },
+  {
+    "Id": 2113,
+    "Name": "Muscle Mochi",
+    "Category": "vitamins",
+    "Cost": 125
+  },
+  {
+    "Id": 2114,
+    "Name": "Resist Mochi",
+    "Category": "vitamins",
+    "Cost": 125
+  },
+  {
+    "Id": 2115,
+    "Name": "Genius Mochi",
+    "Category": "vitamins",
+    "Cost": 125
+  },
+  {
+    "Id": 2116,
+    "Name": "Clever Mochi",
+    "Category": "vitamins",
+    "Cost": 125
+  },
+  {
+    "Id": 2117,
+    "Name": "Swift Mochi",
+    "Category": "vitamins",
+    "Cost": 125
+  },
+  {
+    "Id": 2118,
+    "Name": "Fresh Start Mochi",
+    "Category": "vitamins",
+    "Cost": 75
+  },
+  {
+    "Id": 2160,
+    "Name": "Linking Cord",
+    "Category": "evolution",
+    "Cost": 8000
+  },
+  {
+    "Id": 2161,
+    "Name": "TM172",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 2162,
+    "Name": "TM173",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 2163,
+    "Name": "TM174",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 2164,
+    "Name": "TM175",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 2165,
+    "Name": "TM176",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 2166,
+    "Name": "TM177",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 2167,
+    "Name": "TM178",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 2168,
+    "Name": "TM179",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 2169,
+    "Name": "TM180",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 2170,
+    "Name": "TM181",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 2171,
+    "Name": "TM182",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 2172,
+    "Name": "TM183",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 2173,
+    "Name": "TM184",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 2174,
+    "Name": "TM185",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 2175,
+    "Name": "TM186",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 2176,
+    "Name": "TM187",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 2177,
+    "Name": "TM188",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 2178,
+    "Name": "TM189",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 2179,
+    "Name": "TM190",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 2180,
+    "Name": "TM191",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 2181,
+    "Name": "TM192",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 2182,
+    "Name": "TM193",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 2183,
+    "Name": "TM194",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 2184,
+    "Name": "TM195",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 2185,
+    "Name": "TM196",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 2186,
+    "Name": "TM197",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 2187,
+    "Name": "TM198",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 2188,
+    "Name": "TM199",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 2189,
+    "Name": "TM200",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 2190,
+    "Name": "TM201",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 2191,
+    "Name": "TM202",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 2192,
+    "Name": "TM203",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 2193,
+    "Name": "TM204",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 2194,
+    "Name": "TM205",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 2195,
+    "Name": "TM206",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 2196,
+    "Name": "TM207",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 2197,
+    "Name": "TM208",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 2198,
+    "Name": "TM209",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 2199,
+    "Name": "TM210",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 2200,
+    "Name": "TM211",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 2201,
+    "Name": "TM212",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 2202,
+    "Name": "TM213",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 2203,
+    "Name": "TM214",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 2204,
+    "Name": "TM215",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 2205,
+    "Name": "TM216",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 2206,
+    "Name": "TM217",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 2207,
+    "Name": "TM218",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 2208,
+    "Name": "TM219",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 2209,
+    "Name": "TM220",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 2210,
+    "Name": "TM221",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 2211,
+    "Name": "TM222",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 2212,
+    "Name": "TM223",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 2213,
+    "Name": "TM224",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 2214,
+    "Name": "TM225",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 2215,
+    "Name": "TM226",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 2216,
+    "Name": "TM227",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 2217,
+    "Name": "TM228",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 2218,
+    "Name": "TM229",
+    "Category": "all-machines",
+    "Cost": 0
+  },
+  {
+    "Id": 2219,
+    "Name": "Strange Ball",
+    "Category": "standard-balls",
+    "Cost": 0
+  },
+  {
+    "Id": 2220,
+    "Name": "Pok\u00E9 Ball",
+    "Category": "standard-balls",
+    "Cost": 0
+  },
+  {
+    "Id": 2221,
+    "Name": "Great Ball",
+    "Category": "standard-balls",
+    "Cost": 0
+  },
+  {
+    "Id": 2222,
+    "Name": "Ultra Ball",
+    "Category": "standard-balls",
+    "Cost": 0
+  },
+  {
+    "Id": 2223,
+    "Name": "Heavy Ball",
+    "Category": "standard-balls",
+    "Cost": 0
+  },
+  {
+    "Id": 2224,
+    "Name": "Leaden Ball",
+    "Category": "standard-balls",
+    "Cost": 0
+  },
+  {
+    "Id": 2225,
+    "Name": "Gigaton Ball",
+    "Category": "standard-balls",
+    "Cost": 0
+  },
+  {
+    "Id": 2226,
+    "Name": "Feather Ball",
+    "Category": "standard-balls",
+    "Cost": 0
+  },
+  {
+    "Id": 2227,
+    "Name": "Wing Ball",
+    "Category": "standard-balls",
+    "Cost": 0
+  },
+  {
+    "Id": 2228,
+    "Name": "Jet Ball",
+    "Category": "standard-balls",
+    "Cost": 0
+  },
+  {
+    "Id": 2229,
+    "Name": "Origin Ball",
+    "Category": "standard-balls",
+    "Cost": 0
+  },
+  {
+    "Id": 2230,
+    "Name": "Black Augurite",
+    "Category": "evolution",
+    "Cost": 0
+  },
+  {
+    "Id": 2231,
+    "Name": "Peat Block",
+    "Category": "evolution",
+    "Cost": 0
+  },
+  {
+    "Id": 2232,
+    "Name": "Metal Alloy",
+    "Category": "evolution",
+    "Cost": 0
+  }
+]

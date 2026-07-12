@@ -10,7 +10,24 @@
       "Bash(sudo -n true)",
       "Bash(curl -fsSL https://dot.net/v1/dotnet-install.sh -o /tmp/claude-1001/-home-tstolarik-Documents-GitHub-GodotProcPoke-new-game-project/58bc42ef-65bf-40a4-b232-4526d0ef2c55/scratchpad/dotnet-install.sh)",
       "Bash(chmod +x /tmp/claude-1001/-home-tstolarik-Documents-GitHub-GodotProcPoke-new-game-project/58bc42ef-65bf-40a4-b232-4526d0ef2c55/scratchpad/dotnet-install.sh)",
-      "Bash(/tmp/claude-1001/-home-tstolarik-Documents-GitHub-GodotProcPoke-new-game-project/58bc42ef-65bf-40a4-b232-4526d0ef2c55/scratchpad/dotnet-install.sh --channel 10.0 --install-dir /home/tstolarik/.dotnet)"
+      "Bash(/tmp/claude-1001/-home-tstolarik-Documents-GitHub-GodotProcPoke-new-game-project/58bc42ef-65bf-40a4-b232-4526d0ef2c55/scratchpad/dotnet-install.sh --channel 10.0 --install-dir /home/tstolarik/.dotnet)",
+      "Bash(awk '/^## 10/,/^## 11 /' ProcPoke_Game_Design_Document.md)",
+      "Bash(curl -fsSL --max-time 20 \"https://api.github.com/repos/PokeAPI/pokeapi/commits/master\")",
+      "Bash(curl -fsSL --max-time 20 \"https://api.github.com/repos/PokeAPI/pokeapi/contents/data/v2/csv?ref=master\")",
+      "Bash(curl -fsSL https://raw.githubusercontent.com/PokeAPI/pokeapi/d638fe7791214a8d3c3282e2a3113eea7cfef288/data/v2/csv/version_groups.csv)",
+      "Bash(sort -t, -k4 -n)",
+      "Bash(curl -fsSL \"https://api.github.com/repos/PokeAPI/pokeapi/contents/data/v2/csv?ref=d638fe7791214a8d3c3282e2a3113eea7cfef288\")",
+      "Bash(curl -fsS -o /dev/null -w '%{http_code}\\\\n' https://raw.githubusercontent.com/PokeAPI/sprites/bf4c47ac82c33b330e33d98b8882d1cedb2f53e7/sprites/pokemon/versions/generation-v/black-white/animated/1.gif)",
+      "Bash(curl -fsS -o /dev/null -w '%{http_code}\\\\n' https://raw.githubusercontent.com/PokeAPI/sprites/bf4c47ac82c33b330e33d98b8882d1cedb2f53e7/sprites/pokemon/versions/generation-v/black-white/1.png)",
+      "Bash(curl -fsS -o /dev/null -w '%{http_code}\\\\n' https://raw.githubusercontent.com/PokeAPI/cries/7ba07038103b3482973fa781e25c09debbaaedd8/cries/pokemon/legacy/1.ogg)",
+      "Bash(curl -fsS -o /dev/null -w '%{http_code}\\\\n' https://raw.githubusercontent.com/msikma/pokesprite/c5aaa610ff2acdf7fd8e2dccd181bca8be9fcb3e/pokemon-gen8/regular/bulbasaur.png)",
+      "Bash(curl -fsS -o /dev/null -w '%{http_code}\\\\n' https://raw.githubusercontent.com/msikma/pokesprite/c5aaa610ff2acdf7fd8e2dccd181bca8be9fcb3e/pokemon-gen7x/regular/bulbasaur.png)",
+      "Bash(awk -F, 'NR>1 && $9!=\"\" {print $2, $9}' .cache/pokeapi-csv/pokemon_evolution.csv)",
+      "Bash(awk -F, 'NR>1 {print $4}' .cache/pokeapi-csv/pokemon_evolution.csv)",
+      "Bash(python3 -c \"import json;print\\(len\\(json.load\\(open\\('data/species.json'\\)\\)\\)\\)\")",
+      "Bash(python3 -c \"import json;print\\(len\\(json.load\\(open\\('data/moves.json'\\)\\)\\)\\)\")",
+      "Bash(python3 -c \"import json;print\\(len\\(json.load\\(open\\('data/learnsets.json'\\)\\)\\)\\)\")",
+      "Bash(echo \"  species=$\\(python3 -c \"import json;print\\(len\\(json.load\\(open\\('data/species.json'\\)\\)\\)\\)\"\\) moves=$\\(python3 -c \"import json;print\\(len\\(json.load\\(open\\('data/moves.json'\\)\\)\\)\\)\"\\) learnsets=$\\(python3 -c \"import json;print\\(len\\(json.load\\(open\\('data/learnsets.json'\\)\\)\\)\\)\"\\)\")"
     ]
   }
 }

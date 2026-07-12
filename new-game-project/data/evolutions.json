@@ -1,0 +1,3209 @@
+[
+  {
+    "FromSpeciesId": 1,
+    "ToSpeciesId": 2,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 16,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 2,
+    "ToSpeciesId": 3,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 32,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 4,
+    "ToSpeciesId": 5,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 16,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 5,
+    "ToSpeciesId": 6,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 36,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 7,
+    "ToSpeciesId": 8,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 16,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 8,
+    "ToSpeciesId": 9,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 36,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 10,
+    "ToSpeciesId": 11,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 7,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 11,
+    "ToSpeciesId": 12,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 10,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 13,
+    "ToSpeciesId": 14,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 7,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 14,
+    "ToSpeciesId": 15,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 10,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 16,
+    "ToSpeciesId": 17,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 18,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 17,
+    "ToSpeciesId": 18,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 36,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 19,
+    "ToSpeciesId": 20,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 20,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 21,
+    "ToSpeciesId": 22,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 20,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 23,
+    "ToSpeciesId": 24,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 22,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 172,
+    "ToSpeciesId": 25,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinHappiness": 220,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 25,
+    "ToSpeciesId": 26,
+    "Trigger": "UseItem",
+    "WasTrade": false,
+    "TriggerItemId": 83,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 27,
+    "ToSpeciesId": 28,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 22,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 29,
+    "ToSpeciesId": 30,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 16,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 30,
+    "ToSpeciesId": 31,
+    "Trigger": "UseItem",
+    "WasTrade": false,
+    "TriggerItemId": 81,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 32,
+    "ToSpeciesId": 33,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 16,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 33,
+    "ToSpeciesId": 34,
+    "Trigger": "UseItem",
+    "WasTrade": false,
+    "TriggerItemId": 81,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 173,
+    "ToSpeciesId": 35,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinHappiness": 160,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 35,
+    "ToSpeciesId": 36,
+    "Trigger": "UseItem",
+    "WasTrade": false,
+    "TriggerItemId": 81,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 37,
+    "ToSpeciesId": 38,
+    "Trigger": "UseItem",
+    "WasTrade": false,
+    "TriggerItemId": 82,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 174,
+    "ToSpeciesId": 39,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinHappiness": 160,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 39,
+    "ToSpeciesId": 40,
+    "Trigger": "UseItem",
+    "WasTrade": false,
+    "TriggerItemId": 81,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 41,
+    "ToSpeciesId": 42,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 22,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 43,
+    "ToSpeciesId": 44,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 21,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 44,
+    "ToSpeciesId": 45,
+    "Trigger": "UseItem",
+    "WasTrade": false,
+    "TriggerItemId": 85,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 46,
+    "ToSpeciesId": 47,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 24,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 48,
+    "ToSpeciesId": 49,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 31,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 50,
+    "ToSpeciesId": 51,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 26,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 52,
+    "ToSpeciesId": 53,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 28,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 54,
+    "ToSpeciesId": 55,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 33,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 56,
+    "ToSpeciesId": 57,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 28,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 58,
+    "ToSpeciesId": 59,
+    "Trigger": "UseItem",
+    "WasTrade": false,
+    "TriggerItemId": 82,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 60,
+    "ToSpeciesId": 61,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 25,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 61,
+    "ToSpeciesId": 62,
+    "Trigger": "UseItem",
+    "WasTrade": false,
+    "TriggerItemId": 84,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 63,
+    "ToSpeciesId": 64,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 16,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 64,
+    "ToSpeciesId": 65,
+    "Trigger": "LinkCable",
+    "WasTrade": true,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 66,
+    "ToSpeciesId": 67,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 28,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 67,
+    "ToSpeciesId": 68,
+    "Trigger": "LinkCable",
+    "WasTrade": true,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 69,
+    "ToSpeciesId": 70,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 21,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 70,
+    "ToSpeciesId": 71,
+    "Trigger": "UseItem",
+    "WasTrade": false,
+    "TriggerItemId": 85,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 72,
+    "ToSpeciesId": 73,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 30,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 74,
+    "ToSpeciesId": 75,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 25,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 75,
+    "ToSpeciesId": 76,
+    "Trigger": "LinkCable",
+    "WasTrade": true,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 77,
+    "ToSpeciesId": 78,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 40,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 79,
+    "ToSpeciesId": 80,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 37,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 81,
+    "ToSpeciesId": 82,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 30,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 84,
+    "ToSpeciesId": 85,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 31,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 86,
+    "ToSpeciesId": 87,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 34,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 88,
+    "ToSpeciesId": 89,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 38,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 90,
+    "ToSpeciesId": 91,
+    "Trigger": "UseItem",
+    "WasTrade": false,
+    "TriggerItemId": 84,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 92,
+    "ToSpeciesId": 93,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 25,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 93,
+    "ToSpeciesId": 94,
+    "Trigger": "LinkCable",
+    "WasTrade": true,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 96,
+    "ToSpeciesId": 97,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 26,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 98,
+    "ToSpeciesId": 99,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 28,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 100,
+    "ToSpeciesId": 101,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 30,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 102,
+    "ToSpeciesId": 103,
+    "Trigger": "UseItem",
+    "WasTrade": false,
+    "TriggerItemId": 85,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 104,
+    "ToSpeciesId": 105,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 28,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 236,
+    "ToSpeciesId": 106,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 20,
+    "RelativePhysicalStats": 1,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 236,
+    "ToSpeciesId": 107,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 20,
+    "RelativePhysicalStats": -1,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 109,
+    "ToSpeciesId": 110,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 35,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 111,
+    "ToSpeciesId": 112,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 42,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 440,
+    "ToSpeciesId": 113,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "HeldItemId": 110,
+    "TimeOfDay": "day",
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 116,
+    "ToSpeciesId": 117,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 32,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 118,
+    "ToSpeciesId": 119,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 33,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 120,
+    "ToSpeciesId": 121,
+    "Trigger": "UseItem",
+    "WasTrade": false,
+    "TriggerItemId": 84,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 439,
+    "ToSpeciesId": 122,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "KnownMoveId": 102,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 238,
+    "ToSpeciesId": 124,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 30,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 239,
+    "ToSpeciesId": 125,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 30,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 240,
+    "ToSpeciesId": 126,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 30,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 129,
+    "ToSpeciesId": 130,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 20,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 133,
+    "ToSpeciesId": 134,
+    "Trigger": "UseItem",
+    "WasTrade": false,
+    "TriggerItemId": 84,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 133,
+    "ToSpeciesId": 135,
+    "Trigger": "UseItem",
+    "WasTrade": false,
+    "TriggerItemId": 83,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 133,
+    "ToSpeciesId": 136,
+    "Trigger": "UseItem",
+    "WasTrade": false,
+    "TriggerItemId": 82,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 138,
+    "ToSpeciesId": 139,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 40,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 140,
+    "ToSpeciesId": 141,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 40,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 446,
+    "ToSpeciesId": 143,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinHappiness": 160,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 147,
+    "ToSpeciesId": 148,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 30,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 148,
+    "ToSpeciesId": 149,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 55,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 152,
+    "ToSpeciesId": 153,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 16,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 153,
+    "ToSpeciesId": 154,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 32,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 155,
+    "ToSpeciesId": 156,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 14,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 156,
+    "ToSpeciesId": 157,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 36,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 158,
+    "ToSpeciesId": 159,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 18,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 159,
+    "ToSpeciesId": 160,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 30,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 161,
+    "ToSpeciesId": 162,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 15,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 163,
+    "ToSpeciesId": 164,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 20,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 165,
+    "ToSpeciesId": 166,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 18,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 167,
+    "ToSpeciesId": 168,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 22,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 42,
+    "ToSpeciesId": 169,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinHappiness": 160,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 170,
+    "ToSpeciesId": 171,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 27,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 175,
+    "ToSpeciesId": 176,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinHappiness": 160,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 177,
+    "ToSpeciesId": 178,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 25,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 179,
+    "ToSpeciesId": 180,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 15,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 180,
+    "ToSpeciesId": 181,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 30,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 44,
+    "ToSpeciesId": 182,
+    "Trigger": "UseItem",
+    "WasTrade": false,
+    "TriggerItemId": 80,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 298,
+    "ToSpeciesId": 183,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinHappiness": 160,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 183,
+    "ToSpeciesId": 184,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 18,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 438,
+    "ToSpeciesId": 185,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "KnownMoveId": 102,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 61,
+    "ToSpeciesId": 186,
+    "Trigger": "LinkCable",
+    "WasTrade": true,
+    "HeldItemId": 198,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 187,
+    "ToSpeciesId": 188,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 18,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 188,
+    "ToSpeciesId": 189,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 27,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 191,
+    "ToSpeciesId": 192,
+    "Trigger": "UseItem",
+    "WasTrade": false,
+    "TriggerItemId": 80,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 194,
+    "ToSpeciesId": 195,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 20,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 133,
+    "ToSpeciesId": 196,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "TimeOfDay": "day",
+    "MinHappiness": 160,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 133,
+    "ToSpeciesId": 197,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "TimeOfDay": "night",
+    "MinHappiness": 160,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 79,
+    "ToSpeciesId": 199,
+    "Trigger": "LinkCable",
+    "WasTrade": true,
+    "HeldItemId": 198,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 360,
+    "ToSpeciesId": 202,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 15,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 204,
+    "ToSpeciesId": 205,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 31,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 95,
+    "ToSpeciesId": 208,
+    "Trigger": "LinkCable",
+    "WasTrade": true,
+    "HeldItemId": 210,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 209,
+    "ToSpeciesId": 210,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 23,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 123,
+    "ToSpeciesId": 212,
+    "Trigger": "LinkCable",
+    "WasTrade": true,
+    "HeldItemId": 210,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 216,
+    "ToSpeciesId": 217,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 30,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 218,
+    "ToSpeciesId": 219,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 38,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 220,
+    "ToSpeciesId": 221,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 33,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 223,
+    "ToSpeciesId": 224,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 25,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 458,
+    "ToSpeciesId": 226,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "PartySpeciesId": 223,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 228,
+    "ToSpeciesId": 229,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 24,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 117,
+    "ToSpeciesId": 230,
+    "Trigger": "LinkCable",
+    "WasTrade": true,
+    "HeldItemId": 212,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 231,
+    "ToSpeciesId": 232,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 25,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 137,
+    "ToSpeciesId": 233,
+    "Trigger": "LinkCable",
+    "WasTrade": true,
+    "HeldItemId": 229,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 236,
+    "ToSpeciesId": 237,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 20,
+    "RelativePhysicalStats": 0,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 113,
+    "ToSpeciesId": 242,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinHappiness": 160,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 246,
+    "ToSpeciesId": 247,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 30,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 247,
+    "ToSpeciesId": 248,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 55,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 252,
+    "ToSpeciesId": 253,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 16,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 253,
+    "ToSpeciesId": 254,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 36,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 255,
+    "ToSpeciesId": 256,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 16,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 256,
+    "ToSpeciesId": 257,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 36,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 258,
+    "ToSpeciesId": 259,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 16,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 259,
+    "ToSpeciesId": 260,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 36,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 261,
+    "ToSpeciesId": 262,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 18,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 263,
+    "ToSpeciesId": 264,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 20,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 265,
+    "ToSpeciesId": 266,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 7,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 266,
+    "ToSpeciesId": 267,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 10,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 265,
+    "ToSpeciesId": 268,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 7,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 268,
+    "ToSpeciesId": 269,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 10,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 270,
+    "ToSpeciesId": 271,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 14,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 271,
+    "ToSpeciesId": 272,
+    "Trigger": "UseItem",
+    "WasTrade": false,
+    "TriggerItemId": 84,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 273,
+    "ToSpeciesId": 274,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 14,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 274,
+    "ToSpeciesId": 275,
+    "Trigger": "UseItem",
+    "WasTrade": false,
+    "TriggerItemId": 85,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 276,
+    "ToSpeciesId": 277,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 22,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 278,
+    "ToSpeciesId": 279,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 25,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 280,
+    "ToSpeciesId": 281,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 20,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 281,
+    "ToSpeciesId": 282,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 30,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 283,
+    "ToSpeciesId": 284,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 22,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 285,
+    "ToSpeciesId": 286,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 23,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 287,
+    "ToSpeciesId": 288,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 18,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 288,
+    "ToSpeciesId": 289,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 36,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 290,
+    "ToSpeciesId": 291,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 20,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 290,
+    "ToSpeciesId": 292,
+    "Trigger": "Shed",
+    "WasTrade": false,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 293,
+    "ToSpeciesId": 294,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 20,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 294,
+    "ToSpeciesId": 295,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 40,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 296,
+    "ToSpeciesId": 297,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 24,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 300,
+    "ToSpeciesId": 301,
+    "Trigger": "UseItem",
+    "WasTrade": false,
+    "TriggerItemId": 81,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 304,
+    "ToSpeciesId": 305,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 32,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 305,
+    "ToSpeciesId": 306,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 42,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 307,
+    "ToSpeciesId": 308,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 37,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 309,
+    "ToSpeciesId": 310,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 26,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 406,
+    "ToSpeciesId": 315,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "TimeOfDay": "day",
+    "MinHappiness": 160,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 316,
+    "ToSpeciesId": 317,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 26,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 318,
+    "ToSpeciesId": 319,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 30,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 320,
+    "ToSpeciesId": 321,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 40,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 322,
+    "ToSpeciesId": 323,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 33,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 325,
+    "ToSpeciesId": 326,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 32,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 328,
+    "ToSpeciesId": 329,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 35,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 329,
+    "ToSpeciesId": 330,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 45,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 331,
+    "ToSpeciesId": 332,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 32,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 333,
+    "ToSpeciesId": 334,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 35,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 339,
+    "ToSpeciesId": 340,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 30,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 341,
+    "ToSpeciesId": 342,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 30,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 343,
+    "ToSpeciesId": 344,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 36,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 345,
+    "ToSpeciesId": 346,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 40,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 347,
+    "ToSpeciesId": 348,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 40,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 349,
+    "ToSpeciesId": 350,
+    "Trigger": "LinkCable",
+    "WasTrade": true,
+    "HeldItemId": 580,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 353,
+    "ToSpeciesId": 354,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 37,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 355,
+    "ToSpeciesId": 356,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 37,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 433,
+    "ToSpeciesId": 358,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "TimeOfDay": "night",
+    "MinHappiness": 220,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 361,
+    "ToSpeciesId": 362,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 42,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 363,
+    "ToSpeciesId": 364,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 32,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 364,
+    "ToSpeciesId": 365,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 44,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 366,
+    "ToSpeciesId": 367,
+    "Trigger": "LinkCable",
+    "WasTrade": true,
+    "HeldItemId": 203,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 366,
+    "ToSpeciesId": 368,
+    "Trigger": "LinkCable",
+    "WasTrade": true,
+    "HeldItemId": 204,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 371,
+    "ToSpeciesId": 372,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 30,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 372,
+    "ToSpeciesId": 373,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 50,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 374,
+    "ToSpeciesId": 375,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 20,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 375,
+    "ToSpeciesId": 376,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 45,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 387,
+    "ToSpeciesId": 388,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 18,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 388,
+    "ToSpeciesId": 389,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 32,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 390,
+    "ToSpeciesId": 391,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 14,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 391,
+    "ToSpeciesId": 392,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 36,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 393,
+    "ToSpeciesId": 394,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 16,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 394,
+    "ToSpeciesId": 395,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 36,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 396,
+    "ToSpeciesId": 397,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 14,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 397,
+    "ToSpeciesId": 398,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 34,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 399,
+    "ToSpeciesId": 400,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 15,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 401,
+    "ToSpeciesId": 402,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 10,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 403,
+    "ToSpeciesId": 404,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 15,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 404,
+    "ToSpeciesId": 405,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 30,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 315,
+    "ToSpeciesId": 407,
+    "Trigger": "UseItem",
+    "WasTrade": false,
+    "TriggerItemId": 107,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 408,
+    "ToSpeciesId": 409,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 30,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 410,
+    "ToSpeciesId": 411,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 30,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 412,
+    "ToSpeciesId": 413,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 20,
+    "GenderId": 1,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 412,
+    "ToSpeciesId": 414,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 20,
+    "GenderId": 2,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 415,
+    "ToSpeciesId": 416,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 21,
+    "GenderId": 1,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 418,
+    "ToSpeciesId": 419,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 26,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 420,
+    "ToSpeciesId": 421,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 25,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 422,
+    "ToSpeciesId": 423,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 30,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 190,
+    "ToSpeciesId": 424,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "KnownMoveId": 458,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 425,
+    "ToSpeciesId": 426,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 28,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 427,
+    "ToSpeciesId": 428,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinHappiness": 160,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 200,
+    "ToSpeciesId": 429,
+    "Trigger": "UseItem",
+    "WasTrade": false,
+    "TriggerItemId": 108,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 198,
+    "ToSpeciesId": 430,
+    "Trigger": "UseItem",
+    "WasTrade": false,
+    "TriggerItemId": 108,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 431,
+    "ToSpeciesId": 432,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 38,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 434,
+    "ToSpeciesId": 435,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 34,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 436,
+    "ToSpeciesId": 437,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 33,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 443,
+    "ToSpeciesId": 444,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 24,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 444,
+    "ToSpeciesId": 445,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 48,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 447,
+    "ToSpeciesId": 448,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "TimeOfDay": "day",
+    "MinHappiness": 160,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 449,
+    "ToSpeciesId": 450,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 34,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 451,
+    "ToSpeciesId": 452,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 40,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 453,
+    "ToSpeciesId": 454,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 37,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 456,
+    "ToSpeciesId": 457,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 31,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 459,
+    "ToSpeciesId": 460,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 40,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 215,
+    "ToSpeciesId": 461,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "HeldItemId": 303,
+    "TimeOfDay": "night",
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 82,
+    "ToSpeciesId": 462,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "LocationId": 379,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 108,
+    "ToSpeciesId": 463,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "KnownMoveId": 205,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 112,
+    "ToSpeciesId": 464,
+    "Trigger": "LinkCable",
+    "WasTrade": true,
+    "HeldItemId": 298,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 114,
+    "ToSpeciesId": 465,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "KnownMoveId": 246,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 125,
+    "ToSpeciesId": 466,
+    "Trigger": "LinkCable",
+    "WasTrade": true,
+    "HeldItemId": 299,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 126,
+    "ToSpeciesId": 467,
+    "Trigger": "LinkCable",
+    "WasTrade": true,
+    "HeldItemId": 300,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 176,
+    "ToSpeciesId": 468,
+    "Trigger": "UseItem",
+    "WasTrade": false,
+    "TriggerItemId": 107,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 193,
+    "ToSpeciesId": 469,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "KnownMoveId": 246,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 133,
+    "ToSpeciesId": 470,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "LocationId": 375,
+    "NeedsSpecialRock": true,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 133,
+    "ToSpeciesId": 471,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "LocationId": 380,
+    "NeedsSpecialRock": true,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 207,
+    "ToSpeciesId": 472,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "HeldItemId": 304,
+    "TimeOfDay": "night",
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 221,
+    "ToSpeciesId": 473,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "KnownMoveId": 246,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 233,
+    "ToSpeciesId": 474,
+    "Trigger": "LinkCable",
+    "WasTrade": true,
+    "HeldItemId": 301,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 281,
+    "ToSpeciesId": 475,
+    "Trigger": "UseItem",
+    "WasTrade": false,
+    "TriggerItemId": 109,
+    "GenderId": 2,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 299,
+    "ToSpeciesId": 476,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "LocationId": 379,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 356,
+    "ToSpeciesId": 477,
+    "Trigger": "LinkCable",
+    "WasTrade": true,
+    "HeldItemId": 302,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 361,
+    "ToSpeciesId": 478,
+    "Trigger": "UseItem",
+    "WasTrade": false,
+    "TriggerItemId": 109,
+    "GenderId": 1,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 495,
+    "ToSpeciesId": 496,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 17,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 496,
+    "ToSpeciesId": 497,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 36,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 498,
+    "ToSpeciesId": 499,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 17,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 499,
+    "ToSpeciesId": 500,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 36,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 501,
+    "ToSpeciesId": 502,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 17,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 502,
+    "ToSpeciesId": 503,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 36,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 504,
+    "ToSpeciesId": 505,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 20,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 506,
+    "ToSpeciesId": 507,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 16,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 507,
+    "ToSpeciesId": 508,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 32,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 509,
+    "ToSpeciesId": 510,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 20,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 511,
+    "ToSpeciesId": 512,
+    "Trigger": "UseItem",
+    "WasTrade": false,
+    "TriggerItemId": 85,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 513,
+    "ToSpeciesId": 514,
+    "Trigger": "UseItem",
+    "WasTrade": false,
+    "TriggerItemId": 82,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 515,
+    "ToSpeciesId": 516,
+    "Trigger": "UseItem",
+    "WasTrade": false,
+    "TriggerItemId": 84,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 517,
+    "ToSpeciesId": 518,
+    "Trigger": "UseItem",
+    "WasTrade": false,
+    "TriggerItemId": 81,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 519,
+    "ToSpeciesId": 520,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 21,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 520,
+    "ToSpeciesId": 521,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 32,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 522,
+    "ToSpeciesId": 523,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 27,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 524,
+    "ToSpeciesId": 525,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 25,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 525,
+    "ToSpeciesId": 526,
+    "Trigger": "LinkCable",
+    "WasTrade": true,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 527,
+    "ToSpeciesId": 528,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinHappiness": 160,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 529,
+    "ToSpeciesId": 530,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 31,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 532,
+    "ToSpeciesId": 533,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 25,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 533,
+    "ToSpeciesId": 534,
+    "Trigger": "LinkCable",
+    "WasTrade": true,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 535,
+    "ToSpeciesId": 536,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 25,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 536,
+    "ToSpeciesId": 537,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 36,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 540,
+    "ToSpeciesId": 541,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 20,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 541,
+    "ToSpeciesId": 542,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinHappiness": 220,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 543,
+    "ToSpeciesId": 544,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 22,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 544,
+    "ToSpeciesId": 545,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 30,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 546,
+    "ToSpeciesId": 547,
+    "Trigger": "UseItem",
+    "WasTrade": false,
+    "TriggerItemId": 80,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 548,
+    "ToSpeciesId": 549,
+    "Trigger": "UseItem",
+    "WasTrade": false,
+    "TriggerItemId": 80,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 551,
+    "ToSpeciesId": 552,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 29,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 552,
+    "ToSpeciesId": 553,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 40,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 554,
+    "ToSpeciesId": 555,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 35,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 557,
+    "ToSpeciesId": 558,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 34,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 559,
+    "ToSpeciesId": 560,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 39,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 562,
+    "ToSpeciesId": 563,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 34,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 564,
+    "ToSpeciesId": 565,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 37,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 566,
+    "ToSpeciesId": 567,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 37,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 568,
+    "ToSpeciesId": 569,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 36,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 570,
+    "ToSpeciesId": 571,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 30,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 572,
+    "ToSpeciesId": 573,
+    "Trigger": "UseItem",
+    "WasTrade": false,
+    "TriggerItemId": 107,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 574,
+    "ToSpeciesId": 575,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 32,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 575,
+    "ToSpeciesId": 576,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 41,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 577,
+    "ToSpeciesId": 578,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 32,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 578,
+    "ToSpeciesId": 579,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 41,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 580,
+    "ToSpeciesId": 581,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 35,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 582,
+    "ToSpeciesId": 583,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 35,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 583,
+    "ToSpeciesId": 584,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 47,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 585,
+    "ToSpeciesId": 586,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 34,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 588,
+    "ToSpeciesId": 589,
+    "Trigger": "LinkCable",
+    "WasTrade": true,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 590,
+    "ToSpeciesId": 591,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 39,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 592,
+    "ToSpeciesId": 593,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 40,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 595,
+    "ToSpeciesId": 596,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 36,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 597,
+    "ToSpeciesId": 598,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 40,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 599,
+    "ToSpeciesId": 600,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 38,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 600,
+    "ToSpeciesId": 601,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 49,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 602,
+    "ToSpeciesId": 603,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 39,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 603,
+    "ToSpeciesId": 604,
+    "Trigger": "UseItem",
+    "WasTrade": false,
+    "TriggerItemId": 83,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 605,
+    "ToSpeciesId": 606,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 42,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 607,
+    "ToSpeciesId": 608,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 41,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 608,
+    "ToSpeciesId": 609,
+    "Trigger": "UseItem",
+    "WasTrade": false,
+    "TriggerItemId": 108,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 610,
+    "ToSpeciesId": 611,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 38,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 611,
+    "ToSpeciesId": 612,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 48,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 613,
+    "ToSpeciesId": 614,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 37,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 616,
+    "ToSpeciesId": 617,
+    "Trigger": "LinkCable",
+    "WasTrade": true,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 619,
+    "ToSpeciesId": 620,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 50,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 622,
+    "ToSpeciesId": 623,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 43,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 624,
+    "ToSpeciesId": 625,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 52,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 627,
+    "ToSpeciesId": 628,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 54,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 629,
+    "ToSpeciesId": 630,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 54,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 633,
+    "ToSpeciesId": 634,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 50,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 634,
+    "ToSpeciesId": 635,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 64,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  },
+  {
+    "FromSpeciesId": 636,
+    "ToSpeciesId": 637,
+    "Trigger": "LevelUp",
+    "WasTrade": false,
+    "MinLevel": 59,
+    "NeedsSpecialRock": false,
+    "NeedsOverworldRain": false,
+    "TurnUpsideDown": false
+  }
+]
