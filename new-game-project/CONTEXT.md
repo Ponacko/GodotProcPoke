@@ -40,6 +40,12 @@ An obstacle class that needs only a few tiles, not a biome — cut trees, boulde
 ### Terrain-Bound Obstacle
 An obstacle class that genuinely requires its terrain — surfable water, waterfalls, dive spots, whirlpools, sandstorm desert, sea crossings. Emits a **Biome Requirement** on its area.
 
+### Battle Event
+One typed entry in the ordered stream a battle turn resolves to (`MoveUsed`, `DamageDealt`, `Fainted`, …). The contract between the battle simulation, its tests, and the battle UI — the UI replays events; it never inspects sim state.
+
+### AI Tier
+A trainer's battle intelligence level. Tier 0 (wild): uniform random legal move. Tier 1 (standard trainer): best-damage choice, hard-avoids immunities, ~20% second-best imperfection. Tier 2 (boss): tier 1 without imperfection, plus potion-heal below ~25% HP and at most one hopeless-matchup switch per battle. Difficulty comes from team composition and levels, never from deeper AI.
+
 ### Biome Requirement
 A tag placed by the gate pass on an area ("water-dominant", "desert"), consumed by the later biome pass as a fixed point it grows the coherent biome map around. At most one terrain tag per area — obstacles that would conflict are filtered from the draw before selection, so contradictions are unrepresentable.
 
@@ -57,6 +63,27 @@ A Gen 5-style rare-spawn signal layered over ordinary encounter terrain — Rust
 
 ### Hidden Ability
 A species' rare third ability (Gen 5 Dream World / Hidden Grotto data). Rolled only on Pokémon met via a Special Encounter Overlay (~50% chance there); ordinary encounters always use a regular ability slot.
+
+### Professor
+The per-seed framing NPC: a generated identity (tree-derived name minus canon names, rolled gender, lab in the starter town) who delivers the opening monologue, gives the starter, and sets the fixed mainline premise (fill the dex, take the gym challenge). Only the identity varies; ProcPoke generates no plot arcs at MVP.
+
+### Champion Roll
+The per-seed casting of the League Champion: by default a generated NPC, but ~25% of seeds instead make the **Rival** the Champion (foreshadowed at the pre-League beat). Rival-Champion seeds weight the Underdog rival archetype higher. Reuses existing rival-team and difficulty machinery — a casting decision, not a mechanic.
+
+### Services Pass
+The generation pass that assigns one-off city services (Move Deleter, Name Rater, fossil revival, Link Cable vendor, move tutors) to generated cities, 0–2 per city, under per-service placement constraints (fossil revival near the fossil cave, Move Deleter by mid-game, etc.). Every service is guaranteed present somewhere per seed.
+
+### Second Region
+The Phase 7 post-game feature (Gen 2 Kanto homage): after the Champion, the player may generate a second region from a new sub-seed, merged with the first. Its own dex (novelty-preferring), starter (unused triangle), gyms, and villain thread; no second Elite Four — a **Summit** boss instead. Regions stay separate map spaces joined by a **Region Link**.
+
+### Region Link
+The physical join between the two regions, decided by region 1's geography: a **ship** crossing if region 1 has a coastal city (flagged as port), otherwise a **border pass** (a generated mountain-pass transit route with warp edges). Blocked by a League guard until the Champion flag sets. Fly networks stay local to each region; crossing is always the link.
+
+### Level Cap
+Region 2's per-badge challenge rule (badge obedience reborn with purpose): Pokémon above the current cap cannot be **fielded** (marked resting, not selectable) and stop gaining XP at the cap (excess discarded) until the next badge raises it. Catching is never capped. Each region-2 badge sets the cap ~+3 above that gym's ace level.
+
+### Summit
+Region 2's finale in place of a second Elite Four: a short Victory-Road-style gauntlet ending in one Red-analog battle (~Lv 70s, full six). The boss is **whoever the player did not face for the region-1 title** — the Rival at their peak in normal seeds, the deposed former Champion in rival-Champion seeds.
 
 ### Seed String
 The shareable identity of a region: raw seed + generation settings + generator version, encoded as one string. Determinism is promised only within a generator version — an older Seed String warns it may produce a different region. Save files never depend on it (they store the fully generated region).

@@ -24,6 +24,7 @@
 12. [Post-MVP Features](#12-post-mvp-features)
 13. [Resolved Design Questions](#13-resolved-design-questions)
 14. [Technology & Development Plan](#14-technology--development-plan)
+15. [Second Region (Post-Game Expansion)](#15-second-region-post-game-expansion)
 
 ---
 
@@ -349,6 +350,12 @@ As with encounters, trainer classes are defined by type bias and strength tier r
 - **Difficulty curve** (all levels expressed against progression fraction, so any badge count works): gym ace levels run ~14 at the first badge to ~50 at the last, interpolated smoothly; Elite Four ~54–58, Champion ~59–60. Trainer aces ≈ their area's wild level + 2–4; gym trainers sit between route trainers and their leader; the rival tracks the player-facing curve at each beat; villain bosses match gym-equivalent strength for their timing. Starters begin at level 5. (Badge *obedience* is cut — it exists only to police traded Pokémon, and there is no trading.)
 - **Gym types are distinct** within a region — no repeats — selected with **biome affinity** (the §6.2 bias tables read in reverse: a mountain-ringed city leans Rock/Ground/Fighting, a port leans Water), so gyms feel placed rather than rolled. Thin types in the drawn dex pad their gym with dual-types and adjacent picks, mainline-style. Team size scales 2→6 along the curve.
 - **Elite Four** types are distinct from each other and from the gyms while the type count allows (always true at default settings); full 6-mon teams. The **Champion** is typeless: the broadest, highest-BST team in the region, traditionally featuring a starter line's final stage or a pseudo-legendary if the dex drew one. Villain-team thematic types are chosen away from gym-type collisions when possible.
+- **Champion identity (per-seed roll):** by default the Champion is a generated NPC (own name, title dropped by NPC gossip during the run). In ~25% of seeds the **rival is the Champion instead** — foreshadowed at the pre-League beat, the League's final door opening on a familiar face. Rival-Champion seeds weight the Underdog archetype (7.2) higher; the pairing is otherwise free. Reuses existing rival-team and difficulty machinery.
+
+### 7.1a Framing Narrative (Professor & Premise)
+
+- A **generated professor** per seed: name from the mainline tree convention (curated pool — Aspen, Laurel, Hawthorn, Linden… — minus canon names), gender rolled, lab in the starter town. Delivers the opening "welcome to the world of Pokémon" monologue (showing a wild species from the region's own dex), gives the starter from three Poké Balls with the rival present and picking second — the exact Gen 1–5 beat.
+- The **premise is the mainline default**: fill the Pokédex, take the gym challenge. No generated plot arcs at MVP — the villain-team arc (7.3) is the story's middle, the League its end. Only identities vary; the frame is fixed.
 
 ### 7.2 Rival
 
@@ -375,6 +382,12 @@ As with encounters, trainer classes are defined by type bias and strength tier r
 - The blocklist is **baked for free from the pinned PokeAPI data** (its location tables contain every official game's location names) as `name_blocklist.json`; generated names failing it, or colliding within the region, redraw. Villain team names come from the same machinery, checked against the (short, hardcoded) list of canon team names.
 - Routes keep the mainline numbering convention (Route 1, Route 2, …) in critical-path order; cities and dungeons receive generated proper names.
 
+## 8a. Economy & City Services
+
+**Economy (cloned tables, no new design).** Gym leaders award badge + prize money + a **TM fitting their type** (the mainline triple). Trainer payouts = per-class base rate × ace level. Whiteout costs money by the Gen 5 formula (scaled to badges/level, never items). **Mart stock unlocks in tiers keyed to badge count** — better balls and medicine appear as the player progresses, driven by the §7.1 curve.
+
+**Services pass.** One-off service NPCs (Move Deleter, Name Rater, fossil revival, Link Cable vendor, move tutors) are placed by a generation pass: each city rolls 0–2 services under per-service placement constraints — fossil revival binds to the city nearest the fossil cave; the Move Deleter appears by mid-game (the HM escape hatch, needed before HM-slot regret gets expensive); Link Cables stock in late-game Marts plus one guaranteed earlier vendor; Name Rater anywhere. Every service is guaranteed present somewhere per seed, and hint NPCs (§4.3) may point to services in neighboring towns.
+
 ## 9. User Interface / Screens
 
 ### 9.1 Region Generation Screen
@@ -395,7 +408,7 @@ Grid-locked movement with Gen-standard speed tiers: walk, run (hold B, available
 
 Shows the generated region's layout — routes, cities, dungeons, and their connections — available both in the generation preview and as an in-game pause-menu map.
 
-### 9.3 Pokédex Screen
+### 9.4 Pokédex Screen
 
 Standard seen/caught dex UI, populated in the regional numbering order defined in [Section 5.2](#52-pokédex-numbering).
 
@@ -417,6 +430,18 @@ IP posture: species sprites/cries are Nintendo IP used under fan-game norms — 
 - **Multiple independent save slots** (a deviation from mainline's single save): each slot is a fully independent world — its region, party, and progress — with new-game flow starting from slot selection and no fixed cap beyond disk space. *Within* a slot, mainline conventions hold: one save state, overwrite-on-save, no manual branching (keeping legendaries and one-time events meaningful).
 - Once a seed is locked in via **Enter Game**, the save stores the seed **and the fully generated region**, so a save survives any later generator changes untouched.
 - **Seed sharing:** the shareable **Seed String** encodes raw seed + generation settings + generator version. Determinism is promised only within a generator version — entering an older Seed String warns that the region may differ rather than failing. No cross-version compatibility switches are maintained.
+- **Early provisions for the second region (Section 15):** even at MVP, the save schema reserves space for **multiple regions** plus a region-2 badge/level-cap state, and each region graph keeps one unused **external-connection slot** (the future Region Link point) — so adding region 2 never forces region 1 to regenerate.
+
+## 11a. Post-Game (MVP)
+
+Some post-game exists even at MVP because decided systems reach past the Champion (legendary placement, the B2W2 respawn-on-E4-rematch rule). It is deliberately minimal — **unlocks over existing systems, not new content:**
+
+- Credits roll, then the save resumes at home with a **Champion flag** set.
+- The deep/post-game cave (Cerulean Cave archetype, already a destination dungeon in the topology) becomes enterable — its guard steps aside; inside are the region's highest-level wilds and typically a legendary.
+- **Elite Four rematch** enabled at +10–15 levels (pure reuse of existing teams + curve), which is what makes the legendary respawn rule functional.
+- **Dex-completion diploma** from a professor visit — the dex premise's payoff.
+- **The second-region offer** (Section 15) becomes available.
+- Explicitly **not** at MVP (all Post-MVP): trainer rematches, battle facilities, roaming encounters, new areas beyond those already generated.
 
 ## 12. Post-MVP Features
 
@@ -461,7 +486,17 @@ Additional decisions from the same review: Gen 5 canonical ruleset and its docum
   4. **Battle engine** — headless and unit-tested, then wired to encounters.
   5. **Loop closers** — trainers, gyms, badges, HM field use, marts/centers/PC, save/load.
   6. **Shell** — generation screen, dex UI, region map, polish; audio last.
+  7. **Second region** (Section 15) — post-v1 flagship feature; provisions reserved in Phases 5–6 (save schema + connection slot).
 - **MVP definition:** one default-settings region, beatable start → Champion, all core systems present, with reduced *variety* (subset of dungeon archetypes and trainer classes) rather than reduced systems.
+
+## 15. Second Region (Post-Game Expansion)
+
+The flagship post-v1 feature: a Gen 2 Kanto homage. After becoming Champion, the player may generate a **second region** (new sub-seed) merged with the first. Because the generator is region-agnostic, this is a second invocation of the existing pipeline — the expensive machinery is reused wholesale. Built as **Phase 7**, after v1 ships; Phases 5–6 only reserve the two cheap provisions (Section 11).
+
+- **Level caps (the challenge layer — badge obedience reborn with purpose):** in region 2, Pokémon above the current per-badge cap **cannot be fielded** (marked resting, not selectable, framed as a League regulation) and **stop gaining XP at the cap** (excess discarded) until the next badge. Catching is never capped. Each region-2 badge sets the cap ~+3 above that gym's ace. This forces a fresh team from region 2's dex while region-1 champions sit benched until caps climb — fixing Gen 2 Kanto's steamroll problem.
+- **Region Link (geography-decided):** if region 1 has a coastal city, it's flagged as a **port** and the link is a **ship** crossing (reusing the Ship Ticket / Ship-archetype machinery); otherwise the reserved external slot attaches a **border pass** (a generated mountain-pass transit route with warp edges between edge cities). Either way blocked by a League guard until the Champion flag sets. The two regions stay **separate map spaces** (own region-map tabs); **Fly networks are local** to each region — crossing is always the link.
+- **Dex & starter:** region 2 generates its own 150+4 dex, drawing **preferentially from species unused in region 1** (deep pool at default settings; degrades gracefully to weighted overlap at tight roster caps). The merged Pokédex UI has per-region tabs; catches count once globally. A professor's colleague in the landing town offers a **second starter** from a **triangle template unused by region 1**, drawn from region 2's dex — seeding the fresh-team loop the caps demand.
+- **Structure:** region 2 has its own badge count (own mini generation screen, default 8) and full gym machinery (distinct biome-affine types, hint NPCs, caps riding aces). Curve re-anchored ~Lv 12 → 60. **No second Elite Four** — the topology's League slot becomes the **Summit**: a short Victory-Road gauntlet ending in one Red-analog battle (~Lv 70s, full six). The summit boss is **whoever the player did not face for the region-1 title** — the rival at their peak in normal seeds, the deposed former Champion in rival-Champion seeds. Region 2 rolls its own fresh villain thread(s).
 
 ---
 

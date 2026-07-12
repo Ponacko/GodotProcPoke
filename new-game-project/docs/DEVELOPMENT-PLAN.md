@@ -59,6 +59,8 @@ Design resolved in the Phase 2 grilling session (July 11, 2026):
 - **Encounters:** Gen 5 slot model cloned (12-slot grass, 5-slot surf, rod tiers); rarity = slot assignment; Special Encounter Overlays as separate small tables carrying hidden-ability rolls.
 - **Gyms:** distinct types with biome affinity; E4 distinct while type count allows; typeless Champion.
 
+Added by the Phase 3 session (affects this phase): outdoor carvings must be **edge-aligned** with their Map Connection neighbors (matching edge width/position); population (2c) additionally emits **NPC posts** — Hint NPCs (invariant: every gate has ≥1 hint reachable before it, checked by the fuzz suite), furniture NPCs (Gym guide, Center gossip, signs), and flavor NPCs from template pools parameterized with generated names.
+
 ### 2a — Region Graph
 
 - Topology: critical-path chain (routes/cities), branch points, dead-end rewards, loop-backs; transit/destination dungeon interspersal honoring the "never >2 plain areas" mandate.
@@ -88,18 +90,26 @@ Design resolved in the Phase 2 grilling session (July 11, 2026):
 
 ## Phase 3 — Overworld (L)
 
-First time the generated region is walked.
+First time the generated region is walked. Design resolved in the Phase 3 grilling session (July 12, 2026): faithful-hybrid connections, fixed Center/Mart interiors, guaranteed hint breadcrumbs, mainline movement defaults (GDD §4.3 rule 8, §4.4, §9.2).
 
-- Tile realization: carver output → Godot TileMaps via a tileset mapping layer (Essentials-community tilesets); this is the only place carver output meets art.
-- GBA-style grid movement, collision from carver data, camera; map transitions (route/town/dungeon edges, doors, cave entrances, warps).
-- Interactables: signs, static NPCs with generated dialogue stubs, item balls, gates as physical objects with HM/key prompts (debug-unlock menu until badges exist), ledge hops, Bicycle movement.
-- Time-of-day clock + night tint; region map screen (functional debug version).
+- **Tile Realizer:** Logical Tile grid + biome → Godot TileMaps (Essentials-community tilesets), autotiling, biome variants — the only place carver output meets art.
+- **Connections:** seamless outdoor stitching (neighbor map loads near the edge, scrolls into view; edge-aligned by Phase 2); warp fades for interiors/caves/dungeons.
+- **Movement & controls:** grid-locked walk/run/Bicycle/Surf tiers, ledge hops, face-and-press-A interaction grammar; input actions with keyboard + controller bindings; character choice + naming at new game.
+- **Interiors:** the two hand-authored Center/Mart maps, house template pool, carved gym gauntlets.
+- **Interactables:** NPC posts realized as talkable NPCs (hint/furniture/flavor dialogue from templates), signs, item balls, gates as physical objects with HM/key prompts (debug-unlock menu until badges exist).
+- Time-of-day clock + night tint; dark-cave vision circle (pre-Flash); region map screen (functional debug version).
 
 **Exit criterion:** walk a generated region start → League on foot, with every gate physically blocking until debug-unlocked, across 3+ different seeds without a broken map.
 
 ## Phase 4 — Battle Engine (XL)
 
-Headless first, presentation second (ADR-0003).
+Headless first, presentation second (ADR-0003). Design resolved in the Phase 4 grilling session (July 12, 2026):
+
+- **Event-stream contract (ADR-0006):** turns resolve to ordered BattleEvents; the UI is a replayer; fallback effects emit dev-flagged `EffectNotImplemented`.
+- **RNG:** injected version-stable PRNG — entropy-seeded in game (soft-reset authentic), fixed in tests, replayed from (state, actions, seed) triples for bug repro.
+- **AI:** the three-tier ladder (wild random / standard trainer with ~20% imperfection / boss with potion + one switch), difficulty from composition and levels only.
+- **Animations:** ~15–20 generic archetype effects keyed by damage class + type palette cover all moves at MVP; a short bespoke signature list (Hyper Beam, Earthquake, Surf) is Phase 6 garnish. Backdrop per biome family. Ball throw/shake/catch and HP-drain feel are the non-negotiables.
+- Battle style defaults to Shift; Set arrives with the options menu. B2W2's *scaled* experience formula applies (pinned by reference tests).
 
 ### 4a — Simulation (engine-free)
 
@@ -124,11 +134,13 @@ Everything that turns "walking + battling" into a Pokémon game.
 - Gyms: leader battles, badge grants, badge-gated HM field use now enforced (debug-unlock retired).
 - HM/key field actions: Cut/Surf/Strength/etc. overworld effects, Move Deleter, key-item usage (Bicycle already in, Poké Flute-equivalents, scopes, tickets).
 - Economy & services: marts (progression-scaled stock), Pokémon Centers, PC boxes, party management UI, bag.
-- New-game flow: intro, starter selection (lab scene), rival hooks; scripted rival beats (post-starter, early route, midpoint, pre-League).
+- New-game flow: generated professor + opening monologue, starter selection (lab scene), rival hooks; scripted rival beats (post-starter, early route, midpoint, pre-League).
+- Champion roll: default generated NPC Champion, ~25% rival-as-Champion (foreshadowed pre-League).
+- Economy & services: marts (progression-scaled stock), gym TM/prize rewards, the services pass (Move Deleter, Name Rater, fossil revival, Link Cable vendor, tutors) with placement constraints; Pokémon Centers, PC boxes, party management UI, bag.
 - Villain arc: hideout gauntlets granting gated key items, boss fights, two-team independence rules.
 - Fossils (revival service), legendary static encounters + B2W2 respawn, Link Cable item in the economy.
-- Elite Four → Champion → credits; post-game unlock state.
-- Save system: multiple slots, full-region serialization, save-anywhere-per-mainline rules, Seed String encode/decode with version stamp.
+- Elite Four → Champion → credits; minimal post-game unlocks (GDD §11a: post-game cave opens, E4 rematch, dex diploma).
+- Save system: multiple slots, full-region serialization, save-anywhere-per-mainline rules, Seed String encode/decode with version stamp. **Provision:** schema reserves multi-region space + region-2 badge/cap state; region graph keeps one unused external-connection slot (GDD §11, §15) — so Phase 7 needs no region-1 regeneration.
 
 **Exit criterion — MVP:** a complete blind playthrough of a fresh default-settings seed, start → Champion, by a human, without debug tools, without a progression-blocking bug. All core systems present; variety reduced is fine.
 
@@ -143,6 +155,19 @@ Everything that turns "walking + battling" into a Pokémon game.
 - Widen variety: remaining dungeon archetypes (Ruins, Ship, Mansion, Safari, Ice Cave, Facility, Desert Ruin…) and trainer classes — the MVP's deliberate variety cuts get paid back here, then Post-MVP features (GDD §12) become the backlog.
 
 **Exit criterion:** a stranger can install, generate, and play a region to the Champion with no explanation and no silent-audio moments — shippable as a v1 fan release.
+
+## Phase 7 — Second Region (XL) — post-v1 flagship
+
+The Gen 2 Kanto homage (GDD §15). Designed in the Phase 5/6 grilling session (July 12, 2026); built after v1 ships. Mostly reuse — the generator runs again on a new sub-seed — so the new work is the merge, the cap system, and the link.
+
+- **Second-region generation:** re-invoke the Phase 2 pipeline with a new sub-seed; dex draws preferentially from region-1-unused species (graceful overlap at tight caps); own badge count via a mini generation screen.
+- **Level-cap system:** per-badge fielding cap (over-cap = resting, unselectable) + XP ceiling (excess discarded at cap); catching uncapped; caps ride region-2 gym aces at ~+3. New party-UI states, new battle-eligibility check.
+- **Region Link:** port→ship if region 1 is coastal, else border-pass transit route; League-guard gate until Champion flag; separate map spaces, local Fly networks. Consumes the reserved external-connection slot.
+- **Second starter:** professor's colleague offers a starter from a region-1-unused triangle, from region 2's dex.
+- **Merged Pokédex UI:** per-region tabs, global completion count.
+- **Summit finale:** no second E4; Victory-Road gauntlet → single Red-analog boss = whoever wasn't faced for the region-1 title (rival at peak, or deposed Champion in rival-Champion seeds). Region 2's own villain thread.
+
+**Exit criterion:** a Champion can generate region 2, cross the link, and beat the Summit with a cap-legal team built from region 2's dex, on 3+ seeds (both coastal and inland region-1 geographies).
 
 ---
 
