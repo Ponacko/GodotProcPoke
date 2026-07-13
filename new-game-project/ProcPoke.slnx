@@ -6,6 +6,7 @@
   </Folder>
   <Folder Name="/tools/">
     <Project Path="tools/ProcPoke.Bake/ProcPoke.Bake.csproj" />
+    <Project Path="tools/ProcPoke.MapGen/ProcPoke.MapGen.csproj" />
   </Folder>
   <Folder Name="/tests/">
     <Project Path="tests/ProcPoke.Battle.Tests/ProcPoke.Battle.Tests.csproj" />

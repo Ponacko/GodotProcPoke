@@ -27,7 +27,8 @@
       "Bash(python3 -c \"import json;print\\(len\\(json.load\\(open\\('data/species.json'\\)\\)\\)\\)\")",
       "Bash(python3 -c \"import json;print\\(len\\(json.load\\(open\\('data/moves.json'\\)\\)\\)\\)\")",
       "Bash(python3 -c \"import json;print\\(len\\(json.load\\(open\\('data/learnsets.json'\\)\\)\\)\\)\")",
-      "Bash(echo \"  species=$\\(python3 -c \"import json;print\\(len\\(json.load\\(open\\('data/species.json'\\)\\)\\)\\)\"\\) moves=$\\(python3 -c \"import json;print\\(len\\(json.load\\(open\\('data/moves.json'\\)\\)\\)\\)\"\\) learnsets=$\\(python3 -c \"import json;print\\(len\\(json.load\\(open\\('data/learnsets.json'\\)\\)\\)\\)\"\\)\")"
+      "Bash(echo \"  species=$\\(python3 -c \"import json;print\\(len\\(json.load\\(open\\('data/species.json'\\)\\)\\)\\)\"\\) moves=$\\(python3 -c \"import json;print\\(len\\(json.load\\(open\\('data/moves.json'\\)\\)\\)\\)\"\\) learnsets=$\\(python3 -c \"import json;print\\(len\\(json.load\\(open\\('data/learnsets.json'\\)\\)\\)\\)\"\\)\")",
+      "Bash(cd *)"
     ]
   }
 }
