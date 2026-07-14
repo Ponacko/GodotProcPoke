@@ -117,8 +117,9 @@ public static class GatingGenerator
 
     // ---- key / hint / fly placement ----------------------------------------
 
-    /// <summary>Maps each off-spine area to the critical-path index it hangs off (its anchor).</summary>
-    private static Dictionary<int, int> OffSpineAnchors(RegionGraph graph)
+    /// <summary>Maps each off-spine area to the critical-path index it hangs off (its anchor). Public so the
+    /// 2b overview layout can hang each off-spine area's grid cell off the same anchor.</summary>
+    public static IReadOnlyDictionary<int, int> OffSpineAnchors(RegionGraph graph)
     {
         var anchors = new Dictionary<int, int>();
         foreach (var area in graph.OffSpineAreas)
@@ -129,7 +130,7 @@ public static class GatingGenerator
         return anchors;
     }
 
-    private static int PlaceKey(RegionGraph graph, Pcg32 rng, Dictionary<int, int> anchors, HashSet<int> used, int pos)
+    private static int PlaceKey(RegionGraph graph, Pcg32 rng, IReadOnlyDictionary<int, int> anchors, HashSet<int> used, int pos)
     {
         // Prefer a fresh off-spine destination dungeon reachable before the gate (§4.3 rule 2).
         bool Reachable(int areaId) => anchors[areaId] <= pos && !used.Contains(areaId);
@@ -179,7 +180,7 @@ public static class GatingGenerator
         return path[Math.Max(0, pos - 1)].Id;
     }
 
-    private static FlyPlacement PlaceFly(RegionGraph graph, Pcg32 rng, Dictionary<int, int> anchors, IReadOnlyList<Area> path, int badges)
+    private static FlyPlacement PlaceFly(RegionGraph graph, Pcg32 rng, IReadOnlyDictionary<int, int> anchors, IReadOnlyList<Area> path, int badges)
     {
         var prereq = Math.Clamp((int)Math.Round(ObstacleTable.FlyTiming * badges), 1, badges);
 

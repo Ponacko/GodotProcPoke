@@ -6,7 +6,8 @@ using ProcPoke.Generation.Topology;
 using ProcPoke.MapGen;
 
 // ProcPoke.MapGen — the headless generation harness (DEVELOPMENT-PLAN Phase 2).
-// Prints the topology of one or more generated regions as text. The PNG map renderer arrives in 2b.
+// Prints the topology of one or more generated regions as text, and (--png) renders per-area maps plus a
+// spatially stitched region overview (ticket 2b).
 //
 //   dotnet run --project tools/ProcPoke.MapGen -- [seed] [--badges N] [--count K]
 
@@ -46,12 +47,12 @@ for (var i = 0; i < count; i++)
         {
             var dir = Path.Combine(".cache", "mapgen", $"seed-{thisSeed}");
             Directory.CreateDirectory(dir);
-            var carvedPath = region.Graph.CriticalPath.Select(CarveArea).ToList();
-            foreach (var (a, c) in region.Graph.CriticalPath.Zip(carvedPath))
-                MapImage.SaveArea(Path.Combine(dir, $"{a.PathIndex:D2}-{a.Archetype}.png"), c);
+            var carvedById = region.Graph.Areas.ToDictionary(a => a.Id, CarveArea);
+            foreach (var a in region.Graph.CriticalPath)
+                MapImage.SaveArea(Path.Combine(dir, $"{a.PathIndex:D2}-{a.Archetype}.png"), carvedById[a.Id]);
             foreach (var a in region.Graph.OffSpineAreas)
-                MapImage.SaveArea(Path.Combine(dir, $"branch-{a.Id}-{a.Archetype}.png"), CarveArea(a));
-            MapImage.SaveOverview(Path.Combine(dir, "_overview.png"), carvedPath);
+                MapImage.SaveArea(Path.Combine(dir, $"branch-{a.Id}-{a.Archetype}.png"), carvedById[a.Id]);
+            MapImage.SaveOverview(Path.Combine(dir, "_overview.png"), region.Graph, carvedById.Values.ToList(), region.Openings);
             Console.WriteLine($"png: wrote {region.Graph.Areas.Count} area images + overview → {dir}");
         }
     }

@@ -20,7 +20,12 @@ Delivered in commit "Phase 2: carve gates onto verified chokepoints". `GateCarve
 
 ---
 
-## 2a. Edge-aligned seamless connections
+## 2a. Edge-aligned seamless connections — ✅ DONE
+
+Delivered in commit "implement phase 2". `OpeningAligner` assigns a shared edge/offset/width per Seamless
+connection before carving; `RouteCarver`/`TownCarver`/`GateCarver` take the planned openings instead of
+hard-coding `midY`; `OpeningAlignmentTests` (21 cases) assert offset/width agreement, warp exemption, and
+that carved tiles actually land on the shared coordinate. Full suite green (64/64).
 
 **What to build:** For every `Seamless` connection between two areas, the opening each area carves on the shared edge must line up with its neighbour's — same edge side, same offset along that edge, same width — so Phase 3 can scroll between them without a seam. Today each carver picks its own opening at its own `midY`, and neighbours have different heights, so two connected areas disagree on where the doorway is.
 
@@ -28,12 +33,20 @@ Delivered in commit "Phase 2: carve gates onto verified chokepoints". `GateCarve
 
 **Blocked by:** None — can start immediately.
 
-- [ ] A carver takes its per-edge opening positions as input rather than computing `midY` itself; existing callers pass the aligned positions
-- [ ] Fuzz invariant: for every `Seamless` connection, the two areas' openings on the shared edge have identical offset and width (converted to a common edge coordinate)
-- [ ] Warp connections still produce warp-tile openings; nothing regresses
-- [ ] Existing spine-walkability and mutual-reachability invariants (`CarvingTests`) stay green
+- [x] A carver takes its per-edge opening positions as input rather than computing `midY` itself; existing callers pass the aligned positions
+- [x] Fuzz invariant: for every `Seamless` connection, the two areas' openings on the shared edge have identical offset and width (converted to a common edge coordinate)
+- [x] Warp connections still produce warp-tile openings; nothing regresses
+- [x] Existing spine-walkability and mutual-reachability invariants (`CarvingTests`) stay green
 
-## 2b. Spatially stitched region overview
+## 2b. Spatially stitched region overview — ✅ DONE
+
+Delivered alongside 2a. `OverviewLayout.Plan` (domain, fuzz-tested in `OverviewLayoutTests`) assigns each
+area a `(Col, Row)` cell: critical path left→right at `(PathIndex, 0)`, off-spine areas hung one row
+above/below/further-out their `GatingGenerator.OffSpineAnchors` column. `MapImage.SaveOverview` blits every
+area's carved footprint into a canvas sized per column/row band and draws a connector between each
+connection's pair of openings (aligned opening tile for Seamless, area center for Warp). Verified visually
+via `dotnet run --project tools/ProcPoke.MapGen -- 42 --badges 8 --png` — the overview reads as one
+horizontally-flowing map with branches stacked above/below the spine, not a stack.
 
 **What to build:** Replace the current top-to-bottom stack in `MapImage.SaveOverview` with a real 2-D layout: areas placed adjacent along their connections so the overview reads as one map. This is the artifact the go/no-go review judges.
 
@@ -41,10 +54,10 @@ Delivered in commit "Phase 2: carve gates onto verified chokepoints". `GateCarve
 
 **Blocked by:** 2a (edge-aligned openings).
 
-- [ ] `SaveOverview` lays areas in 2-D grid cells: critical path in a row, off-spine areas above/below their anchor
-- [ ] No two areas overlap in the canvas; every area appears exactly once
-- [ ] Connected areas have a visible connector drawn between them
-- [ ] `dotnet run --project tools/ProcPoke.MapGen -- <seed> --png` writes the stitched `_overview.png`
+- [x] `SaveOverview` lays areas in 2-D grid cells: critical path in a row, off-spine areas above/below their anchor
+- [x] No two areas overlap in the canvas; every area appears exactly once
+- [x] Connected areas have a visible connector drawn between them
+- [x] `dotnet run --project tools/ProcPoke.MapGen -- <seed> --png` writes the stitched `_overview.png`
 
 ## 3a. Location name generator
 
