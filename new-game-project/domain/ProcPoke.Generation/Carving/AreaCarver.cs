@@ -1,4 +1,5 @@
 using ProcPoke.Generation.Biomes;
+using ProcPoke.Generation.Gating;
 using ProcPoke.Generation.Rng;
 using ProcPoke.Generation.Topology;
 
@@ -28,4 +29,15 @@ public static class AreaCarver
 
         _ => RouteCarver.Carve(area, biome, rng),
     };
+
+    /// <summary>Carves the area, then — if a gate blocks its spine exit — stamps that gate onto the tiles.</summary>
+    public static CarvedArea Carve(Area area, Biome biome, Pcg32 rng, Gate? gateOnExit)
+    {
+        var carved = Carve(area, biome, rng);
+        return gateOnExit is null ? carved : GateCarver.Apply(carved, gateOnExit);
+    }
+
+    /// <summary>The gate blocking this area's spine exit, or null — off-spine areas never hold a spine gate.</summary>
+    public static Gate? GateOnExitOf(Area area, GatingPlan gating)
+        => area.OnCriticalPath ? gating.GateBlockingExitOf(area.PathIndex) : null;
 }

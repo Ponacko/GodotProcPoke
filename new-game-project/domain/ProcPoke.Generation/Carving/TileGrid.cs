@@ -40,4 +40,11 @@ public sealed record CarvedArea
 
     /// <summary>Warp/opening coordinates on the grid edges (entry, exit, …), for edge-aligned Map Connections.</summary>
     public required IReadOnlyList<(int X, int Y)> Openings { get; init; }
+
+    /// <summary>
+    /// Coordinates of the gate obstacle tiles carved into this area (empty when the area holds no gate).
+    /// The chokepoint guarantee (ADR-0001) is expressed against these: with them treated as walls the exit
+    /// is unreachable; with them cleared it is reachable.
+    /// </summary>
+    public IReadOnlyList<(int X, int Y)> GateTiles { get; init; } = [];
 }

@@ -28,7 +28,8 @@ for (var i = 0; i < count; i++)
     if (carve || png)
     {
         var streams = new RngStreams(thisSeed);
-        CarvedArea CarveArea(Area a) => AreaCarver.Carve(a, region.Biomes.Of(a.Id), streams.Stream("carve", a.Id));
+        CarvedArea CarveArea(Area a) => AreaCarver.Carve(a, region.Biomes.Of(a.Id), streams.Stream("carve", a.Id),
+            AreaCarver.GateOnExitOf(a, region.Gating));
 
         if (carve)
         {

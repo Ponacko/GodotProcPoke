@@ -45,4 +45,8 @@ public sealed record GatingPlan
     public IEnumerable<(int AreaId, string Tag)> BiomeRequirements
         => Gates.Where(g => g.TerrainTag is not null && g.TerrainAreaId is not null)
                 .Select(g => (g.TerrainAreaId!.Value, g.TerrainTag!));
+
+    /// <summary>The gate (if any) blocking the spine exit of the critical-path area at this PathIndex.</summary>
+    public Gate? GateBlockingExitOf(int pathIndex)
+        => Gates.FirstOrDefault(g => g.BlockPathIndex == pathIndex);
 }
