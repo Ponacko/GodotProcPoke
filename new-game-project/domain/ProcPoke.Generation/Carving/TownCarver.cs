@@ -7,7 +7,9 @@ namespace ProcPoke.Generation.Carving;
 /// <summary>
 /// Carves a settlement: an open plaza with a clear central street (which also carries the spine between
 /// the left/right openings), buildings arranged in a band above and below the street, each with a door
-/// (Warp) facing it. The open street guarantees every door and both edge openings are mutually reachable.
+/// (Warp) facing it. The open street guarantees every door and every edge opening are mutually reachable.
+/// Left/right openings line up with the spine neighbours they were edge-aligned against; any branch or
+/// loop-back connection gets its own opening on the top or bottom edge.
 /// </summary>
 public static class TownCarver
 {
@@ -15,17 +17,30 @@ public static class TownCarver
     private static readonly int[] TopBand = [4, 4, 3];   // gym, centre, mart
     private static readonly int[] BottomBand = [3, 3, 3]; // houses
 
-    public static CarvedArea Carve(Area area, Biome biome, Pcg32 rng)
+    public static CarvedArea Carve(Area area, Biome biome, Pcg32 rng, IReadOnlyList<AreaOpening> planned)
     {
         var (w, h) = CarveKit.Dimensions(area.Size);
         var grid = new TileGrid(w, h, LogicalTile.Ground);
         var midY = h / 2;
 
         CarveKit.Border(grid, LogicalTile.Tree);
-        grid[0, midY] = LogicalTile.Warp;
-        grid[w - 1, midY] = LogicalTile.Warp;
+        // Edge-aligned with the spine neighbours, so — unlike the old fixed midY — this can land inside a
+        // building band's row. If this town's exit is also gated, GateCarver's approach-straightening pass
+        // could then force a gap through that building's wall (cosmetic only: it only adds floor, so
+        // reachability never breaks). Accepted for now; 5d's decoration-rules pass is the place to route
+        // bands around a gated exit row if it ever reads badly in the sign-off packet.
+        var leftY = planned.OffsetOr(EdgeSide.Left, midY);
+        var rightY = planned.OffsetOr(EdgeSide.Right, midY);
+        grid[0, leftY] = LogicalTile.Warp;
+        grid[w - 1, rightY] = LogicalTile.Warp;
 
-        var openings = new List<(int X, int Y)> { (0, midY), (w - 1, midY) };
+        var openings = new List<(int X, int Y)> { (0, leftY), (w - 1, rightY) };
+        foreach (var o in planned.Where(o => o.Edge is EdgeSide.Top or EdgeSide.Bottom))
+        {
+            var tile = o.TileOn(w, h);
+            grid[tile.X, tile.Y] = LogicalTile.Warp;
+            openings.Add(tile);
+        }
 
         var topY = 2;                 // building rows 2..4
         var bottomY = midY + 3;       // building rows midY+3..midY+5

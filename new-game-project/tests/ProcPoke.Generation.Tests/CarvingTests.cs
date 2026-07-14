@@ -20,7 +20,7 @@ public class CarvingTests
         var streams = new RngStreams(seed);
         foreach (var route in region.Graph.CriticalPath.Where(a => a.Archetype == AreaArchetype.Route))
             yield return AreaCarver.Carve(route, region.Biomes.Of(route.Id), streams.Stream("carve", route.Id),
-                AreaCarver.GateOnExitOf(route, region.Gating));
+                region.Openings, AreaCarver.GateOnExitOf(route, region.Gating));
     }
 
     private static IEnumerable<CarvedArea> CarveAll(ulong seed, int badges = 8)
@@ -29,7 +29,7 @@ public class CarvingTests
         var streams = new RngStreams(seed);
         foreach (var area in region.Graph.Areas)
             yield return AreaCarver.Carve(area, region.Biomes.Of(area.Id), streams.Stream("carve", area.Id),
-                AreaCarver.GateOnExitOf(area, region.Gating));
+                region.Openings, AreaCarver.GateOnExitOf(area, region.Gating));
     }
 
     /// <summary>Breadth-first walkable reachability; tiles in <paramref name="cleared"/> count as passable.</summary>
@@ -72,11 +72,13 @@ public class CarvingTests
     }
 
     [Fact]
-    public void RoutesHaveTallGrassAndTwoOpenings()
+    public void RoutesHaveTallGrassAndAtLeastTwoOpenings()
     {
+        // Every route carries its two spine (or spine/Warp) edges; a route anchoring a branch or
+        // loop-back connection carries an extra opening on top of those (ADR-0001/2a edge alignment).
         foreach (var carved in CarveRoutes(42))
         {
-            Assert.Equal(2, carved.Openings.Count);
+            Assert.True(carved.Openings.Count >= 2, $"area {carved.AreaId}: fewer than two openings");
             Assert.True(carved.Grid.Count(LogicalTile.TallGrass) > 0, "route has no wild-encounter grass");
             foreach (var (x, y) in carved.Openings)
                 Assert.Equal(LogicalTile.Warp, carved.Grid[x, y]);
@@ -154,7 +156,7 @@ public class CarvingTests
             {
                 var area = region.Graph.CriticalPath.First(a => a.PathIndex == gate.BlockPathIndex);
                 var carved = AreaCarver.Carve(area, region.Biomes.Of(area.Id),
-                    new RngStreams(seed).Stream("carve", area.Id), gate);
+                    new RngStreams(seed).Stream("carve", area.Id), region.Openings, gate);
                 if (carved.GateTiles.Count == 0) continue;
 
                 var expected = GateCarver.TileFor(gate.Obstacle);

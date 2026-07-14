@@ -12,13 +12,13 @@ namespace ProcPoke.Generation.Carving;
 /// </summary>
 public static class AreaCarver
 {
-    public static CarvedArea Carve(Area area, Biome biome, Pcg32 rng) => area.Archetype switch
+    public static CarvedArea Carve(Area area, Biome biome, Pcg32 rng, OpeningPlan openings) => area.Archetype switch
     {
-        AreaArchetype.Route => RouteCarver.Carve(area, biome, rng),
+        AreaArchetype.Route => RouteCarver.Carve(area, biome, rng, openings.OpeningsOf(area.Id)),
         AreaArchetype.Forest => ForestCarver.Carve(area, biome, rng),
 
         AreaArchetype.StartTown or AreaArchetype.Town or AreaArchetype.League
-            => TownCarver.Carve(area, biome, rng),
+            => TownCarver.Carve(area, biome, rng, openings.OpeningsOf(area.Id)),
 
         AreaArchetype.StandardCave or AreaArchetype.MountainPath or AreaArchetype.VictoryRoad
             => CaveCarver.Carve(area, biome, rng, transit: area.OnCriticalPath),
@@ -27,13 +27,13 @@ public static class AreaCarver
         AreaArchetype.DeepCave or AreaArchetype.VillainHideout or AreaArchetype.Tower
             => CaveCarver.Carve(area, biome, rng, transit: false),
 
-        _ => RouteCarver.Carve(area, biome, rng),
+        _ => RouteCarver.Carve(area, biome, rng, openings.OpeningsOf(area.Id)),
     };
 
     /// <summary>Carves the area, then — if a gate blocks its spine exit — stamps that gate onto the tiles.</summary>
-    public static CarvedArea Carve(Area area, Biome biome, Pcg32 rng, Gate? gateOnExit)
+    public static CarvedArea Carve(Area area, Biome biome, Pcg32 rng, OpeningPlan openings, Gate? gateOnExit)
     {
-        var carved = Carve(area, biome, rng);
+        var carved = Carve(area, biome, rng, openings);
         return gateOnExit is null ? carved : GateCarver.Apply(carved, gateOnExit);
     }
 

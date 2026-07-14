@@ -14,6 +14,10 @@ namespace ProcPoke.Generation.Carving;
 /// </summary>
 public static class GateCarver
 {
+    /// <summary>How far the barrier column sits from the right edge — <see cref="OpeningAligner"/> reserves
+    /// this same column on every area's horizontal edges so a branch opening never lands under it.</summary>
+    public const int BarrierInsetFromRightEdge = 2;
+
     public static LogicalTile TileFor(ObstacleClass obstacle) => obstacle switch
     {
         ObstacleClass.CutTree => LogicalTile.CutTree,
@@ -38,7 +42,7 @@ public static class GateCarver
         if (exit is null) return carved; // defensive: nothing to gate
         var midY = exit.Value.Y;
 
-        var barrierX = w - 2;
+        var barrierX = w - BarrierInsetFromRightEdge;
         var obstacle = TileFor(gate.Obstacle);
 
         // Guarantee a straight approach along the spine row so the entry always reaches the neck, whatever

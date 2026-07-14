@@ -1,12 +1,15 @@
 using ProcPoke.Generation.Biomes;
+using ProcPoke.Generation.Carving;
 using ProcPoke.Generation.Gating;
 using ProcPoke.Generation.Rng;
 using ProcPoke.Generation.Topology;
 
 namespace ProcPoke.Generation;
 
-/// <summary>A generated region so far: graph, gating, and biomes. Grows as later passes (roster, …) land.</summary>
-public sealed record GeneratedRegion(RegionGraph Graph, GatingPlan Gating, BiomeMap Biomes, GenerationSettings Settings);
+/// <summary>A generated region so far: graph, gating, biomes, and the edge-aligned opening plan carvers
+/// consume. Grows as later passes (roster, …) land.</summary>
+public sealed record GeneratedRegion(
+    RegionGraph Graph, GatingPlan Gating, BiomeMap Biomes, OpeningPlan Openings, GenerationSettings Settings);
 
 /// <summary>
 /// Runs the generation pipeline in ADR-0004 order and enforces ADR-0002: construction guarantees a
@@ -31,7 +34,8 @@ public static class RegionGenerator
                 continue;
 
             var biomes = BiomePass.Generate(graph, gating, streams);
-            return new GeneratedRegion(graph, gating, biomes, settings);
+            var openings = OpeningAligner.Plan(graph);
+            return new GeneratedRegion(graph, gating, biomes, openings, settings);
         }
 
         throw new InvalidOperationException(
