@@ -20,7 +20,7 @@ public class OverviewLayoutTests
     {
         for (ulong seed = 1; seed <= 500; seed++)
         {
-            var region = RegionGenerator.Generate(new GenerationSettings { Seed = seed, BadgeCount = badges });
+            var region = RegionGenerator.Generate(new GenerationSettings { Seed = seed, BadgeCount = badges }, TestData.Data);
             var cells = OverviewLayout.Plan(region.Graph);
 
             Assert.Equal(region.Graph.Areas.Count, cells.Count);
@@ -40,7 +40,7 @@ public class OverviewLayoutTests
     {
         for (ulong seed = 1; seed <= 500; seed++)
         {
-            var region = RegionGenerator.Generate(new GenerationSettings { Seed = seed, BadgeCount = badges });
+            var region = RegionGenerator.Generate(new GenerationSettings { Seed = seed, BadgeCount = badges }, TestData.Data);
             var cells = OverviewLayout.Plan(region.Graph).ToDictionary(c => c.AreaId);
 
             foreach (var area in region.Graph.CriticalPath)
@@ -61,7 +61,7 @@ public class OverviewLayoutTests
         var offSpineChecked = 0;
         for (ulong seed = 1; seed <= 500; seed++)
         {
-            var region = RegionGenerator.Generate(new GenerationSettings { Seed = seed, BadgeCount = badges });
+            var region = RegionGenerator.Generate(new GenerationSettings { Seed = seed, BadgeCount = badges }, TestData.Data);
             var cells = OverviewLayout.Plan(region.Graph).ToDictionary(c => c.AreaId);
             var anchors = GatingGenerator.OffSpineAnchors(region.Graph);
 
@@ -87,7 +87,7 @@ public class OverviewLayoutTests
     {
         for (ulong seed = 1; seed <= 300; seed++)
         {
-            var region = RegionGenerator.Generate(new GenerationSettings { Seed = seed, BadgeCount = badges });
+            var region = RegionGenerator.Generate(new GenerationSettings { Seed = seed, BadgeCount = badges }, TestData.Data);
             var placedIds = OverviewLayout.Plan(region.Graph).Select(c => c.AreaId).ToHashSet();
 
             foreach (var c in region.Graph.Connections)
@@ -101,7 +101,7 @@ public class OverviewLayoutTests
     [Fact]
     public void DeterministicAcrossRepeatedCalls()
     {
-        var region = RegionGenerator.Generate(new GenerationSettings { Seed = 42, BadgeCount = 8 });
+        var region = RegionGenerator.Generate(new GenerationSettings { Seed = 42, BadgeCount = 8 }, TestData.Data);
         var first = OverviewLayout.Plan(region.Graph);
         var second = OverviewLayout.Plan(region.Graph);
         Assert.Equal(first, second);

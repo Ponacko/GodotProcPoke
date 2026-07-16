@@ -12,7 +12,7 @@ namespace ProcPoke.Generation.Tests;
 public class BiomeTests
 {
     private static GeneratedRegion Generate(ulong seed, int badges = 8)
-        => RegionGenerator.Generate(new GenerationSettings { Seed = seed, BadgeCount = badges });
+        => RegionGenerator.Generate(new GenerationSettings { Seed = seed, BadgeCount = badges }, TestData.Data);
 
     [Fact]
     public void EveryAreaHasABiome()

@@ -1,3 +1,4 @@
+using ProcPoke.Data;
 using ProcPoke.Generation;
 using ProcPoke.Generation.Carving;
 using ProcPoke.Generation.Debug;
@@ -17,14 +18,17 @@ var count = ParseInt(Flag("--count"), 1);
 var carve = args.Contains("--carve");
 var png = args.Contains("--png");
 
+var data = GameDataLoader.Load(FindDataDir());
+
 for (var i = 0; i < count; i++)
 {
     var thisSeed = seed + (ulong)i;
     var settings = new GenerationSettings { Seed = thisSeed, BadgeCount = badges };
-    var region = RegionGenerator.Generate(settings);
+    var region = RegionGenerator.Generate(settings, data);
 
     Console.WriteLine($"════ seed {thisSeed} ════");
-    Console.WriteLine(RegionGraphText.Render(region.Graph, region.Gating, region.Biomes));
+    Console.WriteLine(RegionGraphText.Render(region.Graph, region.Gating, region.Biomes,
+        region.Names, region.Identity, region.Starters));
 
     if (carve || png)
     {
@@ -74,3 +78,15 @@ string? Flag(string name)
 
 static ulong ParseULong(string? s, ulong fallback) => ulong.TryParse(s, out var v) ? v : fallback;
 static int ParseInt(string? s, int fallback) => int.TryParse(s, out var v) ? v : fallback;
+
+static string FindDataDir()
+{
+    var dir = new DirectoryInfo(AppContext.BaseDirectory);
+    while (dir is not null)
+    {
+        if (File.Exists(Path.Combine(dir.FullName, "ProcPoke.slnx")))
+            return Path.Combine(dir.FullName, "data");
+        dir = dir.Parent;
+    }
+    throw new InvalidOperationException("could not locate repo root (ProcPoke.slnx) from the MapGen assembly.");
+}

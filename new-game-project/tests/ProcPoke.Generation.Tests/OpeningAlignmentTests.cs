@@ -22,7 +22,7 @@ public class OpeningAlignmentTests
         var planned = 0;
         for (ulong seed = 1; seed <= 500; seed++)
         {
-            var region = RegionGenerator.Generate(new GenerationSettings { Seed = seed, BadgeCount = badges });
+            var region = RegionGenerator.Generate(new GenerationSettings { Seed = seed, BadgeCount = badges }, TestData.Data);
             foreach (var c in region.Graph.Connections.Where(c => c.Kind == ConnectionKind.Seamless))
             {
                 var fromA = region.Openings.OpeningsOf(c.AreaA).Single(o => o.NeighborAreaId == c.AreaB);
@@ -50,7 +50,7 @@ public class OpeningAlignmentTests
         var warped = 0;
         for (ulong seed = 1; seed <= 300; seed++)
         {
-            var region = RegionGenerator.Generate(new GenerationSettings { Seed = seed, BadgeCount = badges });
+            var region = RegionGenerator.Generate(new GenerationSettings { Seed = seed, BadgeCount = badges }, TestData.Data);
             foreach (var c in region.Graph.Connections.Where(c => c.Kind == ConnectionKind.Warp))
             {
                 warped++;
@@ -70,7 +70,7 @@ public class OpeningAlignmentTests
         var branchOpenings = 0;
         for (ulong seed = 1; seed <= 300; seed++)
         {
-            var region = RegionGenerator.Generate(new GenerationSettings { Seed = seed, BadgeCount = badges });
+            var region = RegionGenerator.Generate(new GenerationSettings { Seed = seed, BadgeCount = badges }, TestData.Data);
             var streams = new RngStreams(seed);
             // Seamless connections join any two non-dungeon areas (Builder.Connect) — StartTown/Town/Route
             // *and* League, which is neither Plain nor Dungeon (a loop-back fallback can reach it directly).

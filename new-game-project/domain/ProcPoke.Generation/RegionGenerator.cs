@@ -1,15 +1,20 @@
+using ProcPoke.Data;
 using ProcPoke.Generation.Biomes;
 using ProcPoke.Generation.Carving;
 using ProcPoke.Generation.Gating;
+using ProcPoke.Generation.Identity;
+using ProcPoke.Generation.Roster;
 using ProcPoke.Generation.Rng;
 using ProcPoke.Generation.Topology;
 
 namespace ProcPoke.Generation;
 
-/// <summary>A generated region so far: graph, gating, biomes, and the edge-aligned opening plan carvers
-/// consume. Grows as later passes (roster, …) land.</summary>
+/// <summary>A generated region so far: graph, gating, biomes, the edge-aligned opening plan carvers
+/// consume, names, gym/E4/Champion typing, and the starter triangle. Grows as later passes (dex, …)
+/// land.</summary>
 public sealed record GeneratedRegion(
-    RegionGraph Graph, GatingPlan Gating, BiomeMap Biomes, OpeningPlan Openings, GenerationSettings Settings);
+    RegionGraph Graph, GatingPlan Gating, BiomeMap Biomes, OpeningPlan Openings, GenerationSettings Settings,
+    RegionNames Names, RegionIdentity Identity, StarterPlan Starters);
 
 /// <summary>
 /// Runs the generation pipeline in ADR-0004 order and enforces ADR-0002: construction guarantees a
@@ -20,7 +25,7 @@ public static class RegionGenerator
 {
     private const int MaxAttempts = 8;
 
-    public static GeneratedRegion Generate(GenerationSettings settings)
+    public static GeneratedRegion Generate(GenerationSettings settings, GameData data)
     {
         settings.Validate();
 
@@ -35,7 +40,10 @@ public static class RegionGenerator
 
             var biomes = BiomePass.Generate(graph, gating, streams);
             var openings = OpeningAligner.Plan(graph);
-            return new GeneratedRegion(graph, gating, biomes, openings, settings);
+            var names = NamingPass.Generate(graph, data.NameBlocklist, streams);
+            var identity = GymTypingPass.Generate(graph, biomes, streams);
+            var starters = StarterSelector.Generate(data, settings, streams);
+            return new GeneratedRegion(graph, gating, biomes, openings, settings, names, identity, starters);
         }
 
         throw new InvalidOperationException(

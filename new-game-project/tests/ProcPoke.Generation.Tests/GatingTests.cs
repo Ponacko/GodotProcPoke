@@ -13,7 +13,7 @@ namespace ProcPoke.Generation.Tests;
 public class GatingTests
 {
     private static GeneratedRegion Generate(ulong seed, int badges = 8)
-        => RegionGenerator.Generate(new GenerationSettings { Seed = seed, BadgeCount = badges });
+        => RegionGenerator.Generate(new GenerationSettings { Seed = seed, BadgeCount = badges }, TestData.Data);
 
     /// <summary>Number of gym towns reachable at or before a spine edge = badges available there.</summary>
     private static int TownsUpTo(RegionGraph g, int edge)

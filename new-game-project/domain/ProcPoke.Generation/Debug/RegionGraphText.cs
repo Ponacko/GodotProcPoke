@@ -1,6 +1,8 @@
 using System.Text;
 using ProcPoke.Generation.Biomes;
 using ProcPoke.Generation.Gating;
+using ProcPoke.Generation.Identity;
+using ProcPoke.Generation.Roster;
 using ProcPoke.Generation.Topology;
 
 namespace ProcPoke.Generation.Debug;
@@ -12,12 +14,22 @@ namespace ProcPoke.Generation.Debug;
 /// </summary>
 public static class RegionGraphText
 {
-    public static string Render(RegionGraph g, GatingPlan? gating = null, BiomeMap? biomes = null)
+    public static string Render(RegionGraph g, GatingPlan? gating = null, BiomeMap? biomes = null,
+        RegionNames? names = null, RegionIdentity? identity = null, StarterPlan? starters = null)
     {
         var sb = new StringBuilder();
         sb.AppendLine($"Region  badges={g.BadgeCount}  areas={g.Areas.Count}  connections={g.Connections.Count}  connected={g.IsConnected()}");
         if (gating is not null)
             sb.AppendLine($"Gates={gating.Gates.Count}  Fly@{Label(g, gating.Fly.AreaId)} (badge {gating.Fly.BadgePrerequisite})");
+        if (names is not null)
+            sb.AppendLine($"Naming motif: {names.Motif}");
+        if (starters is not null)
+        {
+            var corners = string.Join("  ", starters.Corners.Select(c => $"{c.Type}: #{c.FinalSpeciesId}"));
+            sb.AppendLine($"Starters ({starters.Triangle}): {corners}");
+        }
+        if (identity is not null)
+            sb.AppendLine($"Elite Four: {string.Join(", ", identity.EliteFourTypes)}  Champion: typeless={identity.ChampionIsTypeless}");
         sb.AppendLine("Critical path (start → League):");
 
         var gateAtEdge = gating?.Gates.ToDictionary(x => x.BlockPathIndex) ?? [];
@@ -27,7 +39,9 @@ public static class RegionGraphText
         {
             var tag = area.IsDungeon ? "  «transit»" : "";
             var bio = biomes is not null ? $"  {{{biomes.Of(area.Id)}}}" : "";
-            sb.AppendLine($"  [{area.PathIndex,2}] {area.Archetype,-12} {area.Size}{bio}{tag}");
+            var name = names is not null ? $"  \"{names.Of(area.Id)}\"" : "";
+            var gymType = identity is not null && identity.GymTypes.TryGetValue(area.Id, out var t) ? $"  [{t} gym]" : "";
+            sb.AppendLine($"  [{area.PathIndex,2}] {area.Archetype,-12} {area.Size}{bio}{name}{gymType}{tag}");
 
             // Keys and hints hosted here.
             if (keySites is not null)

@@ -16,7 +16,7 @@ public class CarvingTests
 {
     private static IEnumerable<CarvedArea> CarveRoutes(ulong seed, int badges = 8)
     {
-        var region = RegionGenerator.Generate(new GenerationSettings { Seed = seed, BadgeCount = badges });
+        var region = RegionGenerator.Generate(new GenerationSettings { Seed = seed, BadgeCount = badges }, TestData.Data);
         var streams = new RngStreams(seed);
         foreach (var route in region.Graph.CriticalPath.Where(a => a.Archetype == AreaArchetype.Route))
             yield return AreaCarver.Carve(route, region.Biomes.Of(route.Id), streams.Stream("carve", route.Id),
@@ -25,7 +25,7 @@ public class CarvingTests
 
     private static IEnumerable<CarvedArea> CarveAll(ulong seed, int badges = 8)
     {
-        var region = RegionGenerator.Generate(new GenerationSettings { Seed = seed, BadgeCount = badges });
+        var region = RegionGenerator.Generate(new GenerationSettings { Seed = seed, BadgeCount = badges }, TestData.Data);
         var streams = new RngStreams(seed);
         foreach (var area in region.Graph.Areas)
             yield return AreaCarver.Carve(area, region.Biomes.Of(area.Id), streams.Stream("carve", area.Id),
@@ -151,7 +151,7 @@ public class CarvingTests
         var waterSpans = 0;
         for (ulong seed = 1; seed <= 200; seed++)
         {
-            var region = RegionGenerator.Generate(new GenerationSettings { Seed = seed });
+            var region = RegionGenerator.Generate(new GenerationSettings { Seed = seed }, TestData.Data);
             foreach (var gate in region.Gating.Gates)
             {
                 var area = region.Graph.CriticalPath.First(a => a.PathIndex == gate.BlockPathIndex);

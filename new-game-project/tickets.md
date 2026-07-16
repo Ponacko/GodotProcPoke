@@ -59,7 +59,14 @@ horizontally-flowing map with branches stacked above/below the spine, not a stac
 - [x] Connected areas have a visible connector drawn between them
 - [x] `dotnet run --project tools/ProcPoke.MapGen -- <seed> --png` writes the stitched `_overview.png`
 
-## 3a. Location name generator
+## 3a. Location name generator — ✅ DONE
+
+Delivered in commit "Implement tickets 3a/3b/4b: naming, gym/E4/Champion typing, starter triangle".
+`NameParts` (`domain/ProcPoke.Generation/Identity/`) holds 4 motifs (Colors, Flora, Minerals,
+WeatherLight) with ~6 roots + ~6 blends each; `NamingPass` draws one motif per region from
+`streams.Stream("names")`, numbers Route areas `Route 1..N` in critical-path order, and blends
+city/dungeon names, redrawing on a `name_blocklist.json` hit or in-region collision. `NamingTests`
+(6 cases) fuzzes the standard corpus; `RegionGraphText` prints the motif and every area's name.
 
 **What to build:** A per-seed name for every city and dungeon (routes keep `Route N` in critical-path order). GDD §8: one **Naming Motif** per region (colors, flora, minerals, weather, light), names blended from curated word-part pools, city = motif-root + settlement suffix (`-burgh`, `-port`, `-vale`, `-ton`), dungeon = biome-aware form (`Emberdeep Cave`, `Palegrove Forest`). No name may match `name_blocklist.json` (baked already) or collide within the region — redraw on either.
 
@@ -67,12 +74,19 @@ horizontally-flowing map with branches stacked above/below the spine, not a stac
 
 **Blocked by:** None — can start immediately.
 
-- [ ] Every city and dungeon gets a name; routes are `Route 1..N` in critical-path order
-- [ ] Fuzz invariant over the corpus: no generated name is in `name_blocklist.json`, and no two areas in one region share a name
-- [ ] One motif per seed; deterministic (same seed → same names)
-- [ ] `RegionGraphText` prints the names next to each area
+- [x] Every city and dungeon gets a name; routes are `Route 1..N` in critical-path order
+- [x] Fuzz invariant over the corpus: no generated name is in `name_blocklist.json`, and no two areas in one region share a name
+- [x] One motif per seed; deterministic (same seed → same names)
+- [x] `RegionGraphText` prints the names next to each area
 
-## 3b. Gym / Elite Four / Champion type assignment
+## 3b. Gym / Elite Four / Champion type assignment — ✅ DONE
+
+Delivered alongside 3a. `BiomeTypeAffinity` encodes the §6.2 table over the 7-value `Biome` enum;
+`GymTypingPass` ranks each gym city's own+neighbour biome affinity (ties shuffled off
+`streams.Stream("gym-types")`), picks the highest-ranked untaken type per gym in critical-path
+order, falling back to any untaken type once a city's affinity pool is exhausted, then draws 4
+more distinct types for the Elite Four. Champion is unconditionally typeless. `GymTypingTests` (9
+cases) fuzzes the standard corpus, including a reconstructed-fallback check for the exhaustion case.
 
 **What to build:** Assign each gym a distinct type chosen by **biome affinity** (GDD §7.1 + §6.2 read in reverse: a mountain-ringed gym city leans Rock/Ground/Fighting, a port leans Water). Elite Four get types distinct from each other and from the gyms while the 17-type count allows. The Champion is **typeless** (flagged as such — team composition comes later in 7b).
 
@@ -80,10 +94,10 @@ horizontally-flowing map with branches stacked above/below the spine, not a stac
 
 **Blocked by:** None — can start immediately.
 
-- [ ] Fuzz invariant: gym types are pairwise distinct within a region
-- [ ] Each gym's type is in its biome's §6.2 affinity set (or an adjacent area's) — assert membership
-- [ ] E4 types distinct from each other and from gyms at default settings; Champion marked typeless
-- [ ] Deterministic; printed by `RegionGraphText`
+- [x] Fuzz invariant: gym types are pairwise distinct within a region
+- [x] Each gym's type is in its biome's §6.2 affinity set (or an adjacent area's) — assert membership
+- [x] E4 types distinct from each other and from gyms at default settings; Champion marked typeless
+- [x] Deterministic; printed by `RegionGraphText`
 
 ## 3c. Villain team & rival identity
 
@@ -97,7 +111,16 @@ horizontally-flowing map with branches stacked above/below the spine, not a stac
 - [ ] Exactly one rival archetype per seed, stable across the run
 - [ ] Printed by `RegionGraphText`
 
-## 4b. Starter triangle selection
+## 4b. Starter triangle selection — ✅ DONE
+
+Delivered alongside 3a/3b. `StarterSelector` (`domain/ProcPoke.Generation/Roster/`) rebuilds 3-stage
+lines from `evolutions.json`, filters to level-only (excluding friendship evolutions, which stay
+`Trigger=LevelUp` with `MinHappiness` set), final BST ≤ 540, and within `RosterCap`
+(`SpeciesGeneration.Of`, Gen 1–5 breakpoints), then brute-forces the corner-triple with the
+smallest final-BST spread (≤ 40) per available template, drawn from `streams.Stream("starters")`.
+`StarterSelectorTests` (11 cases) verifies against ground truth from the pinned data (Elemental
+clears at Roster Cap 3+, Mind & Body only at Cap 5, Classic at every cap) and independently
+re-derives each chosen line from raw evolution rules rather than trusting the selector's internals.
 
 **What to build:** Pick the three starters (GDD §5.3). Choose a triangle template (Classic / Mind&Body / Elemental) — templates with an empty corner pool under the current `RosterCap` are unpickable; Classic is the guaranteed floor. For each corner, the eligible pool is every **3-stage** evolution line whose final stage carries the corner's type, final BST ≤ 540, **completable by leveling alone** (exclude lines needing stones / Link Cable / friendship — read the `EvolutionRule`s), and within `RosterCap`. Pick one distinct line per corner with final BSTs close together.
 
@@ -105,10 +128,10 @@ horizontally-flowing map with branches stacked above/below the spine, not a stac
 
 **Blocked by:** None — can start immediately.
 
-- [ ] Fuzz invariant over the corpus: three distinct 3-stage lines, one per triangle corner, each final BST ≤ 540, each level-only-completable, each within `RosterCap`
-- [ ] Templates with an empty corner under the cap are never chosen; Classic always available
-- [ ] Final BSTs are "close" — assert max−min ≤ a stated threshold (e.g. 40)
-- [ ] Deterministic
+- [x] Fuzz invariant over the corpus: three distinct 3-stage lines, one per triangle corner, each final BST ≤ 540, each level-only-completable, each within `RosterCap`
+- [x] Templates with an empty corner under the cap are never chosen; Classic always available
+- [x] Final BSTs are "close" — assert max−min ≤ a stated threshold (e.g. 40)
+- [x] Deterministic
 
 ## 4a. Regional dex selection & numbering
 
