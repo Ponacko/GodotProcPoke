@@ -4,11 +4,18 @@ Finish DEVELOPMENT-PLAN Phase 2 (the go/no-go milestone): the rest of 2b map car
 
 **These tickets are sized for a mid-tier implementer.** Each one names the file(s) it lives in, sketches the algorithm, and states its acceptance as **checkable assertions or fuzz invariants** — not subjective judgment. The one genuinely subjective call ("do the maps read hand-crafted?") is deferred to the final sign-off ticket, where a human makes it. When a ticket says "deterministic," it means: same seed → identical output, and it draws only from a named RNG stream (`streams.Stream("<name>")`, ADR-0005) — never `System.Random`, never wall-clock.
 
+**Model routing.** Every open ticket carries a `Model:` line:
+- **Qwen-OK** — fully pinned (tables, formulas, ID lists, and assert definitions are in the ticket text); a local coder model of the Qwen2.5-coder class can implement it from this file plus the named source files alone.
+- **Sonnet** — needs multi-file wiring, an API design call, or judgment the text can't fully pin; use a Sonnet-class model. Everything marked Qwen-OK is of course also fine for Sonnet.
+
+**Blueprints.** Tickets whose output shape is a *shared contract* consumed by several later tickets carry a `Blueprint:` line pointing at a scaffold in `docs/blueprints/`. A blueprint is a near-complete C# skeleton — records, signatures, RNG stream names, and pass wiring already fixed — with `>>> IMPLEMENT` markers where the weak model fills bodies. Where a blueprint exists, hand the weak model the ticket **and** the blueprint; it must not change public signatures, record fields, or stream names (downstream tickets and tests are written against them). See `docs/blueprints/README.md`. Tickets without a `Blueprint:` line don't need one (the carvers, for instance, copy an existing carver in `Carving/`).
+
 House rules that apply to every ticket:
-- New generation passes hang off `RegionGenerator.Generate` and extend the `GeneratedRegion` record (`domain/ProcPoke.Generation/RegionGenerator.cs`). Follow the existing pass pattern (`GatingGenerator`, `BiomePass`).
-- Baked game data (species, moves, evolutions, types) loads through `ProcPoke.Data` — `GameDataLoader.Load(dataDir)`. A species' BST is the sum of its `BaseStats`. Legendaries carry `IsLegendary`.
-- Add a fuzz test alongside the existing ones in `tests/ProcPoke.Generation.Tests/`; the standard corpus is `seed = 1..2000` × badge counts `{4, 8, 12}` (carving-heavy suites may use a smaller corpus, matching `CarvingTests`).
-- New debug output goes through `RegionGraphText` (text) or `MapImage`/`AsciiRenderer` (maps) so it shows up in the MapGen harness.
+- New generation passes hang off `RegionGenerator.Generate` and extend the `GeneratedRegion` record (`domain/ProcPoke.Generation/RegionGenerator.cs`). Follow the existing pass pattern: a `public static class XPass` with a single static `Generate(...)` taking prior-pass outputs + `RngStreams`, pulling exactly one named stream, returning one immutable record. There is no pass registry — add one line to `Generate` and one field to `GeneratedRegion`.
+- Baked game data (species, moves, evolutions, types) loads through `ProcPoke.Data` — `GameDataLoader.Load(dataDir)`. A species' BST is the **sum of its six `BaseStats`** (no precomputed BST field). Legendaries carry `IsLegendary`; mythicals carry `IsMythical`. Friendship evolutions are `Trigger = LevelUp` with `MinHappiness` set; trade evolutions were rewritten to `Trigger = LinkCable` at bake.
+- Add a fuzz test alongside the existing ones in `tests/ProcPoke.Generation.Tests/`; the standard corpus is `seed = 1..2000` × badge counts `{4, 8, 12}` (carving-heavy suites may use a smaller corpus, matching `CarvingTests`). Use the `TestData.Data` shared loader and end every corpus loop with a `checkedCount > 0`-style assert so a silently-empty corpus fails.
+- New debug output goes through `RegionGraphText` (add a nullable parameter + conditional block) or `MapImage`/`AsciiRenderer` (maps) so it shows up in the MapGen harness.
+- The 7 area biomes are `Biome { Grassland, Forest, Cave, Mountain, Water, Desert, Urban }`; the biome→type table is `BiomeTypeAffinity.Table` (`Identity/BiomeTypeAffinity.cs`). `Urban` has an empty affinity — fall through to neighbouring areas' biomes, the way `GymTypingPass` does.
 
 Work the **frontier**: any ticket whose blockers are all done.
 
@@ -27,17 +34,6 @@ connection before carving; `RouteCarver`/`TownCarver`/`GateCarver` take the plan
 hard-coding `midY`; `OpeningAlignmentTests` (21 cases) assert offset/width agreement, warp exemption, and
 that carved tiles actually land on the shared coordinate. Full suite green (64/64).
 
-**What to build:** For every `Seamless` connection between two areas, the opening each area carves on the shared edge must line up with its neighbour's — same edge side, same offset along that edge, same width — so Phase 3 can scroll between them without a seam. Today each carver picks its own opening at its own `midY`, and neighbours have different heights, so two connected areas disagree on where the doorway is.
-
-**Approach:** Openings are decided *before* the per-area carve, by a small pass that walks the graph and assigns each `Seamless` connection a shared opening descriptor (which edge of each area, the offset, the width — start with width 1). Carvers receive the opening positions for their area instead of hard-coding `(0, midY)`/`(w-1, midY)`. Warp connections are unaffected (they keep their warp tiles and need no alignment). Where two areas have different sizes on a shared vertical edge, clamp the shared offset into both areas' valid interior range.
-
-**Blocked by:** None — can start immediately.
-
-- [x] A carver takes its per-edge opening positions as input rather than computing `midY` itself; existing callers pass the aligned positions
-- [x] Fuzz invariant: for every `Seamless` connection, the two areas' openings on the shared edge have identical offset and width (converted to a common edge coordinate)
-- [x] Warp connections still produce warp-tile openings; nothing regresses
-- [x] Existing spine-walkability and mutual-reachability invariants (`CarvingTests`) stay green
-
 ## 2b. Spatially stitched region overview — ✅ DONE
 
 Delivered alongside 2a. `OverviewLayout.Plan` (domain, fuzz-tested in `OverviewLayoutTests`) assigns each
@@ -48,16 +44,21 @@ connection's pair of openings (aligned opening tile for Seamless, area center fo
 via `dotnet run --project tools/ProcPoke.MapGen -- 42 --badges 8 --png` — the overview reads as one
 horizontally-flowing map with branches stacked above/below the spine, not a stack.
 
-**What to build:** Replace the current top-to-bottom stack in `MapImage.SaveOverview` with a real 2-D layout: areas placed adjacent along their connections so the overview reads as one map. This is the artifact the go/no-go review judges.
+## 2c. Carved maps join the generator pipeline — NEW
 
-**Approach (explicit, so layout isn't open-ended):** Assign each area an integer grid cell `(col, row)`. Lay the critical path left→right: `StartArea` at `(0, 0)`, each next critical-path area at `col+1`. Hang each off-spine area off its anchor (the critical-path area it connects to — see `GatingGenerator.OffSpineAnchors` for the exact rule): place it one row above the anchor if that cell is free, else one row below, else one further out. Then blit each carved area's tile grid into a canvas at `cell.col * (maxAreaW + gap)`, `cell.row * (maxAreaH + gap)`. Draw a thin connector line between the openings of connected areas. Do not attempt force-directed or pixel-perfect edge butting — the grid-cell layout is enough for the review.
+**Model:** Sonnet (mechanical, but touches the generator, the harness, and the carving tests at once).
 
-**Blocked by:** 2a (edge-aligned openings).
+**Why:** Today carving happens *outside* `RegionGenerator.Generate` — the MapGen harness and `CarvingTests` each re-carve areas on demand with `AreaCarver.Carve(a, biomes.Of(a.Id), streams.Stream("carve", a.Id), openings, AreaCarver.GateOnExitOf(a, gating))`. Population tickets 7a and 8b must read carved `TrainerPost`/`ItemBall` tile counts from inside the pipeline, which is impossible until the region owns its carved maps.
 
-- [x] `SaveOverview` lays areas in 2-D grid cells: critical path in a row, off-spine areas above/below their anchor
-- [x] No two areas overlap in the canvas; every area appears exactly once
-- [x] Connected areas have a visible connector drawn between them
-- [x] `dotnet run --project tools/ProcPoke.MapGen -- <seed> --png` writes the stitched `_overview.png`
+**What to build:** After the `OpeningAligner.Plan` step in `RegionGenerator.Generate`, carve every area:
+`graph.Areas.ToDictionary(a => a.Id, a => AreaCarver.Carve(a, biomes.Of(a.Id), streams.Stream("carve", a.Id), openings, AreaCarver.GateOnExitOf(a, gating)))` — the exact same stream names and call the harness uses today, so output is byte-identical. Add `IReadOnlyDictionary<int, CarvedArea> Carved` to `GeneratedRegion`. Then delete the duplicate carve loops: MapGen's `--carve`/`--png` paths and `CarvingTests.CarveAll`/`CarveRoutes` consume `region.Carved` instead (keep one explicit re-carve-and-compare determinism test).
+
+**Blocked by:** None — can start immediately.
+
+- [ ] `GeneratedRegion.Carved` holds one `CarvedArea` per area; carving draws only from `streams.Stream("carve", areaId)`
+- [ ] MapGen `--png` output for seed 42 is identical before/after (same PNGs byte-for-byte)
+- [ ] `CarvingTests` pass unchanged against `region.Carved`; one test still re-carves independently and asserts the ASCII render matches `region.Carved`'s
+- [ ] Full suite green
 
 ## 3a. Location name generator — ✅ DONE
 
@@ -68,17 +69,6 @@ WeatherLight) with ~6 roots + ~6 blends each; `NamingPass` draws one motif per r
 city/dungeon names, redrawing on a `name_blocklist.json` hit or in-region collision. `NamingTests`
 (6 cases) fuzzes the standard corpus; `RegionGraphText` prints the motif and every area's name.
 
-**What to build:** A per-seed name for every city and dungeon (routes keep `Route N` in critical-path order). GDD §8: one **Naming Motif** per region (colors, flora, minerals, weather, light), names blended from curated word-part pools, city = motif-root + settlement suffix (`-burgh`, `-port`, `-vale`, `-ton`), dungeon = biome-aware form (`Emberdeep Cave`, `Palegrove Forest`). No name may match `name_blocklist.json` (baked already) or collide within the region — redraw on either.
-
-**Approach:** Author a static `NameParts` table in `domain/ProcPoke.Generation/Identity/` holding, per motif, a pool of roots and the suffix/biome-form lists (seed it with ~6 roots per motif and the four motifs above — enough to be non-repeating at 8 badges; expandable later). Draw the motif from `streams.Stream("names")`, then draw parts per area, rejecting blocklist hits and in-region duplicates and redrawing. Load the blocklist via `ProcPoke.Data`.
-
-**Blocked by:** None — can start immediately.
-
-- [x] Every city and dungeon gets a name; routes are `Route 1..N` in critical-path order
-- [x] Fuzz invariant over the corpus: no generated name is in `name_blocklist.json`, and no two areas in one region share a name
-- [x] One motif per seed; deterministic (same seed → same names)
-- [x] `RegionGraphText` prints the names next to each area
-
 ## 3b. Gym / Elite Four / Champion type assignment — ✅ DONE
 
 Delivered alongside 3a. `BiomeTypeAffinity` encodes the §6.2 table over the 7-value `Biome` enum;
@@ -88,28 +78,31 @@ order, falling back to any untaken type once a city's affinity pool is exhausted
 more distinct types for the Elite Four. Champion is unconditionally typeless. `GymTypingTests` (9
 cases) fuzzes the standard corpus, including a reconstructed-fallback check for the exhaustion case.
 
-**What to build:** Assign each gym a distinct type chosen by **biome affinity** (GDD §7.1 + §6.2 read in reverse: a mountain-ringed gym city leans Rock/Ground/Fighting, a port leans Water). Elite Four get types distinct from each other and from the gyms while the 17-type count allows. The Champion is **typeless** (flagged as such — team composition comes later in 7b).
+## 3c. Villain team, rival identity & Champion-identity roll
 
-**Approach:** For each gym city, look at its own and neighbouring biomes, map biome→candidate types via the §6.2 bias table, and pick the highest-affinity type not already taken by an earlier gym (deterministic tiebreak from `streams.Stream("gym-types")`). Then draw E4 types from the remaining/pool with the distinctness rule. Store the assignments on the region (extend `GeneratedRegion`, e.g. a small `RegionIdentity` record).
+**Model:** Qwen-OK (everything below is pinned; the only wiring is one new pass line in `RegionGenerator` and a `with`-extension of `RegionIdentity`).
+**Blueprint:** `docs/blueprints/3c-identity-pass.md` (also the canonical "how to add a pass" example).
 
-**Blocked by:** None — can start immediately.
+**What to build:** Extend `RegionIdentity` (produced by `GymTypingPass`) with villain teams, the rival archetype, and the Champion-identity roll. **The Champion roll lives here, not in 7c** — the roll must weight the archetype pick (rival-Champion seeds skew Underdog), so both draws share one pass. Grunt rosters and rival *teams* remain 7a/7c.
 
-- [x] Fuzz invariant: gym types are pairwise distinct within a region
-- [x] Each gym's type is in its biome's §6.2 affinity set (or an adjacent area's) — assert membership
-- [x] E4 types distinct from each other and from gyms at default settings; Champion marked typeless
-- [x] Deterministic; printed by `RegionGraphText`
+**Approach:** New `IdentityPass.Generate(RegionIdentity identity, RegionNames names, RngStreams streams) → RegionIdentity` in `Identity/`, returning `identity with { … }`. Insert into `RegionGenerator.Generate` right after `GymTypingPass`. New fields on `RegionIdentity`:
+- `IReadOnlyList<VillainTeam> VillainTeams` — new record `VillainTeam(string Name, IReadOnlyList<PokeType> Motif)`
+- `RivalArchetype Rival` — new enum `RivalArchetype { Cocky, Friendly, Brooding, Underdog }` (GDD §7.2)
+- `bool ChampionIsRival`
 
-## 3c. Villain team & rival identity
+Draw from `streams.Stream("identity")` **in exactly this order** (determinism depends on it):
+1. **Team count:** `rng.Chance(0.30) ? 2 : 1`.
+2. **Team names:** for each team, name = `$"Team {root}"`, root drawn via `rng.Pick` from the region motif's `NameParts.Pools[motif].Roots`; redraw if the root (case-insensitive) is in the hardcoded canon list below or already used by the other team. **The canon-team-name list does not exist in `data/` — hardcode it** as `static readonly string[] CanonTeamNames = ["Rocket", "Aqua", "Magma", "Galactic", "Plasma", "Flare", "Skull", "Yell", "Star", "Snagem", "Cipher"]`.
+3. **Type motifs:** per team, draw 1 type (or 2 if `rng.Chance(0.40)`) via `rng.Pick` from the 17 `PokeType`s **excluding** the region's gym types and the other team's motif (GDD §7.1: villain motifs chosen away from gym collisions); if that leaves nothing, fall back to excluding only the other team's motif.
+4. **Champion roll:** `ChampionIsRival = rng.Chance(0.25)`.
+5. **Archetype:** if `ChampionIsRival`, pick with weights Underdog 0.55 / Cocky 0.15 / Friendly 0.15 / Brooding 0.15 (cumulative `rng.NextDouble()`); else uniform `rng.Pick` over the four.
 
-**What to build:** Per seed: 1–2 villain organizations, each with a generated name (via 3a's generator, checked against the short hardcoded canon-team-name list) and a thematic type motif; and one rival **archetype** drawn from the §7.2 set (Cocky, Friendly, Brooding, Underdog). This ticket is identity only — villain grunt rosters and rival *teams* are 7b/7c.
+**Blocked by:** None (3a/3b are done).
 
-**Approach:** Small addition to the `RegionIdentity` record. Reuse the 3a name machinery for team names with the team-name blocklist. Pick archetype and team count (1 or 2) from `streams.Stream("identity")`.
-
-**Blocked by:** 3a (name generator).
-
-- [ ] 1–2 villain teams, each with a name not in the canon-team list and a type motif; deterministic
+- [ ] 1–2 villain teams, each named `Team <Root>` with root ∉ canon list (case-insensitive), teams mutually distinct; each with a 1–2-type motif disjoint from gym types when possible; deterministic
 - [ ] Exactly one rival archetype per seed, stable across the run
-- [ ] Printed by `RegionGraphText`
+- [ ] Fuzz invariant over the corpus: `ChampionIsRival` rate ∈ [0.20, 0.30]; P(Underdog | ChampionIsRival) > P(Underdog | !ChampionIsRival)
+- [ ] Printed by `RegionGraphText` (teams + motifs, archetype, "Champion: rival" / "Champion: generated NPC")
 
 ## 4b. Starter triangle selection — ✅ DONE
 
@@ -122,150 +115,308 @@ smallest final-BST spread (≤ 40) per available template, drawn from `streams.S
 clears at Roster Cap 3+, Mind & Body only at Cap 5, Classic at every cap) and independently
 re-derives each chosen line from raw evolution rules rather than trusting the selector's internals.
 
-**What to build:** Pick the three starters (GDD §5.3). Choose a triangle template (Classic / Mind&Body / Elemental) — templates with an empty corner pool under the current `RosterCap` are unpickable; Classic is the guaranteed floor. For each corner, the eligible pool is every **3-stage** evolution line whose final stage carries the corner's type, final BST ≤ 540, **completable by leveling alone** (exclude lines needing stones / Link Cable / friendship — read the `EvolutionRule`s), and within `RosterCap`. Pick one distinct line per corner with final BSTs close together.
+## 4a-1. Evolution-family pool & availability order (split from 4a)
 
-**Approach:** New `StarterSelector` in `domain/ProcPoke.Generation/Roster/`, over `ProcPoke.Data`. Build evolution lines from `evolutions.json`; a line is "level-only" iff every step's `EvolutionRule` is a plain level-up (no item/trade/happiness). Score corner-triples by BST spread and pick the tightest from `streams.Stream("starters")`. The Rock→Flying→Fighting triangle's Flying corner must carry Flying as one of its types.
+**Model:** Qwen-OK (pure functions over baked data + unit tests against pinned ground truth; no generator wiring).
+**Blueprint:** `docs/blueprints/4a1-evolution-families.md` (shared contract for 4a-2, 4c, 6a, 7a/b/c).
 
-**Blocked by:** None — can start immediately.
+**What to build:** Two reusable helpers that 4a-2, 4c, 6 and 7 all consume. No pass, no `GeneratedRegion` change yet.
 
-- [x] Fuzz invariant over the corpus: three distinct 3-stage lines, one per triangle corner, each final BST ≤ 540, each level-only-completable, each within `RosterCap`
-- [x] Templates with an empty corner under the cap are never chosen; Classic always available
-- [x] Final BSTs are "close" — assert max−min ≤ a stated threshold (e.g. 40)
-- [x] Deterministic
+**(1) `EvolutionFamilies` in `Roster/`:** `Build(GameData data, int rosterCap) → IReadOnlyList<EvolutionFamily>`. A *family* is a connected component of the evolution graph — this generalizes `StarterSelector`'s 3-stage lines to branching families (Eevee, Wurmple) and 1/2-stage lines, which is what "evolution lines stay together in consecutive dex slots" (GDD §5.1) actually requires.
+- Nodes = species with `SpeciesGeneration.Of(id) <= rosterCap`; edges = `data.Evolutions` rules with **both** endpoints in cap. A family truncated by the cap (e.g. Electabuzz without Electivire at cap 3) is a complete, valid family at that cap.
+- `EvolutionFamily` record: `IReadOnlyList<int> Members` (ordered: BFS from the root — the member with no incoming in-cap edge; if several roots, lowest id — children visited in ascending `ToSpeciesId`), `int FinalBst` (max BST among members with no outgoing in-cap edge), `IReadOnlyList<PokeType> Types` (union over members), `bool IsLegendary` (any member `IsLegendary || IsMythical`), `bool IsFossil` (any member in the hardcoded list below).
+- **Fossil species are not flagged in data — hardcode the pool** (GDD §5.4 lines, Gen 1–5): Omanyte 138, Omastar 139, Kabuto 140, Kabutops 141, Aerodactyl 142, Lileep 345, Cradily 346, Anorith 347, Armaldo 348, Cranidos 408, Rampardos 409, Shieldon 410, Bastiodon 411, Tirtouga 564, Carracosta 565, Archen 566, Archeops 567.
 
-## 4a. Regional dex selection & numbering
+**(2) `AvailabilityOrder` in `Topology/`:** `Of(RegionGraph graph) → IReadOnlyList<int>` (area ids). Critical path ascending `PathIndex`; immediately after each critical-path area, the off-spine areas anchored to it (`GatingGenerator.OffSpineAnchors` value == that `PathIndex`), ordered by area id. Every area appears exactly once. This is GDD §5.2's "first-availability order" made canonical — 4a-2 numbers by it, 6 levels by it, tests re-derive against it.
 
-**What to build:** Select the `DexSize` (150) species and number them (GDD §5.1, §5.2). Evolution lines stay together in consecutive slots. Dex #1–#9 are the three starter lines (from 4b). #10 onward follows **first-availability order** along the critical path (Route 1's population, then City 1's, …). Placement is weighted by a line's **final-stage BST** (low-BST lines trend early, high-BST late — the Caterpie→Dragonite curve), with a **type-coverage bias** so no type is left unrepresented (§5.6).
+**Blocked by:** None.
 
-**Approach:** New `DexSelector` in `Roster/`. Pool = all evolution lines within `RosterCap`, minus the starter lines (already placed at #1–9). Greedily assign lines to critical-path areas: for each area in order, pick lines whose final BST fits the area's progression band, breaking ties toward under-represented types (track running per-type counts). Number by assignment order. Keep going until `DexSize` species are placed. Draw from `streams.Stream("dex")`.
+- [ ] Unit tests against pinned data: Eevee family at cap 5 has 8 members (133, 134, 135, 136, 196, 197, 470, 471) and at cap 1 has 4; a friendship evolution (`MinHappiness` set) is still an edge (families are about dex adjacency, not level-only completability); at cap 1 exactly 3 fossil families exist
+- [ ] Every species in cap belongs to exactly one family; members are consecutive-unique; `FinalBst` matches a hand-computed example (e.g. Dragonite family → 600)
+- [ ] `AvailabilityOrder` fuzz: permutation of all area ids; critical-path ids appear in `PathIndex` order; each off-spine id appears after its anchor and before the next critical-path id
+- [ ] Deterministic (pure functions of data/graph — no RNG at all)
 
-**Blocked by:** 4b (starters occupy #1–9 and are excluded from the fill).
+## 4a-2. Regional dex selection & numbering (split from 4a)
 
-- [ ] Fuzz invariant: dex holds exactly `DexSize` species (+ the 9 starter slots) with **no broken evolution lines** (every included species' full line is included and consecutive)
-- [ ] Fuzz invariant: dex numbering equals first-availability order along the critical path
-- [ ] Every one of the 17 types has ≥1 representative (assert non-zero counts) at default settings
-- [ ] Deterministic; printed by `RegionGraphText` (number, name, types, final BST)
+**Model:** Sonnet recommended (the algorithm below is fully pinned, but it's a long single pass with a budget-exactness proof obligation; a Qwen-class model may be attempted if 4a-1 landed cleanly).
+
+**What to build:** `DexSelector.Generate(RegionGraph graph, BiomeMap biomes, StarterPlan starters, GameData data, GenerationSettings settings, RngStreams streams) → DexPlan` in `Roster/`; extend `GeneratedRegion`. **Correction to the old ticket text:** per GDD §5.1/§5.2 the dex holds **exactly `DexSize` species total, and #1–#9 are the three starter lines** (starters count *inside* the 150) — the 4 legendaries are appended later by 4c as #`DexSize`+1..+4.
+
+**Pinned algorithm** (draw only from `streams.Stream("dex")`):
+1. `families = EvolutionFamilies.Build(data, settings.RosterCap)` minus legendary families minus the 3 starter families (match by membership of the starters' species ids).
+2. `wildAreas` = `AvailabilityOrder.Of(graph)` filtered to archetypes **not in** { StartTown, Town, League, VillainHideout } (towns/League have no wilds in our model — deliberate deviation from §5.2's "City 1's population"; note it in the pass docstring). Let `J = wildAreas.Count`.
+3. `fossilAreaId` = first area in availability order with archetype `DeepCave`, else first `StandardCave`, else first area with biome `Cave` or `Mountain`, else the first dungeon-archetype area (assert one exists). Store on the plan — 4c places the fossils there.
+4. Reserve exactly **2 distinct fossil families** via `rng.Pick` from the fossil families in cap (≥3 exist at every cap); they will be assigned to `fossilAreaId`'s slot in step 6 and count toward the budget.
+5. Budget `B = settings.DexSize − 9`. Area quotas: `quota_j = floor(B·(j+1)/J) − floor(B·j/J)` (fair share, sums to B exactly).
+6. Walk `wildAreas` in order, j = 0..J−1, with target BST `T_j = 250 + (J==1 ? 1 : j/(J−1.0)) · 350`. While the area's assigned species count < `quota_j` and global assigned < B: candidates = unassigned families with `Members.Count ≤ B − assigned`; if the area is `fossilAreaId` and reserved fossil families remain, take those first; else score each candidate `|FinalBst − T_j| − 200·(family has ≥1 type whose current dex count is 0)` and take the minimum, breaking ties with `rng.Pick` among the tied. Update per-type running counts (both types of every member). Overshooting `quota_j` by a family's tail is fine; **never** overshoot B (the size-≤-remaining filter guarantees exactness — Gen 1–5 has ~90 single-member families in cap, so the pool can always finish; assert non-empty candidates).
+7. Number: #1–9 = starter corners in `StarterPlan.Corners` order (base, mid, final each); #10.. = families in assignment order (area order, then per-area assignment order), members in family order.
+
+`DexPlan` record: `IReadOnlyList<DexEntry>` (`Number, SpeciesId`), `int FossilAreaId`, `IReadOnlyList<int> FossilFamilySpecies`, `IReadOnlyDictionary<int, IReadOnlyList<int>> SpeciesByArea` (areaId → species first available there; starters map to the start town; needed by 6 and 7a).
+
+**Blocked by:** 4a-1, 4b (done).
+
+- [ ] Fuzz invariant: dex holds exactly `DexSize` entries numbered 1..`DexSize` with #1–9 = the starter lines; **no broken families** — every included species' full in-cap family is included and consecutive (re-derive families independently in the test, don't trust the selector)
+- [ ] Fuzz invariant: numbering equals first-availability order — recompute `AvailabilityOrder` in the test and assert each area's species block starts at a number ≥ every earlier area's
+- [ ] Exactly 2 fossil families included, assigned to `FossilAreaId`
+- [ ] Every one of the 17 types has ≥1 representative at default settings (`DexSize` 150, cap 5, badges 8) — do **not** assert this at cap 1 (Gen 1 ids have no Dark-type)
+- [ ] Deterministic; printed by `RegionGraphText` (number, name, types, final BST — first/last 10 plus per-area counts is enough)
 
 ## 4c. Fossils & legendaries
 
-**What to build:** Add 2 fossil species (from the fossil-eligible pool) into a single Rock/Ground cave-type destination dungeon, and 4 legendaries (`IsLegendary`, within `RosterCap`) placed in mythology-appropriate destination dungeons as static encounters (GDD §5.4, §5.5). Legendaries are optional — the solvability graph ignores them (don't touch gating).
+**Model:** Qwen-OK (after 4a-2 the dungeon and fossil choices are already settled; this is list-filtering plus a pinned placement rule).
 
-**Approach:** Extend the dex/identity output. Fossil-eligible pool = a small hardcoded species-id list (Kabuto/Omanyte/Aerodactyl/Lileep/Anorith/Cranidos/Shieldon/Tirtouga/Archen lines, filtered by cap). Pick placement dungeons from the off-spine destination dungeons by archetype (Tower/DeepCave/Ruins). Draw from `streams.Stream("special-species")`.
+**What to build:** `SpecialSpeciesPass.Generate(RegionGraph graph, DexPlan dex, GameData data, GenerationSettings settings, RngStreams streams) → SpecialSpecies` in `Roster/`; extend `GeneratedRegion`. Fossil *species* are already in the dex at `dex.FossilAreaId` (4a-2); this pass emits the two fossil pickups and the four legendary static encounters. Draw from `streams.Stream("special-species")`.
 
-**Blocked by:** 4a (draws from the settled dex/pool).
+**Pinned rules:**
+- **Fossils:** exactly the 2 families in `dex.FossilFamilySpecies`; emit `FossilPlacement(SpeciesId /* family root */, AreaId = dex.FossilAreaId)` for each.
+- **Legendaries:** pool = species with `IsLegendary && !IsMythical` and `SpeciesGeneration.Of(id) <= RosterCap` (mythicals are event-only — excluded). `rng.Shuffle` the pool sorted by id, take 4 distinct.
+- **Placement:** eligible dungeons = off-spine areas with archetype `Tower` or `DeepCave`, excluding `dex.FossilAreaId`, in availability order. (There is **no `Ruins` archetype** — the old ticket text was wrong.) If ≥4 eligible: one legendary per dungeon, first 4, weakest-BST legendary earliest. If fewer: wrap around round-robin so every legendary still gets a dungeon (multiple per dungeon is acceptable; assert every legendary is placed).
+- **Levels** by placement order index: 50, 55, 65, 70.
+- **Dex numbers:** append as #`DexSize`+1..+4 in placement order (the 154-entry dex of GDD §5.1).
+- Legendaries are optional (§5.5) — **do not touch gating**.
 
-- [ ] Exactly 2 fossils placed together in one cave-type dungeon; exactly 4 legendaries, one per placement dungeon
-- [ ] All are within `RosterCap`; legendaries carry `IsLegendary`
-- [ ] Gating/solvability output is unchanged (assert the plan is byte-identical with and without this pass)
+**Blocked by:** 4a-2.
+
+- [ ] Exactly 2 fossils placed together in `dex.FossilAreaId`; exactly 4 legendaries, each with a placement dungeon, one-per-dungeon whenever ≥4 eligible dungeons exist
+- [ ] All within `RosterCap`; legendaries carry `IsLegendary` and not `IsMythical`; numbered `DexSize`+1..+4
+- [ ] Gating/solvability unchanged — assert the `GatingPlan` is the same reference / serializes identically with the pass present
 - [ ] Deterministic; printed by `RegionGraphText`
 
 ## 5a. Forest carver: de-stripe
 
-**What to build:** `ForestCarver` currently lays full-height vertical tree columns — it reads as literal stripes. Replace them with organic tree **clumps** of varied size/position that still leave the spine open and keep left↔right traversal guaranteed.
+**Model:** Qwen-OK.
 
-**Blocked by:** 2a (opening positions come from the alignment pass).
+**What to build:** `ForestCarver` currently lays full-height vertical tree columns with one gap each — literal stripes. Replace with organic tree **clumps**. Additionally — the old ticket implied but never said it — `ForestCarver` today ignores `OpeningPlan` and hardcodes `(0, midY)`/`(w−1, midY)`: **change its signature to `Carve(Area, Biome, Pcg32, IReadOnlyList<AreaOpening> planned)`** mirroring `TownCarver`, resolve left/right rows via `planned.OffsetOr(EdgeSide.Left/Right, midY)`, honor any planned Top/Bottom branch openings, and update the `AreaCarver` switch to pass `openings.OpeningsOf(area.Id)`. (Warp-connected forests have no planned openings — the midY fallback covers them.)
 
-- [ ] Assert: no interior column is entirely `Tree` (no full-height stripe) except the border
-- [ ] Assert: tree tiles form ≥ N discrete clumps (connected-component count over `Tree` tiles ≥ a stated N), not evenly spaced walls
-- [ ] Spine rows stay open; `CarvingTests` spine + mutual-reachability invariants stay green
+**Pinned algorithm:** ground fill + tree border as today; protect the 3 spine rows around the left/right opening rows plus a connecting column per Top/Bottom opening. Then `clumpCount = 6 + rng.NextInt(5)` clumps: each picks a random interior center and stamps a filled ellipse (half-width `1 + rng.NextInt(2)`, half-height `1 + rng.NextInt(2)`) of `Tree`, skipping protected tiles and tiles adjacent to an opening. Keep the 4 tall-grass patches and 1 `ItemBall` as today.
+
+**Blocked by:** None (2a is done). Land before or with 2c — whichever order, keep `AreaCarver` compiling.
+
+- [ ] Assert: no interior column (x = 1..w−2) is entirely `Tree`
+- [ ] Assert: `Tree` tiles excluding the border form ≥ 3 discrete clumps (4-neighbour connected components)
+- [ ] Openings match the plan (`OpeningAlignmentTests` cover forests once the signature changes); spine open; `CarvingTests` spine + mutual-reachability invariants stay green
 - [ ] Deterministic
 
 ## 5b. Cave carver: rooms, winding passages, boulder fields
 
-**What to build:** `CaveCarver` currently carves one thin straight corridor to a chamber. Give caves ≥2 open **rooms** connected by winding (non-straight) corridors, scattered impassable `Boulder` tiles as texture (not gates), and the reward item in a room. Keep both-openings-reachable (transit) / single-entrance-reachable (destination) guarantees.
+**Model:** Qwen-OK with care (the algorithm and every assert below are pinned; the only subtlety is re-checking reachability after each boulder).
 
-**Blocked by:** 2a.
+**What to build:** `CaveCarver` currently carves thin straight corridors to one chamber. Rework it — and, like 5a, **make it take `planned` openings** (it hardcodes them today) and update the `AreaCarver` switch.
 
-- [ ] Assert: ≥2 rooms (open rectangles above a min size); corridors are not a single straight line (path bends at least once)
-- [ ] Assert: some `Boulder` decoration exists and never blocks the only route between openings (mutual-reachability invariant still green)
-- [ ] Item sits inside a room, off the direct corridor
+**Pinned algorithm:** wall fill. Rooms: `2 + rng.NextInt(2)` rectangles, w ∈ [5..8], h ∈ [4..6], rejection-sampled ≤100 tries each, ≥2 tiles from the border, ≥1 tile of wall between rooms; carve `Ground`. Order rooms by center x; connect consecutive centers with a 3-segment corridor (horizontal to a random `midX` between them, vertical, horizontal); if the two centers share a row, offset the middle segment ±2 to force a bend. Transit mode: L-corridor from the left opening to the first room, and from the last room to the right opening; honor Top/Bottom planned openings with a connecting corridor to the nearest room. Non-transit: single entrance (planned, else bottom-center), corridor to the nearest room. Item: `ItemBall` in the room whose center is BFS-farthest from the entrance opening, at a cell not on any corridor segment line. Boulders: 8 attempts — pick a random `Ground` tile not adjacent to an opening, set `Boulder`, BFS-verify all opening-pairs (and item) still mutually reachable, revert if not.
+
+**Blocked by:** None (2a done). Coordinate with 5a on the `AreaCarver` switch.
+
+- [ ] Assert: ≥2 rooms — count connected components over cells that belong to at least one fully-open 4×3 rectangle
+- [ ] Assert: the BFS shortest path between the two transit openings contains both a horizontal and a vertical step (bend); ≥3 `Boulder` tiles exist; mutual-reachability invariant still green
+- [ ] Item cell is inside a room (member of a fully-open 4×3 rectangle) and not on a corridor centerline
 - [ ] Deterministic
 
-## 5c. Distinct League, Villain Hideout & Tower carvers
+## 5c-1. League carver (split from 5c)
 
-**What to build:** These three archetypes currently reuse the town/cave carvers, so the League looks like a starter village and the hideout like a plain cave. Give each a dedicated carver in `Carving/` with a recognizable structural signature, and dispatch to them from `AreaCarver`. League = a gauntlet of chambers leading to a final throne room; Villain Hideout = a multi-room interior with grunt-post rooms and a boss room; Tower = stacked floor bands connected by stair warps.
+**Model:** Qwen-OK.
 
-**Blocked by:** 2a.
+**What to build:** The League (last critical-path area) currently carves as a town. New `LeagueCarver` in `Carving/`; dispatch `AreaArchetype.League` to it in the `AreaCarver` switch (League leaves `TownCarver`'s case).
 
-- [ ] `AreaCarver` dispatches `League`, `VillainHideout`, `Tower` to their own carvers (not `TownCarver`/`CaveCarver`)
-- [ ] Each carver produces a documented structural signature, asserted mechanically (e.g. League has ≥3 chambers in sequence + one terminal room; Tower has ≥2 floor bands separated by walls with stair warps between them)
-- [ ] All carving invariants (walkability, mutual reachability, chokepoint if gated) stay green
-- [ ] Deterministic; the three render visibly differently from a town and from each other in ASCII
+**Pinned layout:** Large grid (`CarveKit.Dimensions`), wall fill. Entrance = planned Left opening (fallback midY). Four **chambers** (E4 rooms, ~6 wide, full usable height minus 2) laid left→right with 1-tile wall between, each connected to the next by a 1-wide door on the spine row; then a **throne room** (Champion) at the right, 8 wide. One `TrainerPost` centered in each chamber and in the throne room (5 total — 7b keys boss teams to these). Honor any other planned openings.
 
-## 5d. Town & route variation + decoration rules
+**Blocked by:** None. Coordinate on the `AreaCarver` switch with 5a/5b/5c-2/5c-3.
 
-**What to build:** `TownCarver` uses a fixed `[4,4,3]` building layout every time; vary it per seed. Apply the §-carver decoration rules everywhere: ledges that drop *toward* the entrance (shortcut asymmetry), item nooks off the main path, trainer posts positioned to watch the spine.
+- [ ] `AreaCarver` dispatches `League` to `LeagueCarver`
+- [ ] Signature asserts: exactly 5 `TrainerPost` tiles; the BFS path from entrance to the throne-room post passes ≥4 doorway tiles (walkable tiles whose north and south neighbours are both `Wall`)
+- [ ] All carving invariants (spine walkability, mutual reachability, chokepoint if gated) stay green
+- [ ] Deterministic; ASCII render visibly differs from a town
 
-**Blocked by:** 2a.
+## 5c-2. Villain-hideout carver (split from 5c)
 
-- [ ] Assert across seeds: building count/positions vary (not identical layouts for different seeds)
-- [ ] Assert: route ledges are oriented toward the entrance side; item balls are not on the spine row; trainer posts are within sight of the spine
+**Model:** Qwen-OK.
+
+**What to build:** New `HideoutCarver` in `Carving/`; dispatch `AreaArchetype.VillainHideout` to it (leaves `CaveCarver`'s non-transit case).
+
+**Pinned layout:** Medium grid, wall fill. 2×2 grid of rooms (~6×4 each) with 1-wide corridors between horizontal and vertical neighbours. Single entrance (planned, else bottom-center) with a corridor into the bottom-left room. Boss room = top-right: one `TrainerPost` + the `ItemBall`. Grunt posts: one `TrainerPost` in each of ≥2 other rooms.
+
+**Blocked by:** None. Coordinate on the `AreaCarver` switch.
+
+- [ ] `AreaCarver` dispatches `VillainHideout` to `HideoutCarver`
+- [ ] Signature asserts: ≥4 rooms (4×3-rectangle component count, as in 5b); ≥3 `TrainerPost` tiles; `ItemBall` in the BFS-farthest room from the entrance
+- [ ] Single-entrance reachability invariant green (item + all posts reachable from the entrance)
+- [ ] Deterministic; ASCII render visibly differs from a cave
+
+## 5c-3. Tower carver (split from 5c)
+
+**Model:** Qwen-OK (pure geometry — the stair-*warp* version was descoped, see note).
+
+**What to build:** New `TowerCarver` in `Carving/`; dispatch `AreaArchetype.Tower` to it. **Design note:** the original "stair warps" idea needs intra-area warp *pairs*, which `CarvedArea` cannot express and every BFS reachability helper would break on. Descoped: floors are separated by full-width wall rows with a 1-wide **stair gap**, alternating ends, which yields the zigzag-climb read. (True stair warps = a Phase 3+ follow-up: add `WarpPairs` to `CarvedArea` and teach the test BFS to traverse them.)
+
+**Pinned layout:** Medium grid, wall fill, then carve all-Ground interior. `floors = 3 + rng.NextInt(2)` horizontal bands separated by 1-thick full-width `Wall` rows (band height ≥ 3). Each separating wall row gets exactly one 1-wide gap: alternating right end (x = w−3) and left end (x = 2), bottom-up. Single entrance (planned, else bottom-center) into the bottom band. Top band: `ItemBall` + one `TrainerPost`.
+
+**Blocked by:** None. Coordinate on the `AreaCarver` switch.
+
+- [ ] `AreaCarver` dispatches `Tower` to `TowerCarver`
+- [ ] Signature asserts: ≥2 interior full-width wall rows each with exactly one walkable gap; consecutive gaps on opposite halves of the width; `ItemBall` in the top band
+- [ ] Single-entrance reachability invariant green (item reachable via the zigzag)
+- [ ] Deterministic; ASCII render visibly differs from cave, hideout, and League
+
+## 5d-1. Town layout variation (split from 5d)
+
+**Model:** Qwen-OK.
+
+**What to build:** `TownCarver` stamps fixed bands `TopBand = [4,4,3]`, `BottomBand = [3,3,3]` every time. Vary per seed from the carver's `Pcg32`: per band, building count 2–4, widths 3–5, heights 3–4, x-positions left-to-right with ≥1-tile gaps (rejection-sample within the row's usable width). Keep the semantics: first top building is the gym (make it the widest in its band), keep one south-side `Warp` door per building, keep planned openings and the clear spine row exactly as today.
+
+**Blocked by:** None (2a done).
+
+- [ ] Assert across seeds 1..50 (badges 8): ≥2 distinct building-rectangle sets occur for the first town (layouts genuinely vary)
+- [ ] Every building has a door `Warp` on its south wall reachable from the spine; carving invariants stay green
+- [ ] Deterministic per seed
+
+## 5d-2. Decoration rules: directional ledges, item nooks, trainer sightlines (split from 5d)
+
+**Model:** Sonnet (touches the tile-model contract plus two carvers; the semantics call is the risky part, pinned below).
+
+**What to build:** The §-carver decoration rules on routes (and forests where noted). **Model decision the old ticket hid:** `LogicalTile.Ledge` has no direction. Pin the convention instead of extending the enum: **a `Ledge` tile is one-way passable moving south** (north→south hop; document this in the `LogicalTile` docstring — Phase 3 movement will enforce it; `IsWalkable()` stays as-is for reachability purposes).
+
+**Pinned rules for `RouteCarver` (+ `ForestCarver` for nooks/posts):**
+- **Ledges:** 1–2 horizontal runs of length 4–8, placed 2–4 rows **south of the spine row** (hopping down moves you off-spine, and walking back along the south side leads toward the entrance — the mainline shortcut asymmetry). Every ledge tile's north and south neighbours must be walkable.
+- **Item nooks:** every `ItemBall` sits off the spine row and adjacent to ≥2 non-walkable tiles (a pocket, not open floor).
+- **Trainer posts:** 1–2 per route, within 2 rows of the spine, with an unobstructed straight-line row or column (walkable the whole way) to at least one spine tile.
+- Also fix the known cosmetic issue flagged in `TownCarver`'s docstring (gate-approach straightening punching a floor gap through a building wall): after `GateCarver.Apply`, re-close any building-wall tile the straightening opened unless it's the doorway.
+
+**Blocked by:** 5d-1 (same file), 5a (forest signature).
+
+- [ ] Asserts, per fuzz corpus: every `Ledge` tile has walkable north+south neighbours and sits south of the spine row; no `ItemBall` on the spine row and each has ≥2 non-walkable neighbours; every route `TrainerPost` has a clear straight sightline to a spine tile
+- [ ] `LogicalTile.Ledge` docstring states the one-way-south contract
 - [ ] Carving invariants stay green; deterministic
 
-## 6. Encounter tables
+## 6a. Encounter framework: level curve, table shapes, method assignment (split from 6)
 
-**What to build:** Per-area wild encounter tables (GDD §6.3). Clone the Gen 5 **slot model**: tall-grass/cave = 12 slots at 20/20/10/10/10/10/5/5/4/4/1/1; surf = 5 slots at 60/30/5/4/1; fishing per rod tier. Fill slots from the area's biome pool (§6.2 type bias) by rarity — a species' rarity *is* which slots it holds. **Special Encounter Overlays** are separate small tables and the only source of hidden abilities. Wild level per area ≈ (next gym ace − 5) ± 2 (§6.3); destination dungeons ~+2.
+**Model:** Qwen-OK.
+**Blueprint:** `docs/blueprints/6a-encounter-framework.md` (records + `LevelCurve` consumed by 6b, 7a, 7b, 7c).
 
-**Approach:** New `EncounterPass` in `domain/ProcPoke.Generation/Encounters/`, run after the dex pass. Species eligible for an area = dex species whose types match the area's §6.2 bias; assign to slots by dex position/BST as a rarity proxy. Draw from `streams.Stream("encounters")`.
+**What to build:** The skeleton of GDD §6.3 in `domain/ProcPoke.Generation/Encounters/`: records, the level curve, and which areas get which tables. Slot *filling* is 6b.
 
-**Blocked by:** 4a (needs the settled dex).
+**Records:** `EncounterMethod { Land, Surf, Fishing }`; `EncounterSlot(int Percent, int SpeciesId, int MinLevel, int MaxLevel)`; `EncounterTable(EncounterMethod Method, IReadOnlyList<EncounterSlot> Slots, double HiddenAbilityChance = 0)`; `AreaEncounters(int AreaId, IReadOnlyList<EncounterTable> Tables, EncounterTable? Overlay)`; `EncounterPlan` (by-area dictionary). Slot layouts (pinned, GDD §6.3): Land = 12 slots at 20/20/10/10/10/10/5/5/4/4/1/1; Surf = 5 at 60/30/5/4/1; Fishing = 5 at 60/30/5/4/1 (one rod — B2W2 has only the Super Rod; per-tier tables are a noted deferral, not a TODO for this ticket).
 
-- [ ] Every area with tall grass / surfable water / fishing gets a slot table with the canonical percentages above
-- [ ] Fuzz invariant: every wild species is in the regional dex; the biome type-bias is respected (each slot's species matches the §6.2 set for that biome)
-- [ ] Special Encounter Overlays exist where §6 mandates (e.g. Dark Grass) and are the only tables carrying a hidden-ability roll
-- [ ] Wild levels track the progression fraction; deterministic; printed by `RegionGraphText`
+**`LevelCurve` static class (pinned — 7a/7b reuse it):**
+- Gym cities = the keys of `RegionIdentity.GymTypes` in critical-path order; `GymAce(i, G) = G == 1 ? 50 : (int)Math.Round(14 + 36.0 * i / (G − 1))` (GDD §7.1: ~14 → ~50).
+- `WildLevel(area)`: find the first gym city at a critical-path position **after** the area's position (own `PathIndex`, or its `OffSpineAnchors` anchor for off-spine areas); wild = that gym's ace − 5; if no gym follows (post-last-gym), wild = 54 − 5 = 49. Destination dungeons (`DeepCave`, `Tower`, `VillainHideout`) get +2. The ±2 per-slot jitter is applied in 6b, not here.
+
+**Method assignment** (`EncounterPass.Generate(graph, biomes, gating, dex, streams) → EncounterPlan`, stream `"encounters"`): Land table for archetypes Route, Forest, StandardCave, MountainPath, DeepCave, VictoryRoad, Tower; Surf + Fishing tables additionally for areas with biome `Water` **or** listed in `gating.BiomeRequirements` with a water terrain tag; no tables for StartTown/Town/League/VillainHideout. In this ticket, emit the tables with correct methods and per-area base levels but **empty `Slots`** — 6b fills them.
+
+**Blocked by:** 4a-2 (the plan takes `DexPlan`; pass runs after it in `RegionGenerator`).
+
+- [ ] Every Route/Forest/cave-family/Tower area has a Land table; every Water-biome or water-gated area also has Surf + Fishing; towns/League/hideouts have none
+- [ ] `LevelCurve` unit tests: `GymAce(0, 8) = 14`, `GymAce(7, 8) = 50`, monotone non-decreasing; `WildLevel` non-decreasing along availability order (±0 tolerance — jitter isn't in yet)
+- [ ] Deterministic; `RegionGraphText` prints each area's methods + base wild level
+
+## 6b. Encounter slot filling & special overlays (split from 6)
+
+**Model:** Sonnet recommended (pinned, but the pool-widening and rarity-tiering interact; Qwen-class feasible after 6a merges).
+
+**What to build:** Fill the 6a tables from the dex; add Special Encounter Overlays. All draws from `streams.Stream("encounters")`.
+
+**Pinned fill, per area:**
+- **Pool:** dex species (exclude legendaries — appended #151+ are never wild — and exclude the 2 fossil families) whose type intersects the area's affinity: archetype override first — `Tower` → [Ghost, Psychic, Normal] (GDD §6.2 Tower/Graveyard row; the 7-value `Biome` enum has no Tower biome) — else `BiomeTypeAffinity.Table[biome]`, with `Urban` falling through to neighbouring areas' biomes. If pool < 4 species: widen to Normal-typed dex species; still < 4: all dex species (assert final ≥ 4).
+- **Rarity = slot tier** (§6.3: "a species' rarity *is* which slots it holds"). Sort the pool ascending by its family's `FinalBst`; split into quartile tiers: common (bottom 40%), uncommon (next 30%), rare (next 20%), very-rare (top 10%, min 1 each tier). Land slots: the two 20% slots and four 10% slots draw from common/uncommon; the 5%/4% slots from rare; the two 1% slots from very-rare. Draw with `rng.Pick`, repeats allowed within a tier; require ≥4 distinct species per Land table (redraw the last offending slot until satisfied — tiers guarantee it terminates). Surf/Fishing: same tiering over the Water-typed pool, ≥3 distinct.
+- **Levels:** per slot `MinLevel = max(2, wild − 2)`, `MaxLevel = wild + 2` where wild is 6a's base level.
+- **Overlays** (§6.3/§3 — the only hidden-ability source): every Land-table area with archetype Route or Forest whose availability fraction ≥ 0.5 gets a Dark-Grass-style overlay: 12-slot layout, drawn from the rare+very-rare tiers only, levels +5, `HiddenAbilityChance = 0.5`. Base tables keep 0.
+
+**Blocked by:** 6a.
+
+- [ ] Fuzz invariant: every slot's percentages match the pinned layouts and sum to 100; every wild species ∈ regional dex, never a legendary or fossil-family member; each slot species' type ∈ the area's affinity set (or the widened pool was in effect — assert via the pool-size precondition, not by skipping)
+- [ ] Overlays exist exactly on late (≥0.5) Routes/Forests and are the only tables with `HiddenAbilityChance > 0`
+- [ ] Wild levels track the curve (non-decreasing along availability order within the ±2 jitter + dungeon +2 tolerance); deterministic; printed by `RegionGraphText`
 
 ## 7a. Route & gym-building trainers, item balls
 
-**What to build:** Fill the carved `TrainerPost` tiles with trainers and the `ItemBall` tiles with contents. Trainer **class** by biome (GDD §7.1 table: Bug Catcher in Forest, Hiker in Mountain/Cave, Swimmer on Surf routes, …); **roster** a subset of the regional dex on the §7.1 level curve (trainer ace ≈ area wild level + 2–4); item/TM contents badge-appropriate.
+**Model:** Sonnet recommended (pinned tables, but it consumes four upstream plans and the carved tile grid; Qwen-class only after 2c/6a are merged and stable).
 
-**Approach:** New `TrainerPass` in `domain/ProcPoke.Generation/Trainers/`. For each carved area, read its `TrainerPost`/`ItemBall` counts, pick a class from the biome, and build rosters from the dex within the area's level band. Draw from `streams.Stream("trainers")`.
+**What to build:** `TrainerPass` in `domain/ProcPoke.Generation/Trainers/`, filling every carved `TrainerPost` tile (row-major scan order of `region.Carved[areaId].Grid`) and every `ItemBall`. Stream `"trainers"`.
 
-**Blocked by:** 4a (dex).
+**Pinned class table** (pick uniformly among the listed candidates): archetype VictoryRoad → Veteran; Tower → Psychic; VillainHideout → `Team <name>` Grunt, hideout's team = region's villain teams alternated in availability order; StandardCave/MountainPath/DeepCave → Hiker; Forest (archetype or biome) → Bug Catcher; else by biome: Grassland → Youngster/Lass; Mountain/Cave → Hiker; Water → Swimmer/Fisherman; Desert → Hiker/Ace Trainer; Urban → Gentleman/Lady.
+**Class type-bias** (roster filter): Youngster/Lass/Gentleman/Lady/Veteran/Ace Trainer → any; Bug Catcher → Bug; Hiker → Rock/Ground/Fighting; Swimmer/Fisherman → Water; Psychic → Psychic/Ghost; Grunt → the team's motif types.
+**Rosters:** size = 1 + (f ≥ 0.35 ? 1 : 0) + (f ≥ 0.7 ? 1 : 0) where f = availability fraction; ace level = `LevelCurve.WildLevel(area)` + 2 + `rng.NextInt(3)`; other members ace−2, ace−3. Species: `rng.Pick` from dex species available at-or-before this area (`DexPlan.SpeciesByArea` walked in availability order) whose type intersects the class bias; if empty, all available dex species. (Later-dex species on trainers are *allowed* by §5.2 but not required — available-only keeps it simple.)
+**Gym trainers:** per gym city, 2 trainers (class Ace Trainer) with mono-type rosters of the gym's type, levels between the city's route wild level and `GymAce − 2` (leader teams are 7b).
+**Item balls** by availability fraction: f < 1/3 → `items.json` Category `healing` with Cost ≤ 700; f < 2/3 → `healing` ≤ 2000 or `standard-balls`; else `revival` or `held-items`; any tier: 10% `rng.Chance` swaps in a TM (Category `all-machines`).
 
-- [ ] Every `TrainerPost` gets a trainer with a biome-appropriate class and a dex-subset roster; every `ItemBall` gets contents
-- [ ] Fuzz invariant: all trainer species ∈ regional dex; trainer ace levels rise (non-decreasing within tolerance) along the critical path
-- [ ] Deterministic; printed by `RegionGraphText`
+**Blocked by:** 2c (carved tiles in the region), 4a-2 (dex), 6a (levels), 3c (grunt team names).
+
+- [ ] Every carved `TrainerPost` has a trainer (count matches tile count per area); every `ItemBall` has contents; classes match the pinned table
+- [ ] Fuzz invariant: all trainer species ∈ regional dex; trainer ace levels non-decreasing along the critical path within a ±4 tolerance
+- [ ] Deterministic; printed by `RegionGraphText` (per-area class/ace summaries)
 
 ## 7b. Gym leader, Elite Four & Champion teams
 
-**What to build:** Build the boss teams honoring 3b's type assignments. Gym leader teams are single-type (thin types padded with dual-types), size scaling 2→6 along the badge curve; leader ace ~14→~50 interpolated. E4 = full 6-mon single-type teams at ~54–58. Champion = typeless, broadest/highest-BST 6-mon team at ~59–60, favoring a starter final stage or a pseudo-legendary if the dex drew one.
+**Model:** Sonnet recommended (formulas pinned below, but the species-picking fallback chain wants judgment; Qwen-class possible if 7a's roster helper is reused).
 
-**Blocked by:** 4a (dex), 3b (type assignments).
+**What to build:** `BossPlan` (extend `GeneratedRegion`): leader teams honoring 3b's `GymTypes`, E4 teams, Champion team. **Species + levels only — no movesets in Phase 2.** Stream `"bosses"`.
 
-- [ ] Each gym leader's team is its assigned type (or dual-types including it); size and ace level follow the badge curve
-- [ ] E4 teams single-type per member, distinct; Champion team typeless and highest-BST-band
-- [ ] Fuzz invariant: all boss species ∈ regional dex; ace levels match the §7.1 bands within tolerance
+**Pinned formulas:** Leader i of G (0-based, f = i/(G−1), G==1 → f=1): size = min(6, 2 + round(4f)); ace = `LevelCurve.GymAce(i, G)`; member levels = ace, ace−2, ace−3, ace−4, ace−4, ace−5 (truncate to size). Candidates = dex species carrying the gym type (primary or secondary), no two from one family, BST ≤ 250 + 350f; ace slot = highest-BST candidate, rest descending; if candidates run out, drop the BST cap, then admit any dex species (mono-type padding per §7.1 — assert how often via test message, don't fail). E4 member j (0..3): full 6-mon team of its assigned type, ace = 55 + j, levels [a−2, a−2, a−1, a−1, a−1, a]. Champion (typeless, §7.1): 6 highest-BST dex species, distinct families, ≤2 sharing any type, levels [57, 57, 58, 58, 58, 60]; must include a pseudo-legendary final stage if the dex drew one (hardcode: Dragonite 149, Tyranitar 248, Salamence 373, Metagross 376, Garchomp 445, Hydreigon 635), else one starter corner's final stage (`rng.Pick` of the three).
+
+**Blocked by:** 4a-2 (dex), 3b (done), 6a (`LevelCurve`).
+
+- [ ] Each leader's team is mono-type in its assigned type until the candidate pool exhausts (padding admitted only then); size and ace follow the pinned formulas exactly
+- [ ] E4 single-type per member, types distinct; Champion team typeless (no type constraint), includes the pseudo-legendary/starter pick, distinct families, ≤2 per type
+- [ ] Fuzz invariant: all boss species ∈ regional dex (legendaries #151+ excluded); levels match the formulas exactly
 - [ ] Deterministic; printed by `RegionGraphText`
 
-## 7c. Rival team across beats & Champion-identity roll
+## 7c. Rival team across beats & rival-Champion team
 
-**What to build:** The rival's starter is auto-picked as the counter to the player's (standard "rival picks your counter"); the rival team **evolves across the four beats** (post-starter, early route, midpoint, pre-League), tracking the player-facing curve. Roll Champion identity: ~25% of seeds the **rival is the Champion** (foreshadowed pre-League); rival-Champion seeds weight the Underdog archetype higher. Reuses 7b's team machinery.
+**Model:** Sonnet (three player-choice variants × four beats × evolution-stage resolution against real `MinLevel` data, plus consuming 3c's roll — genuinely cross-cutting).
 
-**Blocked by:** 4b (starters, for the counter-pick), 3c (rival archetype), 7b (team-build machinery).
+**What to build:** `RivalPlan` (extend `GeneratedRegion`): for **each of the 3 possible player starter corners**, the rival's counter-pick and a team per beat. The Champion-identity roll already happened in 3c (`RegionIdentity.ChampionIsRival`) — consume it, don't re-roll. Stream `"rival"`.
 
-- [ ] Rival starter is the effectiveness-counter to each possible player pick; team present at all four beats with non-decreasing strength
-- [ ] Champion-identity roll is deterministic and ~25% rival across the corpus (assert the rate within a band); rival-Champion seeds skew Underdog
+**Pinned rules:** `StarterSelector.TriangleCorners` order means corner *i* beats corner *i+1 (mod 3)*; the rival counter to player corner *i* is corner *(i+2) mod 3*. Beats (sizes/aces): post-starter = rival starter base stage at level 5; early-route = 2 mons, ace `GymAce(0)+2`; midpoint = 4 mons, ace `GymAce(G/2)`; pre-League = 5 mons, ace 52. The rival starter appears in every beat at the highest evolution stage its family's `MinLevel` chain permits at that beat's ace level. Non-starter slots: dex species (no legendaries, no duplicate families) picked by BST closest to 250 + 350·(beat fraction). If `ChampionIsRival`: 7b's generated-NPC Champion team is **replaced** by a rival Champion team — 7b's Champion formula but forced to include the rival starter's final stage (per player corner).
+
+**Blocked by:** 4b (done), 3c (`ChampionIsRival`, archetype), 6a (`LevelCurve`), 7b (Champion formula reuse).
+
+- [ ] For every player corner: rival starter is the corner that beats it (assert via the triangle order, and independently via `TypeChart` effectiveness); teams exist at all four beats with non-decreasing ace levels and sizes
+- [ ] Starter evolution stage at each beat re-derived in the test from raw `MinLevel` chains
+- [ ] Rival-Champion seeds: the Champion team contains the rival starter final stage for each player corner; non-rival seeds keep 7b's team
 - [ ] All rival species ∈ regional dex; deterministic; printed by `RegionGraphText`
 
-## 8. NPC posts & hint reachability
+## 8a. NPC plan: hints, furniture, flavor (split from 8)
 
-**What to build:** Emit NPC posts into carved towns/routes: **Hint NPCs** naming each gate's key location, furniture NPCs (Gym guide, Center gossip, signs), and flavor NPCs from templates parameterized with the generated names. The load-bearing part is the hint invariant (Phase 3 addendum): every gate has ≥1 Hint NPC in an area reachable *before* that gate.
+**Model:** Qwen-OK (the reachability re-derivation below is spelled out; everything else is templating).
 
-**Approach:** New `NpcPass` (or fold into population). Each gate already carries `HintAreaId` (`Gate.HintAreaId`) — place the Hint NPC there and verify reachability independently, the way `GatingValidator` verifies keys. Hint text pulls the generated key/area names from 3a.
+**What to build:** Graph-level `NpcPass` → `NpcPlan` (extend `GeneratedRegion`): per area, a list of `NpcPost(NpcKind Kind, string Text)`. Kinds: Hint, GymGuide, CenterGossip, Sign, Flavor. Stream `"npcs"`. No tiles yet — placement is 8b.
 
-**Blocked by:** 3a (names for hint text).
+**Pinned content:**
+- **Hint NPCs** (the load-bearing part, GDD §4.3 rule 8): for every gate, one Hint post in `gate.HintAreaId`, text from 3 templates `rng.Pick`ed, e.g. `$"I hear {gate.KeyName} waits somewhere in {names.Of(gate.KeyAreaId)}."` — generated names, never internal ids.
+- **Furniture:** each gym city gets a GymGuide post (`$"The Leader here runs a {type} gym!"`) and a CenterGossip post (names the nearest villain hideout by generated name, if any); each Route gets one Sign (`$"Route {n} — onward to {names.Of(next critical-path town)}"`).
+- **Flavor:** 1–2 per town from a ≥6-template pool parameterized with region/area names.
 
-- [ ] Fuzz invariant: for every gate, ≥1 Hint NPC sits in an area reachable before the gate (independent flood-fill, not trusting `HintAreaId`)
-- [ ] Hint text references generated key/area names, not internal ids
-- [ ] Furniture/flavor NPC posts land on walkable tiles; deterministic; render in the debug maps
+**Hint invariant — independent re-derivation (do not trust `HintAreaId`):** for gate g, the hintable set = every area whose critical-path position (own `PathIndex`, or `OffSpineAnchors` anchor if off-spine) is **≤ `g.BlockPathIndex`**, *intersected with* the areas actually reachable at that frontier by a `GatingValidator`-style forward replay (walk forward from the start picking up keys, stopping the first time gate g blocks the frontier; collect every on-path area at index ≤ frontier and every off-spine area anchored ≤ frontier). Assert each gate's Hint post lands in its hintable set.
+
+**Blocked by:** 3a (done), 3c (hideout names exist for gossip — soft; can stub if 3c is in flight).
+
+- [ ] Fuzz invariant: for every gate, ≥1 Hint post in an area in the independently re-derived hintable set
+- [ ] Hint/gossip/sign text contains generated names and never an internal area id
+- [ ] Deterministic; printed by `RegionGraphText` (post counts per area + hint texts)
+
+## 8b. NPC posts on tiles (split from 8)
+
+**Model:** Qwen-OK.
+
+**What to build:** Realize `NpcPlan` on the carved maps. New `LogicalTile.NpcPost` — **walkable** (add to `IsWalkable()`), glyph `n` in `AsciiRenderer`, a distinct color in `MapImage`. In `RegionGenerator`, after carving and `NpcPass`: for each area, stamp one `NpcPost` tile per plan entry on a `rng`-picked (`streams.Stream("npc-tiles")`) walkable `Ground` tile that is not on the spine row and not adjacent to an opening or gate tile; skip-and-log nothing — if an area lacks room (tiny grids), place on any walkable non-opening tile (assert count always matches).
+
+**Blocked by:** 2c (carved maps in the region), 8a (the plan).
+
+- [ ] Per area: `NpcPost` tile count == `NpcPlan` entry count; every post tile was walkable before stamping and `NpcPost` is walkable after (reachability invariants untouched — assert `CarvingTests` still green)
+- [ ] Posts render in ASCII and PNG debug maps
+- [ ] Deterministic
 
 ## 9. Go/no-go sign-off packet
 
-**What to build:** Execute the Phase 2 exit criterion. Two parts: (1) the **mechanical** part Sonnet does — run the complete invariant suite over ≥10,000 seeds and produce a render packet (stitched overview + per-area maps for ~10 diverse seeds across varied badge counts) via one harness command, plus a structured self-check listing which archetypes are now visually distinct; (2) the **human** part — the user judges whether the maps "read hand-crafted" (trainers guard the path, ledges create shortcut asymmetry, item nooks reward poking around, no mush). Record the verdict; if it fails, the deliverable is a documented gap list feeding an ADR-0001 reconsideration.
+**Model:** Sonnet (explicitly — the old ticket already said the mechanical half is "the part Sonnet does"; it's cross-cutting glue over every pass).
+
+**What to build:** Execute the Phase 2 exit criterion (DEVELOPMENT-PLAN §Phase 2). Two parts:
+
+**(1) Mechanical.** A domain `Invariants.CheckAll(GeneratedRegion, GameData) → IReadOnlyList<string>` consolidating the fuzz assertions (chokepoint, key-before-gate, hint-before-gate, edge alignment, names off-blocklist, dex numbering & no-broken-families, type coverage at defaults, encounter/trainer ⊆ dex, level monotonicity) so tests and the harness share one implementation. Then a MapGen mode `--packet [seeds]` that (a) sweeps seeds 1..N (default 10,000) × badges {4, 8, 12} through `CheckAll`, reporting any violating seed and failing non-zero; (b) renders the pinned showcase seeds {2, 7, 42, 99, 123, 500, 777, 1234, 4242, 9001} × badges {4, 8, 12} to per-area PNGs + stitched overviews; (c) writes `PACKET.md` with the sweep summary and a per-archetype "distinct? yes/no" self-check computed from the 5a/5b/5c signature asserts (expose those checks as a shared helper, e.g. `Debug/CarverSignatures`, so tests and packet agree).
+
+**(2) Human.** The user judges whether the maps read hand-crafted (trainers guard the path, ledges create shortcut asymmetry, item nooks reward poking around, no mush). Record the verdict in `PACKET.md`; if it fails, the deliverable is a documented gap list feeding an ADR-0001 reconsideration.
 
 **Blocked by:** every other ticket in this file.
 
-- [ ] Complete invariant suite (chokepoint, key-before-gate, hint-before-gate, edge alignment, names, dex numbering, coverage, trainers ⊆ dex) passes on ≥10,000 seeds
-- [ ] One command generates the packet; overviews are spatially stitched (2b); packet includes a per-archetype "distinct? yes/no" self-check
+- [ ] `Invariants.CheckAll` passes on ≥10,000 seeds × {4, 8, 12} badges via one command
+- [ ] One command generates the packet; overviews are spatially stitched (2b); packet includes the per-archetype distinctness self-check
 - [ ] Human verdict recorded: pass, or a gap list + explicit decision on ADR-0001
