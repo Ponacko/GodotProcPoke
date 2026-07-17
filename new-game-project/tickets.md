@@ -110,7 +110,21 @@ smallest final-BST spread (≤ 40) per available template, drawn from `streams.S
 clears at Roster Cap 3+, Mind & Body only at Cap 5, Classic at every cap) and independently
 re-derives each chosen line from raw evolution rules rather than trusting the selector's internals.
 
-## 4a-1. Evolution-family pool & availability order (split from 4a)
+## 4a-1. Evolution-family pool & availability order (split from 4a) — ✅ DONE
+
+Delivered in commit "Implement ticket 4a-1: evolution families & availability order". `EvolutionFamilies.Build`
+(`Roster/`) builds connected components of the in-cap evolution graph — every trigger (friendship, stone,
+trade) counts as an edge — ordering each family's members by BFS from the no-incoming root (children
+ascending by `ToSpeciesId`), with `FinalBst`/`Types`/`IsLegendary`/`IsFossil` computed per the blueprint
+(fossil pool hardcoded, BST via a now-`internal` `StarterSelector.Bst`). `AvailabilityOrder.Of` (`Topology/`)
+takes the off-spine anchors as a parameter (keeping `Topology` free of a `Gating` reference) and interleaves
+each off-spine area right after its anchor. `EvolutionFamiliesTests` (11 cases) verifies against pinned
+ground truth (Eevee 8/4 members, friendship edge Golbat→Crobat, 3 fossil families at cap 1, Dragonite
+family BST 600, cap-3 Electabuzz truncation, exact partition of every cap) and fuzzes `AvailabilityOrder`
+over the standard corpus (permutation, critical-path order, each off-spine area between its anchor and the
+next path area). Pure functions, no RNG. Full suite green (139 tests).
+
+<details><summary>Original ticket</summary>
 
 **Model:** Qwen-OK (pure functions over baked data + unit tests against pinned ground truth; no generator wiring).
 **Blueprint:** `docs/blueprints/4a1-evolution-families.md` (shared contract for 4a-2, 4c, 6a, 7a/b/c).
@@ -130,6 +144,8 @@ re-derives each chosen line from raw evolution rules rather than trusting the se
 - [ ] Every species in cap belongs to exactly one family; members are consecutive-unique; `FinalBst` matches a hand-computed example (e.g. Dragonite family → 600)
 - [ ] `AvailabilityOrder` fuzz: permutation of all area ids; critical-path ids appear in `PathIndex` order; each off-spine id appears after its anchor and before the next critical-path id
 - [ ] Deterministic (pure functions of data/graph — no RNG at all)
+
+</details>
 
 ## 4a-2. Regional dex selection & numbering (split from 4a)
 

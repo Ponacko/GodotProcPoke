@@ -137,6 +137,9 @@ public static class StarterSelector
         ];
     }
 
-    private static int Bst(PokemonSpecies s) => s.BaseStats.Hp + s.BaseStats.Attack + s.BaseStats.Defense
+    /// <summary>A species' base-stat total — the sum of its six base stats (there is no precomputed BST
+    /// field). Internal so sibling roster passes (<see cref="EvolutionFamilies"/>, the dex) share one
+    /// definition.</summary>
+    internal static int Bst(PokemonSpecies s) => s.BaseStats.Hp + s.BaseStats.Attack + s.BaseStats.Defense
         + s.BaseStats.SpecialAttack + s.BaseStats.SpecialDefense + s.BaseStats.Speed;
 }
