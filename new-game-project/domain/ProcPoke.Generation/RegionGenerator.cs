@@ -10,10 +10,11 @@ using ProcPoke.Generation.Topology;
 namespace ProcPoke.Generation;
 
 /// <summary>A generated region so far: graph, gating, biomes, the edge-aligned opening plan carvers
-/// consume, names, gym/E4/Champion typing, and the starter triangle. Grows as later passes (dex, …)
-/// land.</summary>
+/// consume, the carved tile map per area (keyed by area id), names, gym/E4/Champion typing, and the
+/// starter triangle. Grows as later passes (dex, …) land.</summary>
 public sealed record GeneratedRegion(
-    RegionGraph Graph, GatingPlan Gating, BiomeMap Biomes, OpeningPlan Openings, GenerationSettings Settings,
+    RegionGraph Graph, GatingPlan Gating, BiomeMap Biomes, OpeningPlan Openings,
+    IReadOnlyDictionary<int, CarvedArea> Carved, GenerationSettings Settings,
     RegionNames Names, RegionIdentity Identity, StarterPlan Starters);
 
 /// <summary>
@@ -43,7 +44,13 @@ public static class RegionGenerator
             var names = NamingPass.Generate(graph, data.NameBlocklist, streams);
             var identity = GymTypingPass.Generate(graph, biomes, streams);
             var starters = StarterSelector.Generate(data, settings, streams);
-            return new GeneratedRegion(graph, gating, biomes, openings, settings, names, identity, starters);
+            // Carving is the last pass (ADR-0004: puzzle before terrain) — the region owns its carved maps
+            // so later population passes can read TrainerPost/ItemBall tile counts. Each area draws only
+            // from its own "carve/<id>" stream (ADR-0005), so output is independent of pass order.
+            var carved = graph.Areas.ToDictionary(a => a.Id, a => AreaCarver.Carve(
+                a, biomes.Of(a.Id), streams.Stream("carve", a.Id), openings, AreaCarver.GateOnExitOf(a, gating)));
+            return new GeneratedRegion(
+                graph, gating, biomes, openings, carved, settings, names, identity, starters);
         }
 
         throw new InvalidOperationException(

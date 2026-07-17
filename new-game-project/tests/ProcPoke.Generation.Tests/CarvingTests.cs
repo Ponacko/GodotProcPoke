@@ -14,22 +14,20 @@ namespace ProcPoke.Generation.Tests;
 /// </summary>
 public class CarvingTests
 {
+    // The region now owns its carved maps (ticket 2c) — read them straight off region.Carved rather than
+    // re-carving. CarvingIsDeterministic below still re-carves independently and asserts it matches.
     private static IEnumerable<CarvedArea> CarveRoutes(ulong seed, int badges = 8)
     {
         var region = RegionGenerator.Generate(new GenerationSettings { Seed = seed, BadgeCount = badges }, TestData.Data);
-        var streams = new RngStreams(seed);
         foreach (var route in region.Graph.CriticalPath.Where(a => a.Archetype == AreaArchetype.Route))
-            yield return AreaCarver.Carve(route, region.Biomes.Of(route.Id), streams.Stream("carve", route.Id),
-                region.Openings, AreaCarver.GateOnExitOf(route, region.Gating));
+            yield return region.Carved[route.Id];
     }
 
     private static IEnumerable<CarvedArea> CarveAll(ulong seed, int badges = 8)
     {
         var region = RegionGenerator.Generate(new GenerationSettings { Seed = seed, BadgeCount = badges }, TestData.Data);
-        var streams = new RngStreams(seed);
         foreach (var area in region.Graph.Areas)
-            yield return AreaCarver.Carve(area, region.Biomes.Of(area.Id), streams.Stream("carve", area.Id),
-                region.Openings, AreaCarver.GateOnExitOf(area, region.Gating));
+            yield return region.Carved[area.Id];
     }
 
     /// <summary>Breadth-first walkable reachability; tiles in <paramref name="cleared"/> count as passable.</summary>
@@ -66,9 +64,17 @@ public class CarvingTests
     [Fact]
     public void CarvingIsDeterministic()
     {
-        var a = CarveRoutes(2026).Select(AsciiRenderer.Render).ToList();
-        var b = CarveRoutes(2026).Select(AsciiRenderer.Render).ToList();
-        Assert.Equal(a, b);
+        // The region carves its maps inside the pipeline; an independent re-carve from the same seed's
+        // "carve/<areaId>" stream must reproduce every area byte-for-byte (ADR-0005 stream isolation).
+        const ulong seed = 2026;
+        var region = RegionGenerator.Generate(new GenerationSettings { Seed = seed, BadgeCount = 8 }, TestData.Data);
+        var streams = new RngStreams(seed);
+        foreach (var area in region.Graph.Areas)
+        {
+            var reCarved = AreaCarver.Carve(area, region.Biomes.Of(area.Id), streams.Stream("carve", area.Id),
+                region.Openings, AreaCarver.GateOnExitOf(area, region.Gating));
+            Assert.Equal(AsciiRenderer.Render(region.Carved[area.Id]), AsciiRenderer.Render(reCarved));
+        }
     }
 
     [Fact]

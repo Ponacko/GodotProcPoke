@@ -32,16 +32,15 @@ for (var i = 0; i < count; i++)
 
     if (carve || png)
     {
-        var streams = new RngStreams(thisSeed);
-        CarvedArea CarveArea(Area a) => AreaCarver.Carve(a, region.Biomes.Of(a.Id), streams.Stream("carve", a.Id),
-            region.Openings, AreaCarver.GateOnExitOf(a, region.Gating));
+        // Maps are carved once inside the pipeline (ticket 2c) — the harness reads region.Carved.
+        var carvedById = region.Carved;
 
         if (carve)
         {
             // Show the first few critical-path areas as ASCII.
             foreach (var a in region.Graph.CriticalPath.Take(4))
             {
-                var carved = CarveArea(a);
+                var carved = carvedById[a.Id];
                 Console.WriteLine($"── [{a.PathIndex}] {a.Archetype}  {a.Size}  {region.Biomes.Of(a.Id)}  ({carved.Grid.Width}×{carved.Grid.Height}) ──");
                 Console.WriteLine(AsciiRenderer.Render(carved));
             }
@@ -51,7 +50,6 @@ for (var i = 0; i < count; i++)
         {
             var dir = Path.Combine(".cache", "mapgen", $"seed-{thisSeed}");
             Directory.CreateDirectory(dir);
-            var carvedById = region.Graph.Areas.ToDictionary(a => a.Id, CarveArea);
             foreach (var a in region.Graph.CriticalPath)
                 MapImage.SaveArea(Path.Combine(dir, $"{a.PathIndex:D2}-{a.Archetype}.png"), carvedById[a.Id]);
             foreach (var a in region.Graph.OffSpineAreas)

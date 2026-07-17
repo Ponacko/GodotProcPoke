@@ -44,21 +44,16 @@ connection's pair of openings (aligned opening tile for Seamless, area center fo
 via `dotnet run --project tools/ProcPoke.MapGen -- 42 --badges 8 --png` — the overview reads as one
 horizontally-flowing map with branches stacked above/below the spine, not a stack.
 
-## 2c. Carved maps join the generator pipeline — NEW
+## 2c. Carved maps join the generator pipeline — ✅ DONE
 
-**Model:** Sonnet (mechanical, but touches the generator, the harness, and the carving tests at once).
-
-**Why:** Today carving happens *outside* `RegionGenerator.Generate` — the MapGen harness and `CarvingTests` each re-carve areas on demand with `AreaCarver.Carve(a, biomes.Of(a.Id), streams.Stream("carve", a.Id), openings, AreaCarver.GateOnExitOf(a, gating))`. Population tickets 7a and 8b must read carved `TrainerPost`/`ItemBall` tile counts from inside the pipeline, which is impossible until the region owns its carved maps.
-
-**What to build:** After the `OpeningAligner.Plan` step in `RegionGenerator.Generate`, carve every area:
-`graph.Areas.ToDictionary(a => a.Id, a => AreaCarver.Carve(a, biomes.Of(a.Id), streams.Stream("carve", a.Id), openings, AreaCarver.GateOnExitOf(a, gating)))` — the exact same stream names and call the harness uses today, so output is byte-identical. Add `IReadOnlyDictionary<int, CarvedArea> Carved` to `GeneratedRegion`. Then delete the duplicate carve loops: MapGen's `--carve`/`--png` paths and `CarvingTests.CarveAll`/`CarveRoutes` consume `region.Carved` instead (keep one explicit re-carve-and-compare determinism test).
-
-**Blocked by:** None — can start immediately.
-
-- [ ] `GeneratedRegion.Carved` holds one `CarvedArea` per area; carving draws only from `streams.Stream("carve", areaId)`
-- [ ] MapGen `--png` output for seed 42 is identical before/after (same PNGs byte-for-byte)
-- [ ] `CarvingTests` pass unchanged against `region.Carved`; one test still re-carves independently and asserts the ASCII render matches `region.Carved`'s
-- [ ] Full suite green
+Delivered in commit "Implement ticket 2c: carved maps join the generator pipeline". `RegionGenerator.Generate`
+now carves every area right after `OpeningAligner.Plan` —
+`graph.Areas.ToDictionary(a => a.Id, a => AreaCarver.Carve(a, biomes.Of(a.Id), streams.Stream("carve", a.Id), openings, AreaCarver.GateOnExitOf(a, gating)))`
+— and exposes it as `IReadOnlyDictionary<int, CarvedArea> Carved` on `GeneratedRegion`. MapGen's `--carve`/`--png`
+paths and `CarvingTests.CarveAll`/`CarveRoutes` read `region.Carved`; the duplicate carve loops are gone.
+`CarvingIsDeterministic` now re-carves every area independently from `new RngStreams(seed).Stream("carve", id)`
+and asserts the ASCII render matches `region.Carved`. Verified byte-identical: seed 42 `--png` output is
+byte-for-byte the same before and after the change (36 area images + overview). Full suite green (128 tests).
 
 ## 3a. Location name generator — ✅ DONE
 
