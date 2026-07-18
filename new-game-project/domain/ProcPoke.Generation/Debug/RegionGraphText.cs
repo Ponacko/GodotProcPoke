@@ -17,7 +17,7 @@ public static class RegionGraphText
 {
     public static string Render(RegionGraph g, GatingPlan? gating = null, BiomeMap? biomes = null,
         RegionNames? names = null, RegionIdentity? identity = null, StarterPlan? starters = null,
-        DexPlan? dex = null, GameData? data = null)
+        DexPlan? dex = null, GameData? data = null, SpecialSpecies? special = null)
     {
         var sb = new StringBuilder();
         sb.AppendLine($"Region  badges={g.BadgeCount}  areas={g.Areas.Count}  connections={g.Connections.Count}  connected={g.IsConnected()}");
@@ -82,8 +82,25 @@ public static class RegionGraphText
         if (dex is not null && data is not null)
             AppendDex(sb, g, dex, data, names);
 
+        if (special is not null && data is not null)
+            AppendSpecial(sb, g, special, data, names);
+
         return sb.ToString();
     }
+
+    /// <summary>Fossils and legendaries: species, area, and (for legendaries) level and appended dex number.</summary>
+    private static void AppendSpecial(StringBuilder sb, RegionGraph g, SpecialSpecies special, GameData data, RegionNames? names)
+    {
+        sb.AppendLine("Fossils & legendaries:");
+        foreach (var f in special.Fossils)
+            sb.AppendLine($"    fossil  {data.Species[f.SpeciesId].Name,-12} @ {AreaName(g, names, f.AreaId)}");
+        foreach (var l in special.Legendaries)
+            sb.AppendLine($"    #{l.DexNumber,3} {data.Species[l.SpeciesId].Name,-12} Lv{l.Level} @ {AreaName(g, names, l.AreaId)}");
+    }
+
+    /// <summary>An area's generated name in quotes, or its archetype when names aren't available.</summary>
+    private static string AreaName(RegionGraph g, RegionNames? names, int areaId)
+        => names is not null ? $"\"{names.Of(areaId)}\"" : g[areaId].Archetype.ToString();
 
     /// <summary>The regional dex: first and last ten entries (number, name, types, BST) and per-area counts.</summary>
     private static void AppendDex(StringBuilder sb, RegionGraph g, DexPlan dex, GameData data, RegionNames? names)
@@ -101,9 +118,8 @@ public static class RegionGraphText
         sb.AppendLine("  Per-area first-availability counts:");
         foreach (var (areaId, species) in dex.SpeciesByArea.OrderBy(kv => kv.Key))
         {
-            var name = names is not null ? $"\"{names.Of(areaId)}\"" : g[areaId].Archetype.ToString();
             var fossil = areaId == dex.FossilAreaId ? "  [fossils]" : "";
-            sb.AppendLine($"    {name,-22} {species.Count} species{fossil}");
+            sb.AppendLine($"    {AreaName(g, names, areaId),-22} {species.Count} species{fossil}");
         }
     }
 

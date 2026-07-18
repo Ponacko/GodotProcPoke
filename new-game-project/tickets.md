@@ -189,7 +189,21 @@ dex (first/last 10 + per-area counts). Full suite green (146 tests).
 
 </details>
 
-## 4c. Fossils & legendaries
+## 4c. Fossils & legendaries — ✅ DONE
+
+Delivered in commit "Implement ticket 4c: fossils & legendaries". `SpecialSpeciesPass.Generate` (`Roster/`)
+emits `SpecialSpecies` (added to `GeneratedRegion`): two `FossilPlacement`s (each fossil family's root at
+`dex.FossilAreaId`) and four `LegendaryPlacement`s. Legendaries are drawn from the non-mythical in-cap pool
+(`rng.Shuffle` of the id-sorted pool, take 4), sorted weakest-BST-first, and placed one-per-dungeon across
+the off-spine Tower/DeepCave areas (excluding the fossil area) in availability order — round-robin when a
+region has fewer than four, which is the common case at 4/8 badges once the fossil DeepCave is spent. Levels
+50/55/65/70 and dex numbers DexSize+1..+4 by placement index. The pass never receives or touches gating.
+`SpecialSpeciesTests` (5 cases) fuzz the corpus for two fossils at the fossil area (roots re-derived), four
+distinct in-cap non-mythical legendaries, weakest-first ordering, one-per-dungeon when ≥4 eligible (seen at
+12 badges), the cap-1 legendary set {144,145,146,150}, unchanged solvability, and determinism.
+`RegionGraphText` prints fossils and legendaries. Full suite green (151 tests).
+
+<details><summary>Original ticket</summary>
 
 **Model:** Qwen-OK (after 4a-2 the dungeon and fossil choices are already settled; this is list-filtering plus a pinned placement rule).
 
@@ -209,6 +223,8 @@ dex (first/last 10 + per-area counts). Full suite green (146 tests).
 - [ ] All within `RosterCap`; legendaries carry `IsLegendary` and not `IsMythical`; numbered `DexSize`+1..+4
 - [ ] Gating/solvability unchanged — assert the `GatingPlan` is the same reference / serializes identically with the pass present
 - [ ] Deterministic; printed by `RegionGraphText`
+
+</details>
 
 ## 5a. Forest carver: de-stripe
 
