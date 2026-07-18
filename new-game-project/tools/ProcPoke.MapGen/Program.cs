@@ -28,7 +28,7 @@ for (var i = 0; i < count; i++)
 
     Console.WriteLine($"════ seed {thisSeed} ════");
     Console.WriteLine(RegionGraphText.Render(region.Graph, region.Gating, region.Biomes,
-        region.Names, region.Identity, region.Starters));
+        region.Names, region.Identity, region.Starters, region.Dex, data));
 
     if (carve || png)
     {

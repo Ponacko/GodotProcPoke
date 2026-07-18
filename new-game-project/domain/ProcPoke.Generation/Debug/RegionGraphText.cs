@@ -1,4 +1,5 @@
 using System.Text;
+using ProcPoke.Data;
 using ProcPoke.Generation.Biomes;
 using ProcPoke.Generation.Gating;
 using ProcPoke.Generation.Identity;
@@ -15,7 +16,8 @@ namespace ProcPoke.Generation.Debug;
 public static class RegionGraphText
 {
     public static string Render(RegionGraph g, GatingPlan? gating = null, BiomeMap? biomes = null,
-        RegionNames? names = null, RegionIdentity? identity = null, StarterPlan? starters = null)
+        RegionNames? names = null, RegionIdentity? identity = null, StarterPlan? starters = null,
+        DexPlan? dex = null, GameData? data = null)
     {
         var sb = new StringBuilder();
         sb.AppendLine($"Region  badges={g.BadgeCount}  areas={g.Areas.Count}  connections={g.Connections.Count}  connected={g.IsConnected()}");
@@ -77,7 +79,32 @@ public static class RegionGraphText
                 sb.AppendLine($"  {Label(g, c.AreaA)}  ↔  {Label(g, c.AreaB)}  ({c.Kind})");
         }
 
+        if (dex is not null && data is not null)
+            AppendDex(sb, g, dex, data, names);
+
         return sb.ToString();
+    }
+
+    /// <summary>The regional dex: first and last ten entries (number, name, types, BST) and per-area counts.</summary>
+    private static void AppendDex(StringBuilder sb, RegionGraph g, DexPlan dex, GameData data, RegionNames? names)
+    {
+        sb.AppendLine($"Regional dex ({dex.Entries.Count} species):");
+        string Row(DexEntry e)
+        {
+            var s = data.Species[e.SpeciesId];
+            return $"    #{e.Number,3} {s.Name,-12} {string.Join("/", s.Types),-14} BST {StarterSelector.Bst(s)}";
+        }
+        foreach (var e in dex.Entries.Take(10)) sb.AppendLine(Row(e));
+        if (dex.Entries.Count > 20) sb.AppendLine("      …");
+        foreach (var e in dex.Entries.Skip(Math.Max(10, dex.Entries.Count - 10))) sb.AppendLine(Row(e));
+
+        sb.AppendLine("  Per-area first-availability counts:");
+        foreach (var (areaId, species) in dex.SpeciesByArea.OrderBy(kv => kv.Key))
+        {
+            var name = names is not null ? $"\"{names.Of(areaId)}\"" : g[areaId].Archetype.ToString();
+            var fossil = areaId == dex.FossilAreaId ? "  [fossils]" : "";
+            sb.AppendLine($"    {name,-22} {species.Count} species{fossil}");
+        }
     }
 
     private static string Label(RegionGraph g, int areaId)

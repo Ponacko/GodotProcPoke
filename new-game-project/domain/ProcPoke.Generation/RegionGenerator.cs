@@ -15,7 +15,7 @@ namespace ProcPoke.Generation;
 public sealed record GeneratedRegion(
     RegionGraph Graph, GatingPlan Gating, BiomeMap Biomes, OpeningPlan Openings,
     IReadOnlyDictionary<int, CarvedArea> Carved, GenerationSettings Settings,
-    RegionNames Names, RegionIdentity Identity, StarterPlan Starters);
+    RegionNames Names, RegionIdentity Identity, StarterPlan Starters, DexPlan Dex);
 
 /// <summary>
 /// Runs the generation pipeline in ADR-0004 order and enforces ADR-0002: construction guarantees a
@@ -44,13 +44,14 @@ public static class RegionGenerator
             var names = NamingPass.Generate(graph, data.NameBlocklist, streams);
             var identity = GymTypingPass.Generate(graph, biomes, streams);
             var starters = StarterSelector.Generate(data, settings, streams);
+            var dex = DexSelector.Generate(graph, biomes, starters, data, settings, streams);
             // Carving is the last pass (ADR-0004: puzzle before terrain) — the region owns its carved maps
             // so later population passes can read TrainerPost/ItemBall tile counts. Each area draws only
             // from its own "carve/<id>" stream (ADR-0005), so output is independent of pass order.
             var carved = graph.Areas.ToDictionary(a => a.Id, a => AreaCarver.Carve(
                 a, biomes.Of(a.Id), streams.Stream("carve", a.Id), openings, AreaCarver.GateOnExitOf(a, gating)));
             return new GeneratedRegion(
-                graph, gating, biomes, openings, carved, settings, names, identity, starters);
+                graph, gating, biomes, openings, carved, settings, names, identity, starters, dex);
         }
 
         throw new InvalidOperationException(

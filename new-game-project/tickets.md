@@ -147,7 +147,22 @@ next path area). Pure functions, no RNG. Full suite green (139 tests).
 
 </details>
 
-## 4a-2. Regional dex selection & numbering (split from 4a)
+## 4a-2. Regional dex selection & numbering (split from 4a) — ✅ DONE
+
+Delivered in commit "Implement ticket 4a-2: regional dex selection & numbering". `DexSelector.Generate`
+(`Roster/`) builds the dex from `EvolutionFamilies` (minus legendary and starter families), walks
+`AvailabilityOrder`'s wild areas (towns/League/hideouts excluded) filling fair-share quotas toward a rising
+BST target with a −200 type-coverage bonus, and numbers #1–9 starter lines then whole families in
+availability order. `DexPlan` (Entries/FossilAreaId/FossilFamilySpecies/SpeciesByArea) is added to
+`GeneratedRegion`. The two reserved fossil families are **pre-placed** at the fossil area so the budget can
+never be exhausted before they are seated. The budget is clamped to the candidate pool, so an infeasible
+knob combo (e.g. DexSize 150 at RosterCap 1) yields a smaller whole-family dex instead of crashing — a no-op
+at every feasible setting. `DexSelectorTests` (7 cases) fuzz the corpus for exactly-DexSize numbering, no
+broken families (re-derived), first-availability order, the two fossil families, full 17-type coverage at
+defaults, budget-exactness at DexSize 60, the cap-1 clamp, and determinism. `RegionGraphText` prints the
+dex (first/last 10 + per-area counts). Full suite green (146 tests).
+
+<details><summary>Original ticket</summary>
 
 **Model:** Sonnet recommended (the algorithm below is fully pinned, but it's a long single pass with a budget-exactness proof obligation; a Qwen-class model may be attempted if 4a-1 landed cleanly).
 
@@ -171,6 +186,8 @@ next path area). Pure functions, no RNG. Full suite green (139 tests).
 - [ ] Exactly 2 fossil families included, assigned to `FossilAreaId`
 - [ ] Every one of the 17 types has ≥1 representative at default settings (`DexSize` 150, cap 5, badges 8) — do **not** assert this at cap 1 (Gen 1 ids have no Dark-type)
 - [ ] Deterministic; printed by `RegionGraphText` (number, name, types, final BST — first/last 10 plus per-area counts is enough)
+
+</details>
 
 ## 4c. Fossils & legendaries
 
