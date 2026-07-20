@@ -31,7 +31,13 @@ public static class RegionGraphText
             sb.AppendLine($"Starters ({starters.Triangle}): {corners}");
         }
         if (identity is not null)
+        {
             sb.AppendLine($"Elite Four: {string.Join(", ", identity.EliteFourTypes)}  Champion: typeless={identity.ChampionIsTypeless}");
+            foreach (var team in identity.VillainTeams)
+                sb.AppendLine($"Villain: {team.Name} [{string.Join('/', team.Motif)}]");
+            sb.AppendLine($"Rival: {identity.Rival}");
+            sb.AppendLine(identity.ChampionIsRival ? "Champion: the rival" : "Champion: generated NPC");
+        }
         sb.AppendLine("Critical path (start → League):");
 
         var gateAtEdge = gating?.Gates.ToDictionary(x => x.BlockPathIndex) ?? [];

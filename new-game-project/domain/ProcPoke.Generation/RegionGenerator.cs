@@ -43,6 +43,7 @@ public static class RegionGenerator
             var openings = OpeningAligner.Plan(graph);
             var names = NamingPass.Generate(graph, data.NameBlocklist, streams);
             var identity = GymTypingPass.Generate(graph, biomes, streams);
+            identity = IdentityPass.Generate(identity, names, streams);
             var starters = StarterSelector.Generate(data, settings, streams);
             var dex = DexSelector.Generate(graph, biomes, starters, data, settings, streams);
             var special = SpecialSpeciesPass.Generate(graph, dex, data, settings, streams);

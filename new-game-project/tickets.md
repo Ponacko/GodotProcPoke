@@ -73,7 +73,22 @@ order, falling back to any untaken type once a city's affinity pool is exhausted
 more distinct types for the Elite Four. Champion is unconditionally typeless. `GymTypingTests` (9
 cases) fuzzes the standard corpus, including a reconstructed-fallback check for the exhaustion case.
 
-## 3c. Villain team, rival identity & Champion-identity roll
+## 3c. Villain team, rival identity & Champion-identity roll — ✅ DONE
+
+Delivered in commit "Implement ticket 3c: villain teams, rival identity & champion roll". `IdentityPass.Generate`
+(`Identity/`) layers villain teams, the rival archetype, and the Champion-identity roll onto the
+`GymTypingPass` identity via `identity with { … }`, drawing from the `"identity"` stream in the pinned
+order: team count (30% two), per-team name (`Team <root>`, root rejection-sampled off the canon list and the
+other team's root), per-team 1–2-type motif (excluding gym types + the other team's motif, falling back to
+just the other team's motif), the 25% Champion-is-rival roll, then the archetype (Underdog-weighted when the
+rival is Champion, else uniform). `RegionIdentity` gains `VillainTeams`/`Rival`/`ChampionIsRival`; the new
+`VillainTeam` record and `RivalArchetype` enum live alongside it. A guard turns the (astronomically unlikely)
+name-redraw exhaustion into a loud failure rather than a silent duplicate. `IdentityTests` (5 cases) fuzz the
+corpus for well-formed distinct non-canon teams with gym-disjoint motifs, per-seed archetype stability, the
+ChampionIsRival rate ∈ [0.20,0.30] and the conditional-Underdog skew (over 1500 seeds), and determinism.
+`RegionGraphText` prints teams, rival, and champion. Full suite green (156 tests).
+
+<details><summary>Original ticket</summary>
 
 **Model:** Qwen-OK (everything below is pinned; the only wiring is one new pass line in `RegionGenerator` and a `with`-extension of `RegionIdentity`).
 **Blueprint:** `docs/blueprints/3c-identity-pass.md` (also the canonical "how to add a pass" example).
@@ -98,6 +113,8 @@ Draw from `streams.Stream("identity")` **in exactly this order** (determinism de
 - [ ] Exactly one rival archetype per seed, stable across the run
 - [ ] Fuzz invariant over the corpus: `ChampionIsRival` rate ∈ [0.20, 0.30]; P(Underdog | ChampionIsRival) > P(Underdog | !ChampionIsRival)
 - [ ] Printed by `RegionGraphText` (teams + motifs, archetype, "Champion: rival" / "Champion: generated NPC")
+
+</details>
 
 ## 4b. Starter triangle selection — ✅ DONE
 

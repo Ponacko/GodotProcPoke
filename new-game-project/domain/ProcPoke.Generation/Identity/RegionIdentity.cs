@@ -2,8 +2,9 @@ using ProcPoke.Data;
 
 namespace ProcPoke.Generation.Identity;
 
-/// <summary>Gym/Elite Four/Champion type assignments (§7.1). Champion is always typeless — the broadest,
-/// highest-BST team in the region (7b builds the actual team).</summary>
+/// <summary>Gym/Elite Four/Champion type assignments (§7.1) plus the villain teams, rival archetype, and
+/// Champion-identity roll (§7.2/§7.3, ticket 3c). Champion is always typeless — the broadest, highest-BST
+/// team in the region (7b builds the actual team).</summary>
 public sealed record RegionIdentity
 {
     /// <summary>Gym-city area id → its assigned type, one per <see cref="Topology.AreaArchetype.Town"/>
@@ -15,4 +16,21 @@ public sealed record RegionIdentity
     public required IReadOnlyList<PokeType> EliteFourTypes { get; init; }
 
     public bool ChampionIsTypeless { get; init; } = true;
+
+    // --- added by ticket 3c (IdentityPass) ---
+
+    /// <summary>The 1–2 villain organisations of the region (§7.3).</summary>
+    public IReadOnlyList<VillainTeam> VillainTeams { get; init; } = [];
+
+    /// <summary>The rival's personality archetype (§7.2), fixed per seed.</summary>
+    public RivalArchetype Rival { get; init; } = RivalArchetype.Cocky;
+
+    /// <summary>Whether the rival is the region's Champion (§7.2) — 7c swaps in a rival Champion team.</summary>
+    public bool ChampionIsRival { get; init; }
 }
+
+/// <summary>A generated villain organisation (GDD §7.3): a name and a 1–2 type thematic motif.</summary>
+public sealed record VillainTeam(string Name, IReadOnlyList<PokeType> Motif);
+
+/// <summary>The rival's personality archetype (GDD §7.2), fixed per seed.</summary>
+public enum RivalArchetype { Cocky, Friendly, Brooding, Underdog }
