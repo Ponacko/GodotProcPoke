@@ -35,7 +35,7 @@ public class IdentityTests
             Assert.InRange(team.Motif.Count, 1, 2);
             Assert.Equal(team.Motif.Count, team.Motif.Distinct().Count()); // the two types differ
             // At ≤12 badges the candidate pool never runs dry, so the motif avoids every gym type (§7.1).
-            Assert.Empty(team.Motif.Where(gymTypes.Contains));
+            Assert.DoesNotContain(team.Motif, gymTypes.Contains);
         }
         Assert.Equal(roots.Count, roots.Distinct(StringComparer.OrdinalIgnoreCase).Count()); // teams distinct
         Assert.Contains(id.Rival, Enum.GetValues<RivalArchetype>());

@@ -1,6 +1,7 @@
 using System.Text;
 using ProcPoke.Data;
 using ProcPoke.Generation.Biomes;
+using ProcPoke.Generation.Encounters;
 using ProcPoke.Generation.Gating;
 using ProcPoke.Generation.Identity;
 using ProcPoke.Generation.Roster;
@@ -17,7 +18,8 @@ public static class RegionGraphText
 {
     public static string Render(RegionGraph g, GatingPlan? gating = null, BiomeMap? biomes = null,
         RegionNames? names = null, RegionIdentity? identity = null, StarterPlan? starters = null,
-        DexPlan? dex = null, GameData? data = null, SpecialSpecies? special = null)
+        DexPlan? dex = null, GameData? data = null, SpecialSpecies? special = null,
+        EncounterPlan? encounters = null)
     {
         var sb = new StringBuilder();
         sb.AppendLine($"Region  badges={g.BadgeCount}  areas={g.Areas.Count}  connections={g.Connections.Count}  connected={g.IsConnected()}");
@@ -91,7 +93,21 @@ public static class RegionGraphText
         if (special is not null && data is not null)
             AppendSpecial(sb, g, special, data, names);
 
+        if (encounters is not null)
+            AppendEncounters(sb, g, encounters, names);
+
         return sb.ToString();
+    }
+
+    /// <summary>Per-area encounter methods and base wild level (slots are filled in 6b).</summary>
+    private static void AppendEncounters(StringBuilder sb, RegionGraph g, EncounterPlan encounters, RegionNames? names)
+    {
+        sb.AppendLine("Encounters (methods @ base wild level):");
+        foreach (var (areaId, area) in encounters.ByArea.OrderBy(kv => kv.Key))
+        {
+            var methods = string.Join("/", area.Tables.Select(t => t.Method));
+            sb.AppendLine($"    {AreaName(g, names, areaId),-22} {methods,-18} Lv{area.BaseLevel}");
+        }
     }
 
     /// <summary>Fossils and legendaries: species, area, and (for legendaries) level and appended dex number.</summary>

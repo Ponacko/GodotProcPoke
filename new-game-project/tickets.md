@@ -348,7 +348,24 @@ distinct in-cap non-mythical legendaries, weakest-first ordering, one-per-dungeo
 - [ ] `LogicalTile.Ledge` docstring states the one-way-south contract
 - [ ] Carving invariants stay green; deterministic
 
-## 6a. Encounter framework: level curve, table shapes, method assignment (split from 6)
+## 6a. Encounter framework: level curve, table shapes, method assignment (split from 6) — ✅ DONE
+
+Delivered in commit "Implement ticket 6a: encounter framework". `Encounters/` holds the records
+(`EncounterMethod`, `EncounterSlot`, `EncounterTable`, `AreaEncounters` with the recommended `int BaseLevel`,
+`EncounterPlan`, `SlotLayouts`), the shared `LevelCurve` (`GymAce` + `WildLevel`), and `EncounterPass` which
+emits per-area tables with correct methods and base levels but **empty slots** (6b fills them). Land tables
+go on Route/Forest/cave-family/VictoryRoad/Tower; Surf+Fishing additionally on Water-biome or water-gated
+areas; towns/League/hideouts get no entry. `EncounterPlan Encounters` added to `GeneratedRegion`;
+`RegionGraphText` prints per-area methods + base level. `EncounterFrameworkTests` (12 cases) cover the
+`GymAce` endpoints/monotonicity, per-area method assignment + empty slots across the corpus, non-decreasing
+base levels along availability order (dungeon +2 removed), slot-layout sums, and determinism. Full suite
+green (168 tests).
+
+**Ticket vs blueprint conflict (resolved toward the ticket):** for areas past the last gym the ticket prose
+says base wild = `54 − 5 = 49`, while the blueprint's `IMPLEMENT(1)` says `GymAce(last) − 5` (= 45 at 8
+badges). Per the blueprints README ("the ticket is the spec"), `LevelCurve` uses 49; documented in the code.
+
+<details><summary>Original ticket</summary>
 
 **Model:** Qwen-OK.
 **Blueprint:** `docs/blueprints/6a-encounter-framework.md` (records + `LevelCurve` consumed by 6b, 7a, 7b, 7c).
@@ -368,6 +385,8 @@ distinct in-cap non-mythical legendaries, weakest-first ordering, one-per-dungeo
 - [ ] Every Route/Forest/cave-family/Tower area has a Land table; every Water-biome or water-gated area also has Surf + Fishing; towns/League/hideouts have none
 - [ ] `LevelCurve` unit tests: `GymAce(0, 8) = 14`, `GymAce(7, 8) = 50`, monotone non-decreasing; `WildLevel` non-decreasing along availability order (±0 tolerance — jitter isn't in yet)
 - [ ] Deterministic; `RegionGraphText` prints each area's methods + base wild level
+
+</details>
 
 ## 6b. Encounter slot filling & special overlays (split from 6)
 

@@ -1,6 +1,7 @@
 using ProcPoke.Data;
 using ProcPoke.Generation.Biomes;
 using ProcPoke.Generation.Carving;
+using ProcPoke.Generation.Encounters;
 using ProcPoke.Generation.Gating;
 using ProcPoke.Generation.Identity;
 using ProcPoke.Generation.Roster;
@@ -15,7 +16,8 @@ namespace ProcPoke.Generation;
 public sealed record GeneratedRegion(
     RegionGraph Graph, GatingPlan Gating, BiomeMap Biomes, OpeningPlan Openings,
     IReadOnlyDictionary<int, CarvedArea> Carved, GenerationSettings Settings,
-    RegionNames Names, RegionIdentity Identity, StarterPlan Starters, DexPlan Dex, SpecialSpecies Special);
+    RegionNames Names, RegionIdentity Identity, StarterPlan Starters, DexPlan Dex, SpecialSpecies Special,
+    EncounterPlan Encounters);
 
 /// <summary>
 /// Runs the generation pipeline in ADR-0004 order and enforces ADR-0002: construction guarantees a
@@ -47,13 +49,15 @@ public static class RegionGenerator
             var starters = StarterSelector.Generate(data, settings, streams);
             var dex = DexSelector.Generate(graph, biomes, starters, data, settings, streams);
             var special = SpecialSpeciesPass.Generate(graph, dex, data, settings, streams);
+            var encounters = EncounterPass.Generate(graph, biomes, gating, dex, identity, streams);
             // Carving is the last pass (ADR-0004: puzzle before terrain) — the region owns its carved maps
             // so later population passes can read TrainerPost/ItemBall tile counts. Each area draws only
             // from its own "carve/<id>" stream (ADR-0005), so output is independent of pass order.
             var carved = graph.Areas.ToDictionary(a => a.Id, a => AreaCarver.Carve(
                 a, biomes.Of(a.Id), streams.Stream("carve", a.Id), openings, AreaCarver.GateOnExitOf(a, gating)));
             return new GeneratedRegion(
-                graph, gating, biomes, openings, carved, settings, names, identity, starters, dex, special);
+                graph, gating, biomes, openings, carved, settings, names, identity, starters, dex, special,
+                encounters);
         }
 
         throw new InvalidOperationException(
