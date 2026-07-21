@@ -243,7 +243,22 @@ distinct in-cap non-mythical legendaries, weakest-first ordering, one-per-dungeo
 
 </details>
 
-## 5a. Forest carver: de-stripe
+## 5a. Forest carver: de-stripe — ✅ DONE
+
+Delivered in commit "Implement ticket 5a: forest carver de-stripe". `ForestCarver` now takes
+`Carve(Area, Biome, Pcg32, IReadOnlyList<AreaOpening> planned)` (mirroring `TownCarver`/`RouteCarver`), and
+the `AreaCarver` switch passes `openings.OpeningsOf(area.Id)`. It carves a protected three-row spine band at
+the edge-aligned exit row, links the left/branch openings to it via protected columns, then stamps
+`6 + rng.NextInt(5)` organic tree-clump ellipses instead of full-height stripe barriers. To satisfy the
+`≥3 discrete clumps` acceptance assert (the literal random-centre algorithm merged into <3 clumps on some
+seeds, e.g. seed 28/badges 4), clump centres are rejection-sampled off the spine band/openings and ≥6
+Chebyshev apart, so each is a discrete component. The shared spine-stub idiom (`OpenSpineEdge`/
+`ConnectSpineColumn`) was hoisted into `CarveKit` and both `ForestCarver` and `RouteCarver` now use it
+(behaviour-preserving for routes). `ForestCarverTests` fuzz the corpus for no all-Tree interior column and
+≥3 clumps; `CarvingTests`/`OpeningAlignmentTests` cover spine/reachability/alignment/determinism. Forests
+render as scattered clumps with a clear walkable spine. Full suite green (171 tests).
+
+<details><summary>Original ticket</summary>
 
 **Model:** Qwen-OK.
 
@@ -257,6 +272,8 @@ distinct in-cap non-mythical legendaries, weakest-first ordering, one-per-dungeo
 - [ ] Assert: `Tree` tiles excluding the border form ≥ 3 discrete clumps (4-neighbour connected components)
 - [ ] Openings match the plan (`OpeningAlignmentTests` cover forests once the signature changes); spine open; `CarvingTests` spine + mutual-reachability invariants stay green
 - [ ] Deterministic
+
+</details>
 
 ## 5b. Cave carver: rooms, winding passages, boulder fields
 

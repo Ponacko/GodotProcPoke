@@ -44,11 +44,11 @@ public static class RouteCarver
 
         var openings = new List<(int X, int Y)>
         {
-            OpenEdge(canvas, EdgeSide.Left, planned.OffsetOr(EdgeSide.Left, h / 2)),
-            OpenEdge(canvas, EdgeSide.Right, canvas.SpineY),
+            CarveKit.OpenSpineEdge(grid, canvas.Protected, EdgeSide.Left, planned.OffsetOr(EdgeSide.Left, h / 2), canvas.SpineY, floor),
+            CarveKit.OpenSpineEdge(grid, canvas.Protected, EdgeSide.Right, canvas.SpineY, canvas.SpineY, floor),
         };
         foreach (var o in planned.Where(o => o.Edge is EdgeSide.Top or EdgeSide.Bottom))
-            openings.Add(OpenEdge(canvas, o.Edge, o.Offset));
+            openings.Add(CarveKit.OpenSpineEdge(grid, canvas.Protected, o.Edge, o.Offset, canvas.SpineY, floor));
 
         var grassPatches = biome == Biome.Forest ? 4 : 3;
         var treeClumps = biome == Biome.Forest ? 5 : biome == Biome.Desert ? 1 : 3;
@@ -85,37 +85,6 @@ public static class RouteCarver
         PlaceOnFloor(grid, rng.NextInt(3, w - 3), rng.Chance(0.5) ? 2 : h - 3, LogicalTile.ItemBall, floor);
 
         return new CarvedArea { AreaId = area.Id, Grid = grid, Openings = openings };
-    }
-
-    /// <summary>Punches one edge opening through the border and connects it into the spine row.</summary>
-    private static (int X, int Y) OpenEdge(Canvas c, EdgeSide edge, int offset)
-    {
-        var g = c.Grid;
-        var (w, h) = (g.Width, g.Height);
-
-        if (edge is EdgeSide.Left or EdgeSide.Right)
-        {
-            var x = edge == EdgeSide.Left ? 0 : w - 1;
-            for (var dy = -1; dy <= 1; dy++)
-                if (g.InBounds(x, offset + dy)) g[x, offset + dy] = c.Floor;
-            g[x, offset] = LogicalTile.Warp;
-            ConnectColumn(c, edge == EdgeSide.Left ? 1 : w - 2, offset);
-            return (x, offset);
-        }
-
-        var y = edge == EdgeSide.Top ? 0 : h - 1;
-        g[offset, y] = LogicalTile.Warp;
-        ConnectColumn(c, offset, edge == EdgeSide.Top ? 1 : h - 2);
-        return (offset, y);
-    }
-
-    /// <summary>Carves a protected floor stub down one column between <paramref name="fromY"/> and the
-    /// spine row — an opening's link to the guaranteed corridor.</summary>
-    private static void ConnectColumn(Canvas c, int x, int fromY)
-    {
-        var (lo, hi) = fromY <= c.SpineY ? (fromY, c.SpineY) : (c.SpineY, fromY);
-        for (var y = lo; y <= hi; y++)
-            if (c.Grid.InBounds(x, y)) { c.Grid[x, y] = c.Floor; c.Protected.Add((x, y)); }
     }
 
     /// <summary>Stamps a rectangle of a tile, staying inside the border and (optionally) off protected connectivity tiles.</summary>

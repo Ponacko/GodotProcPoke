@@ -15,7 +15,7 @@ public static class AreaCarver
     public static CarvedArea Carve(Area area, Biome biome, Pcg32 rng, OpeningPlan openings) => area.Archetype switch
     {
         AreaArchetype.Route => RouteCarver.Carve(area, biome, rng, openings.OpeningsOf(area.Id)),
-        AreaArchetype.Forest => ForestCarver.Carve(area, biome, rng),
+        AreaArchetype.Forest => ForestCarver.Carve(area, biome, rng, openings.OpeningsOf(area.Id)),
 
         AreaArchetype.StartTown or AreaArchetype.Town or AreaArchetype.League
             => TownCarver.Carve(area, biome, rng, openings.OpeningsOf(area.Id)),

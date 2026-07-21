@@ -37,6 +37,44 @@ internal static class CarveKit
                 Set(g, bx + w, y, floor);
     }
 
+    /// <summary>Punches one edge opening (a <see cref="LogicalTile.Warp"/>) through the border at
+    /// <paramref name="offset"/> and links it into the spine row via a protected floor column — the shared
+    /// spine-first connectivity idiom (ADR-0001). Every carved tile is recorded in <paramref name="guarded"/>
+    /// so decoration never overwrites the connection. Returns the opening tile.</summary>
+    public static (int X, int Y) OpenSpineEdge(
+        TileGrid g, ISet<(int X, int Y)> guarded, EdgeSide edge, int offset, int spineY, LogicalTile floor)
+    {
+        var (w, h) = (g.Width, g.Height);
+        if (edge is EdgeSide.Left or EdgeSide.Right)
+        {
+            var x = edge == EdgeSide.Left ? 0 : w - 1;
+            for (var dy = -1; dy <= 1; dy++)
+                if (g.InBounds(x, offset + dy)) g[x, offset + dy] = floor;
+            g[x, offset] = LogicalTile.Warp;
+            ConnectSpineColumn(g, guarded, edge == EdgeSide.Left ? 1 : w - 2, offset, spineY, floor);
+            return (x, offset);
+        }
+
+        var y = edge == EdgeSide.Top ? 0 : h - 1;
+        g[offset, y] = LogicalTile.Warp;
+        ConnectSpineColumn(g, guarded, offset, edge == EdgeSide.Top ? 1 : h - 2, spineY, floor);
+        return (offset, y);
+    }
+
+    /// <summary>Carves a protected floor column between <paramref name="fromY"/> and the spine row — an
+    /// opening's link to the guaranteed corridor.</summary>
+    public static void ConnectSpineColumn(
+        TileGrid g, ISet<(int X, int Y)> guarded, int x, int fromY, int spineY, LogicalTile floor)
+    {
+        var (lo, hi) = fromY <= spineY ? (fromY, spineY) : (spineY, fromY);
+        for (var y = lo; y <= hi; y++)
+            if (x >= 1 && x <= g.Width - 2 && y >= 1 && y <= g.Height - 2)
+            {
+                g[x, y] = floor;
+                guarded.Add((x, y));
+            }
+    }
+
     private static void Set(TileGrid g, int x, int y, LogicalTile tile)
     {
         if (x >= 1 && x <= g.Width - 2 && y >= 1 && y <= g.Height - 2) g[x, y] = tile;
