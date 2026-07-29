@@ -28,6 +28,20 @@ public static class EncounterPass
     /// <summary>Terrain tags that make an area a water body (they map to <see cref="Biome.Water"/>).</summary>
     private static readonly HashSet<string> WaterTags = ["water", "deep-water", "sea"];
 
+    /// <summary>Fewest distinct species a table's pool may be narrowed to before a restriction is relaxed —
+    /// the Land layout has to reach four distinct species.</summary>
+    private const int MinimumPoolSpecies = 4;
+
+    /// <summary>How many distinct species an area's land line-up holds.</summary>
+    private const int RosterSize = 5;
+
+    /// <summary>
+    /// How many of those an area keeps from the last area of the same biome. The rest are newly introduced, so
+    /// the species met early stay common across the whole region while every new area of a familiar biome
+    /// still has something in it worth looking for (GDD §6.3 pacing).
+    /// </summary>
+    private const int CarriedForward = 3;
+
     private sealed record Candidate(int SpeciesId, int FinalBst);
 
     private sealed record RarityTiers(
@@ -65,32 +79,46 @@ public static class EncounterPass
                 familyFinalBst.TryGetValue(e.SpeciesId, out var bst) ? bst : StarterSelector.Bst(data.Species[e.SpeciesId])))
             .ToList();
 
+        var stages = EvolutionStages.Of(data, settings.RosterCap);
+
+        // Walked in availability order, so each biome's line-up can build on the one before it.
+        var lastRosterByBiome = new Dictionary<Biome, List<Candidate>>();
+        var introducedByBiome = new Dictionary<Biome, HashSet<int>>();
+
         var byArea = new Dictionary<int, AreaEncounters>();
         foreach (var areaId in availabilityOrder)
         {
             var area = graph[areaId];
             if (NoWild.Contains(area.Archetype)) continue; // towns/League/hideouts hold no wild encounters
 
-            var baseLevel = LevelCurve.WildLevel(area, graph, biomes.Of(area.Id), gymPathIndices, anchors);
+            var biome = biomes.Of(area.Id);
+            var baseLevel = LevelCurve.WildLevel(area, graph, biome, gymPathIndices, anchors);
+            var fraction = AvailabilityFraction(availabilityIndex[area.Id], availabilityOrder.Count);
             var tables = new List<EncounterTable>();
             RarityTiers? landTiers = null;
 
             if (LandArchetypes.Contains(area.Archetype))
             {
-                landTiers = BuildTiers(PoolFor(area, biomes, graph, wildDex, data, EncounterMethod.Land));
+                var pool = EligibleByStage(
+                    PoolFor(area, biomes, graph, wildDex, data, EncounterMethod.Land), stages, fraction);
+                var roster = NextRoster(biome, pool, lastRosterByBiome, introducedByBiome, rng);
+                landTiers = BuildTiers(roster);
                 tables.Add(FillTable(EncounterMethod.Land, SlotLayouts.Land, landTiers, baseLevel, 0, 4, rng));
             }
 
-            if (biomes.Of(area.Id) == Biome.Water || waterGated.Contains(area.Id))
+            if (biome == Biome.Water || waterGated.Contains(area.Id))
             {
-                var waterTiers = BuildTiers(PoolFor(area, biomes, graph, wildDex, data, EncounterMethod.Surf));
+                // Water tables are not rostered — a region has few water areas, so there is no run of them to
+                // introduce species across — but the stage cap applies just the same.
+                var waterTiers = BuildTiers(EligibleByStage(
+                    PoolFor(area, biomes, graph, wildDex, data, EncounterMethod.Surf), stages, fraction));
                 tables.Add(FillTable(EncounterMethod.Surf, SlotLayouts.Surf, waterTiers, baseLevel, 0, 3, rng));
                 tables.Add(FillTable(EncounterMethod.Fishing, SlotLayouts.Fishing, waterTiers, baseLevel, 0, 3, rng));
             }
 
             EncounterTable? overlay = null;
             if (landTiers is not null && area.Archetype is AreaArchetype.Route or AreaArchetype.Forest
-                && AvailabilityFraction(availabilityIndex[area.Id], availabilityOrder.Count) >= 0.5)
+                && fraction >= 0.5)
             {
                 overlay = FillTable(EncounterMethod.Land, SlotLayouts.Land, landTiers, baseLevel, 5, 0, rng,
                     landTiers.RareAndVeryRare);
@@ -118,6 +146,83 @@ public static class EncounterPass
         if (wildDex.Count >= 4) return wildDex;
         throw new InvalidOperationException($"encounter pool for area {area.Id} has fewer than four species");
 
+    }
+
+    /// <summary>
+    /// Drops species too far up their evolution line for this point in the game: base forms only for the
+    /// first third, one evolution deep by the second, anything after that. Without this a fully-evolved
+    /// Pokémon could hold a slot on route one purely because its family sits early in the dex — a family is
+    /// seated as a unit, so its evolutions become "available" the moment its base form does.
+    /// <para>
+    /// The cap lifts a stage at a time if a narrow biome pool cannot field <see cref="MinimumPoolSpecies"/>
+    /// otherwise; a table that cannot be built is worse than one with an early evolution in it.
+    /// </para>
+    /// </summary>
+    private static IReadOnlyList<Candidate> EligibleByStage(
+        IReadOnlyList<Candidate> pool, IReadOnlyDictionary<int, int> stages, double fraction)
+    {
+        for (var cap = MaxStageAt(fraction); cap < 3; cap++)
+        {
+            var eligible = pool.Where(c => StageOf(stages, c.SpeciesId) <= cap).ToList();
+            if (eligible.Count >= MinimumPoolSpecies) return eligible;
+        }
+        return pool;
+    }
+
+    private static int MaxStageAt(double fraction) => fraction < 1.0 / 3 ? 0 : fraction < 2.0 / 3 ? 1 : 2;
+
+    private static int StageOf(IReadOnlyDictionary<int, int> stages, int speciesId)
+        => stages.TryGetValue(speciesId, out var stage) ? stage : 0;
+
+    /// <summary>
+    /// This area's land line-up: most of it carried over from the previous area of the same biome, the rest
+    /// species that biome has not shown before. The player therefore keeps meeting the Pokémon they met early
+    /// — those become the region's common wildlife — while each new area of a familiar biome still holds one
+    /// or two they have not caught yet.
+    /// <para>
+    /// A pool no larger than the roster is used whole; there is nothing to stagger.
+    /// </para>
+    /// </summary>
+    private static IReadOnlyList<Candidate> NextRoster(
+        Biome biome, IReadOnlyList<Candidate> pool,
+        Dictionary<Biome, List<Candidate>> lastRosterByBiome,
+        Dictionary<Biome, HashSet<int>> introducedByBiome,
+        Pcg32 rng)
+    {
+        IReadOnlyList<Candidate> roster;
+        if (pool.Count <= RosterSize)
+        {
+            roster = pool;
+        }
+        else
+        {
+            var previous = lastRosterByBiome.TryGetValue(biome, out var last) ? last : [];
+            var inPool = pool.Select(c => c.SpeciesId).ToHashSet();
+
+            var carried = previous.Where(c => inPool.Contains(c.SpeciesId)).ToList();
+            rng.Shuffle(carried);
+            carried = carried.Take(CarriedForward).ToList();
+
+            var carriedIds = carried.Select(c => c.SpeciesId).ToHashSet();
+            var introduced = introducedByBiome.TryGetValue(biome, out var seen) ? seen : [];
+            var remaining = pool.Where(c => !carriedIds.Contains(c.SpeciesId)).ToList();
+
+            // Unseen species first, so the new slots really are new; species this biome has shown before are
+            // the backstop once it runs out of them.
+            var fresh = remaining.Where(c => !introduced.Contains(c.SpeciesId)).ToList();
+            var repeats = remaining.Where(c => introduced.Contains(c.SpeciesId)).ToList();
+            rng.Shuffle(fresh);
+            rng.Shuffle(repeats);
+
+            roster = carried.Concat(fresh).Concat(repeats).Take(RosterSize).ToList();
+        }
+
+        lastRosterByBiome[biome] = roster.ToList();
+        if (!introducedByBiome.TryGetValue(biome, out var all))
+            introducedByBiome[biome] = all = [];
+        all.UnionWith(roster.Select(c => c.SpeciesId));
+
+        return roster;
     }
 
     private static IReadOnlySet<PokeType> AffinityFor(Area area, BiomeMap biomes, RegionGraph graph)

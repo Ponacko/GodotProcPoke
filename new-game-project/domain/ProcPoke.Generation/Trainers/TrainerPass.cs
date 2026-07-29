@@ -135,16 +135,26 @@ public static class TrainerPass
         return new TrainerEncounter(areaId, position, assignment.ClassName, assignment.TeamName, roster);
     }
 
+    /// <summary>How many levels a gym's trainer band spans below its top.</summary>
+    private const int GymTrainerBandDepth = 3;
+
     private static TrainerEncounter CreateGymTrainer(
         Area area, int areaId, PokeType gymType, IReadOnlyList<int> availableSpecies, double fraction,
         RegionGraph graph, BiomeMap biomes, IReadOnlyList<int> gymPathIndices,
         IReadOnlyDictionary<int, int> anchors, GameData data, Pcg32 rng)
     {
-        var lower = GymRouteWildLevel(area, graph, biomes, gymPathIndices, anchors);
+        var wild = GymRouteWildLevel(area, graph, biomes, gymPathIndices, anchors);
         var gymIndex = gymPathIndices.Select((pathIndex, index) => (pathIndex, index))
             .First(x => x.pathIndex == area.PathIndex).index;
-        var upper = LevelCurve.GymAce(gymIndex, gymPathIndices.Count) - 2;
-        if (upper < lower) upper = lower;
+        var ace = LevelCurve.GymAce(gymIndex, gymPathIndices.Count);
+
+        // A tight band halfway between the routes outside the gym and the leader waiting inside, so the gym
+        // is a step up on the way to a clear spike. Pegging the top of the band at the leader's ace minus two
+        // only read correctly while wild levels ran five under the next gym; on the gentler wild curve that
+        // put a gym's own trainers eight to ten levels above every route around it.
+        var upper = Math.Max(wild, (wild + ace) / 2);
+        var lower = Math.Max(wild, upper - GymTrainerBandDepth);
+
         var size = RosterSize(fraction);
         var roster = Enumerable.Range(0, size)
             .Select(_ => new TrainerMember(

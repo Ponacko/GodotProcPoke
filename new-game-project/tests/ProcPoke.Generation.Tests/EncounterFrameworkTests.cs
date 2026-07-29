@@ -102,8 +102,10 @@ public class EncounterFrameworkTests
                         Assert.DoesNotContain(slot.SpeciesId, region.Dex.FossilFamilySpecies);
                         Assert.False(TestData.Data.Species[slot.SpeciesId].IsLegendary);
                         Assert.False(TestData.Data.Species[slot.SpeciesId].IsMythical);
-                        Assert.InRange(slot.MinLevel, Math.Max(2, entry.BaseLevel - 2), entry.BaseLevel - 2);
-                        Assert.InRange(slot.MaxLevel, entry.BaseLevel + 2, entry.BaseLevel + 2);
+                        // Stated as equalities: these are exact, and as an InRange the lower bound overtook
+                        // the upper one as soon as the wild curve reached down to level 3.
+                        Assert.Equal(Math.Max(2, entry.BaseLevel - 2), slot.MinLevel);
+                        Assert.Equal(entry.BaseLevel + 2, slot.MaxLevel);
                     });
                 }
 
@@ -140,8 +142,6 @@ public class EncounterFrameworkTests
     {
         // With no jitter yet, the base curve (with the dungeon +2 removed) is non-decreasing along
         // first-availability order.
-        var dungeonBump = new HashSet<AreaArchetype>
-            { AreaArchetype.DeepCave, AreaArchetype.Tower, AreaArchetype.VillainHideout };
         var checkedCount = 0;
 
         for (ulong seed = 1; seed <= 200; seed++)
@@ -153,7 +153,9 @@ public class EncounterFrameworkTests
             {
                 var entry = region.Encounters.Of(areaId);
                 if (entry is null) continue;
-                var baseLevel = entry.BaseLevel - (dungeonBump.Contains(region.Graph[areaId].Archetype) ? 2 : 0);
+                // Ask the curve which archetypes it bumps rather than restating the set here.
+                var archetype = region.Graph[areaId].Archetype;
+                var baseLevel = entry.BaseLevel - (LevelCurve.HasDungeonBump(archetype) ? 2 : 0);
                 Assert.True(baseLevel >= prev,
                     $"seed {seed}/{badges}: area {areaId} base level {baseLevel} < previous {prev}");
                 prev = baseLevel;
