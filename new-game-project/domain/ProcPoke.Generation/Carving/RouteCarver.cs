@@ -25,7 +25,8 @@ public static class RouteCarver
         public HashSet<(int X, int Y)> Protected { get; } = [];
     }
 
-    public static CarvedArea Carve(Area area, Biome biome, Pcg32 rng, IReadOnlyList<AreaOpening> planned)
+    public static CarvedArea Carve(
+        Area area, Biome biome, Pcg32 rng, IReadOnlyList<AreaOpening> planned, EdgeSide? spineExit)
     {
         var (w, h) = CarveKit.Dimensions(area.Size);
         var border = biome is Biome.Mountain or Biome.Cave ? LogicalTile.Wall : LogicalTile.Tree;
@@ -39,16 +40,20 @@ public static class RouteCarver
 
         // The spine row is the exit opening's row (edge-aligned with the next area) — the one guaranteed
         // walkable corridor every other opening reaches through a stub, kept clear of decoration below.
-        var canvas = new Canvas(grid, floor, planned.OffsetOr(EdgeSide.Right, h / 2));
+        // The trunk row follows whichever side-to-side border the area has (the exit if it has one), or the
+        // middle when the spine runs top-to-bottom here and there is no horizontal border to align to.
+        var trunkY = CarveKit.TrunkRow(planned, spineExit, h);
+        var canvas = new Canvas(grid, floor, trunkY);
         for (var x = 1; x < w - 1; x++) { grid[x, canvas.SpineY] = floor; canvas.Protected.Add((x, canvas.SpineY)); }
 
-        var openings = new List<(int X, int Y)>
-        {
-            CarveKit.OpenSpineEdge(grid, canvas.Protected, EdgeSide.Left, planned.OffsetOr(EdgeSide.Left, h / 2), canvas.SpineY, floor),
-            CarveKit.OpenSpineEdge(grid, canvas.Protected, EdgeSide.Right, canvas.SpineY, canvas.SpineY, floor),
-        };
-        foreach (var o in planned.Where(o => o.Edge is EdgeSide.Top or EdgeSide.Bottom))
-            openings.Add(CarveKit.OpenSpineEdge(grid, canvas.Protected, o.Edge, o.Offset, canvas.SpineY, floor));
+        // Only borders that face a neighbour are opened — the spine can leave on any side now, and opening a
+        // border with nothing behind it would leave a walkable tile onto blank space.
+        var openings = planned
+            .Select(o => CarveKit.OpenSpineEdge(grid, canvas.Protected, o.Edge, o.Offset, canvas.SpineY, floor))
+            .ToList();
+
+        // Keep decoration off the line a gate barrier would wall over, or the item/post placed there is lost.
+        foreach (var tile in CarveKit.BarrierLine(spineExit, w, h)) canvas.Protected.Add(tile);
 
         var nearOpening = OpeningNeighbourhood(openings);
 
@@ -66,9 +71,14 @@ public static class RouteCarver
 
         // Tree/rock clumps on the flanks only (never on a protected connectivity tile).
         var clumpTile = biome is Biome.Mountain or Biome.Cave ? LogicalTile.Wall : LogicalTile.Tree;
-        for (var i = 0; i < treeClumps; i++)
+        // The trunk row is wherever the neighbour's opening put it, so a flank can be too thin to hold a
+        // clump. Use whichever side has room, and place none at all if neither does.
+        var upperRoom = spineY - 1 > 2;
+        var lowerRoom = h - 2 > spineY + 2;
+        for (var i = 0; i < treeClumps && (upperRoom || lowerRoom); i++)
         {
-            var upper = rng.Chance(0.5);
+            var wantUpper = rng.Chance(0.5);
+            var upper = upperRoom && (wantUpper || !lowerRoom);
             var cy = upper ? rng.NextInt(2, spineY - 1) : rng.NextInt(spineY + 2, h - 2);
             var cx = rng.NextInt(3, w - 3);
             Stamp(canvas, cx - 1, cy - 1, cx + 1, cy, clumpTile, allowCorridor: false);
@@ -78,7 +88,7 @@ public static class RouteCarver
         DecorationKit.PlaceItemNook(grid, floor, clumpTile, spineY, rng, canvas.Protected, nearOpening);
         DecorationKit.PlaceTrainerPosts(grid, floor, spineY, 1 + rng.NextInt(2), rng, canvas.Protected, nearOpening);
 
-        return new CarvedArea { AreaId = area.Id, Grid = grid, Openings = openings };
+        return new CarvedArea { AreaId = area.Id, Grid = grid, Openings = openings, TrunkRow = spineY };
     }
 
     /// <summary>Stamps a rectangle of a tile, staying inside the border and (optionally) off protected connectivity tiles.</summary>

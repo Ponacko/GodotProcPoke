@@ -18,6 +18,15 @@ public sealed record AreaOpening
 
 public static class AreaOpeningExtensions
 {
+    /// <summary>The border facing this one across the area.</summary>
+    public static EdgeSide Opposite(this EdgeSide edge) => edge switch
+    {
+        EdgeSide.Left => EdgeSide.Right,
+        EdgeSide.Right => EdgeSide.Left,
+        EdgeSide.Top => EdgeSide.Bottom,
+        _ => EdgeSide.Top,
+    };
+
     /// <summary>This area's offset on <paramref name="edge"/>, or <paramref name="fallback"/> if it has no
     /// Seamless connection there (an unaligned edge — a Warp neighbour, or none at all).</summary>
     public static int OffsetOr(this IReadOnlyList<AreaOpening> openings, EdgeSide edge, int fallback)

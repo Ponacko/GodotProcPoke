@@ -23,30 +23,48 @@ public class TowerCarverTests
                 checkedCount++;
                 Assert.Single(carved.Openings);
 
-                var gaps = SeparatorGaps(carved.Grid);
+                // The climb runs away from whichever border the entrance is on, so separators are lines of
+                // constant canonical u — reading them off the grid's rows only worked while every tower was
+                // entered from the bottom.
+                var frame = EntranceFrame(carved);
+                var gaps = SeparatorGaps(carved.Grid, frame);
                 Assert.True(gaps.Count >= 2, $"seed {seed}/{badges} area {area.Id}: fewer than two stair walls");
-                var bottomUp = gaps.OrderByDescending(g => g.Y).ToList();
-                for (var i = 1; i < bottomUp.Count; i++)
-                    Assert.NotEqual(bottomUp[i - 1].X > carved.Grid.Width / 2, bottomUp[i].X > carved.Grid.Width / 2);
+
+                // Walking up from the entrance, consecutive stair gaps must sit on opposite sides.
+                var fromEntrance = gaps.OrderByDescending(g => g.U).ToList();
+                for (var i = 1; i < fromEntrance.Count; i++)
+                    Assert.NotEqual(fromEntrance[i - 1].V > frame.V / 2, fromEntrance[i].V > frame.V / 2);
 
                 var item = Find(carved.Grid, LogicalTile.ItemBall);
                 var post = Find(carved.Grid, LogicalTile.TrainerPost);
-                var topWall = gaps.Min(g => g.Y);
-                Assert.True(item.Y < topWall && post.Y < topWall, $"seed {seed}/{badges} area {area.Id}: reward is not in top band");
+                var lastWall = gaps.Min(g => g.U);
+                Assert.True(frame.Unmap(item.X, item.Y).U < lastWall && frame.Unmap(post.X, post.Y).U < lastWall,
+                    $"seed {seed}/{badges} area {area.Id}: reward is not in the top band");
                 Assert.Contains(item, Reachable(carved.Grid, carved.Openings[0]));
             }
         }
         Assert.True(checkedCount > 0, "no Tower areas were exercised across the corpus");
     }
 
-    private static IReadOnlyList<(int X, int Y)> SeparatorGaps(TileGrid grid)
+    /// <summary>The grid seen from the tower's entrance border, which is the axis the floors stack along.</summary>
+    private static CarveFrame EntranceFrame(CarvedArea carved)
     {
-        var gaps = new List<(int X, int Y)>();
-        for (var y = 1; y < grid.Height - 1; y++)
+        var (w, h) = (carved.Grid.Width, carved.Grid.Height);
+        var (x, y) = carved.Openings[0];
+        var edge = x == 0 ? EdgeSide.Left : x == w - 1 ? EdgeSide.Right : y == 0 ? EdgeSide.Top : EdgeSide.Bottom;
+        return new CarveFrame(edge, w, h);
+    }
+
+    /// <summary>Canonical u lines that are solid wall but for a single walkable gap — the stair walls.</summary>
+    private static IReadOnlyList<(int U, int V)> SeparatorGaps(TileGrid grid, CarveFrame f)
+    {
+        var gaps = new List<(int U, int V)>();
+        for (var u = 1; u < f.U - 1; u++)
         {
-            var walkable = Enumerable.Range(1, grid.Width - 2).Where(x => grid[x, y].IsWalkable()).ToList();
-            if (walkable.Count == 1 && Enumerable.Range(1, grid.Width - 2).All(x => x == walkable[0] || grid[x, y] == LogicalTile.Wall))
-                gaps.Add((walkable[0], y));
+            var span = Enumerable.Range(1, f.V - 2).ToList();
+            var walkable = span.Where(v => f.Read(grid, u, v).IsWalkable()).ToList();
+            if (walkable.Count == 1 && span.All(v => v == walkable[0] || f.Read(grid, u, v) == LogicalTile.Wall))
+                gaps.Add((u, walkable[0]));
         }
         return gaps;
     }

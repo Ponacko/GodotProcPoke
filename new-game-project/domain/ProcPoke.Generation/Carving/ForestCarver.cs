@@ -12,7 +12,8 @@ namespace ProcPoke.Generation.Carving;
 /// </summary>
 public static class ForestCarver
 {
-    public static CarvedArea Carve(Area area, Biome biome, Pcg32 rng, IReadOnlyList<AreaOpening> planned)
+    public static CarvedArea Carve(
+        Area area, Biome biome, Pcg32 rng, IReadOnlyList<AreaOpening> planned, EdgeSide? spineExit)
     {
         var (w, h) = CarveKit.Dimensions(area.Size);
         var grid = new TileGrid(w, h, LogicalTile.Ground);
@@ -20,10 +21,9 @@ public static class ForestCarver
 
         CarveKit.Border(grid, LogicalTile.Tree);
 
-        // Spine = the exit (right) opening's row, edge-aligned with the next area (midY when Warp-connected).
-        var leftY = planned.OffsetOr(EdgeSide.Left, midY);
-        var rightY = planned.OffsetOr(EdgeSide.Right, midY);
-        var spineY = rightY;
+        // Spine = the row of whichever side-to-side border the area has, edge-aligned with that neighbour;
+        // midY when the spine runs top-to-bottom here and there is no horizontal border to align to.
+        var spineY = CarveKit.TrunkRow(planned, spineExit, h);
 
         // Three protected spine rows: always Ground, so left↔right traversal is guaranteed and no interior
         // column is ever entirely Tree. Clumps never overwrite a protected tile.
@@ -35,13 +35,13 @@ public static class ForestCarver
             for (var x = 1; x < w - 1; x++) { grid[x, y] = LogicalTile.Ground; guarded.Add((x, y)); }
         }
 
-        var openings = new List<(int X, int Y)>
-        {
-            CarveKit.OpenSpineEdge(grid, guarded, EdgeSide.Left, leftY, spineY, LogicalTile.Ground),
-            CarveKit.OpenSpineEdge(grid, guarded, EdgeSide.Right, rightY, spineY, LogicalTile.Ground),
-        };
-        foreach (var o in planned.Where(o => o.Edge is EdgeSide.Top or EdgeSide.Bottom))
-            openings.Add(CarveKit.OpenSpineEdge(grid, guarded, o.Edge, o.Offset, spineY, LogicalTile.Ground));
+        // Only borders that face a neighbour are opened; opening a blank border leaves a hole in the map.
+        var openings = planned
+            .Select(o => CarveKit.OpenSpineEdge(grid, guarded, o.Edge, o.Offset, spineY, LogicalTile.Ground))
+            .ToList();
+
+        // Keep decoration off the line a gate barrier would wall over, or the item placed there is lost.
+        foreach (var tile in CarveKit.BarrierLine(spineExit, w, h)) guarded.Add(tile);
 
         // Tiles touching an opening stay clear so a clump can never wall off an entrance.
         var nearOpening = new HashSet<(int X, int Y)>();
@@ -85,7 +85,7 @@ public static class ForestCarver
         DecorationKit.PlaceItemNook(grid, LogicalTile.Ground, LogicalTile.Tree, spineY, rng, guarded, nearOpening);
         DecorationKit.PlaceTrainerPosts(grid, LogicalTile.Ground, spineY, 1 + rng.NextInt(2), rng, guarded, nearOpening);
 
-        return new CarvedArea { AreaId = area.Id, Grid = grid, Openings = openings };
+        return new CarvedArea { AreaId = area.Id, Grid = grid, Openings = openings, TrunkRow = spineY };
     }
 
     /// <summary>Stamps a filled ellipse of <see cref="LogicalTile.Tree"/>, skipping protected and

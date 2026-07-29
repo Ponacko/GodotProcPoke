@@ -5,8 +5,15 @@ using ProcPoke.Generation.Topology;
 namespace ProcPoke.Generation.Carving;
 
 /// <summary>
-/// Carves a tower as stacked floor bands. Full-width wall rows with one alternating stair gap force a
-/// zigzag climb while keeping the whole area in one ordinary tile-grid reachability graph.
+/// Carves a tower as stacked floor bands. Full-span wall lines with one alternating stair gap force a zigzag
+/// climb while keeping the whole area in one ordinary tile-grid reachability graph.
+/// <para>
+/// Laid out in the entrance's <see cref="CarveFrame"/>: the entrance is always at <c>u == U - 1</c> and the
+/// floors stack away from it, so the reward band is the one farthest from the door whichever border the door
+/// is on. Written against the grid directly this only worked for a bottom entrance — a side entrance's link
+/// to the ground floor ran straight through every separator line, punching a hole in each and destroying the
+/// climb it exists to create.
+/// </para>
 /// </summary>
 public static class TowerCarver
 {
@@ -15,75 +22,67 @@ public static class TowerCarver
         var (w, h) = CarveKit.Dimensions(area.Size);
         var grid = new TileGrid(w, h, LogicalTile.Wall);
         CarveKit.Border(grid, LogicalTile.Wall);
-        for (var y = 1; y < h - 1; y++)
-            for (var x = 1; x < w - 1; x++) grid[x, y] = LogicalTile.Ground;
+
+        var entrance = planned.FirstOrDefault();
+        var f = new CarveFrame(entrance?.Edge ?? EdgeSide.Bottom, w, h);
+
+        // Open the whole interior, then divide it back up with the separator lines.
+        f.Fill(grid, 1, 1, f.U - 2, f.V - 2, LogicalTile.Ground);
 
         var floors = 3 + rng.NextInt(2);
-        var top = 1;
-        var bandHeights = floors == 4 ? new[] { 3, 3, 3, 2 } : new[] { 4, 4, 4 };
-        var bands = new List<(int Y0, int Y1)>();
-        var separators = new List<(int Y, int GapX)>();
-        for (var i = 0; i < floors; i++)
-        {
-            var y1 = top + bandHeights[i] - 1;
-            bands.Add((top, y1));
-            top = y1 + 1;
-            if (i == floors - 1) continue;
+        var bands = Bands(f.U, floors);
 
-            var separatorY = top++;
-            var fromBottom = floors - 2 - i;
-            var gapX = fromBottom % 2 == 0 ? w - 3 : 2;
-            for (var x = 1; x < w - 1; x++) grid[x, separatorY] = LogicalTile.Wall;
-            grid[gapX, separatorY] = LogicalTile.Ground;
-            separators.Add((separatorY, gapX));
+        // Separator between each pair of bands, its single gap alternating side to side so the climb zigzags.
+        // Counted from the entrance end so the alternation reads the same however many floors there are.
+        var separators = new List<(int U, int GapV)>();
+        for (var i = 0; i < bands.Count - 1; i++)
+        {
+            var separatorU = bands[i].U1 + 1;
+            var fromEntrance = bands.Count - 2 - i;
+            var gapV = fromEntrance % 2 == 0 ? f.V - 3 : 2;
+            f.Fill(grid, separatorU, 1, separatorU, f.V - 2, LogicalTile.Wall);
+            f.Write(grid, separatorU, gapV, LogicalTile.Ground);
+            separators.Add((separatorU, gapV));
         }
 
-        var plannedEntrance = planned.FirstOrDefault();
-        var edge = plannedEntrance?.Edge ?? EdgeSide.Bottom;
-        var offset = plannedEntrance?.Offset ?? w / 2;
-        var bottomBand = bands[^1];
-        var spineY = (bottomBand.Y0 + bottomBand.Y1) / 2;
-        var opening = AddEntrance(grid, edge, offset, spineY, separators, bands[0], bottomBand);
+        // The entrance sits on the reference border, so its offset already is a canonical v, and the tile just
+        // inside it belongs to the ground-floor band — no stub needed, and none crosses a separator.
+        var entranceV = f.InteriorV(entrance?.Offset ?? f.V / 2);
+        f.Write(grid, f.U - 2, entranceV, LogicalTile.Ground);
+        var opening = f.Map(f.U - 1, entranceV);
+        grid[opening.X, opening.Y] = LogicalTile.Warp;
 
-        var post = (X: w / 2, Y: bands[0].Y0 + (bands[0].Y1 - bands[0].Y0) / 2);
-        grid[post.X, post.Y] = LogicalTile.TrainerPost;
-        var item = (X: post.X + 1, Y: post.Y);
-        grid[item.X, item.Y] = LogicalTile.ItemBall;
+        // Reward on the top floor: the band farthest from the entrance, beyond every separator.
+        var top = bands[0];
+        var rewardU = (top.U0 + top.U1) / 2;
+        var postV = Math.Clamp(f.V / 2, 1, f.V - 3);
+        f.Write(grid, rewardU, postV, LogicalTile.TrainerPost);
+        f.Write(grid, rewardU, postV + 1, LogicalTile.ItemBall);
 
         return new CarvedArea { AreaId = area.Id, Grid = grid, Openings = [opening] };
     }
 
-    private static (int X, int Y) AddEntrance(
-        TileGrid grid, EdgeSide edge, int offset, int spineY,
-        IReadOnlyList<(int Y, int GapX)> separators,
-        (int Y0, int Y1) topBand, (int Y0, int Y1) bottomBand)
+    /// <summary>
+    /// Floor bands over the interior <c>u</c> range, one separator line between each pair. Index 0 is the band
+    /// farthest from the entrance (the reward floor); the last band is the one the entrance opens into.
+    /// Sized from the frame rather than fixed, since the climb axis is the grid's height for a top or bottom
+    /// entrance and its width for a side one.
+    /// </summary>
+    private static List<(int U0, int U1)> Bands(int u, int floors)
     {
-        var (w, h) = (grid.Width, grid.Height);
-        var safeOffset = edge is EdgeSide.Left or EdgeSide.Right
-            ? Math.Clamp(offset, 1, h - 2)
-            : Math.Clamp(offset, 1, w - 2);
+        var interior = u - 2;
+        var bandTotal = interior - (floors - 1);
+        var basis = bandTotal / floors;
+        var extra = bandTotal % floors;
 
-        if (edge != EdgeSide.Top)
+        var bands = new List<(int U0, int U1)>();
+        var start = 1;
+        for (var i = 0; i < floors; i++)
         {
-            var guarded = new HashSet<(int X, int Y)>();
-            var opening = CarveKit.OpenSpineEdge(grid, guarded, edge, safeOffset, spineY, LogicalTile.Ground);
-            return opening;
+            var depth = basis + (i < extra ? 1 : 0);
+            bands.Add((start, start + depth - 1));
+            start += depth + 1; // +1 for the separator line that follows
         }
-
-        // A top entrance must descend through the prescribed gaps rather than punch extra holes in the
-        // separator rows. The edge tile is still exactly where OpeningPlan placed it.
-        var topOpening = (X: safeOffset, Y: 0);
-        grid[topOpening.X, topOpening.Y] = LogicalTile.Warp;
-        var currentX = safeOffset;
-        var currentY = topBand.Y0;
-        foreach (var separator in separators)
-        {
-            CarveKit.CarveCorridor(grid, currentX, currentY, separator.GapX, currentY, LogicalTile.Ground);
-            grid[separator.GapX, separator.Y] = LogicalTile.Ground;
-            currentX = separator.GapX;
-            currentY = separator.Y + 1;
-        }
-        CarveKit.CarveCorridor(grid, currentX, currentY, w / 2, spineY, LogicalTile.Ground);
-        return topOpening;
+        return bands;
     }
 }

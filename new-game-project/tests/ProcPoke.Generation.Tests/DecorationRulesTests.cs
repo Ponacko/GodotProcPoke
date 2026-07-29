@@ -22,7 +22,9 @@ public class DecorationRulesTests
             foreach (var area in region.Graph.Areas.Where(a => a.Archetype is AreaArchetype.Route or AreaArchetype.Forest))
             {
                 var carved = region.Carved[area.Id];
-                var spineY = carved.Openings.First(o => o.X == carved.Grid.Width - 1).Y;
+                // The trunk row is whatever the carver laid, not whatever sits on the right edge — the
+                // spine may leave this area on any border, or have no right-edge opening at all.
+                var spineY = carved.TrunkRow;
                 var ledges = Find(carved.Grid, LogicalTile.Ledge);
                 foreach (var ledge in ledges)
                 {
@@ -65,7 +67,7 @@ public class DecorationRulesTests
                 var area = region.Graph.CriticalPath.First(a => a.PathIndex == gate.BlockPathIndex);
                 if (area.Archetype is not (AreaArchetype.StartTown or AreaArchetype.Town)) continue;
                 var carved = AreaCarver.Carve(area, region.Biomes.Of(area.Id), new RngStreams(seed).Stream("carve", area.Id),
-                    region.Openings, gate);
+                    region.Openings, gate, GateGeometry.SpineExitSideOf(region.Graph, area));
                 gatedTownCount++;
                 foreach (var wall in carved.BuildingWallTiles)
                     Assert.Equal(LogicalTile.Wall, carved.Grid[wall.X, wall.Y]);

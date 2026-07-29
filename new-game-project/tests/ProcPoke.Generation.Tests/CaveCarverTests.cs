@@ -26,22 +26,35 @@ public class CaveCarverTests
                 var carved = region.Carved[area.Id];
                 checkedCaves++;
 
-                Assert.True(RoomComponents(carved.Grid) >= 2, $"seed {seed}/{badges} area {area.Id}: fewer than two rooms");
+                // Asserted against the chambers the carver actually built. Scanning the finished tiles for
+                // open blocks instead reported two rooms as one whenever the corridor joining them fell
+                // inside both scan windows — a property of the window, not of the cave.
+                Assert.True(carved.Rooms.Count >= 2, $"seed {seed}/{badges} area {area.Id}: fewer than two rooms");
+                foreach (var room in carved.Rooms)
+                    Assert.True(room.Width >= 4 && room.Height >= 3,
+                        $"seed {seed}/{badges} area {area.Id}: room {room} is too small to be a chamber");
+                foreach (var (a, b) in carved.Rooms.SelectMany((r, i) => carved.Rooms.Skip(i + 1).Select(o => (r, o))))
+                    Assert.False(a.Touches(b), $"seed {seed}/{badges} area {area.Id}: rooms {a} and {b} are not separate");
+
                 Assert.Equal(1, carved.Grid.Count(LogicalTile.ItemBall));
                 Assert.True(carved.Grid.Count(LogicalTile.Boulder) >= 3,
                     $"seed {seed}/{badges} area {area.Id}: fewer than three boulders");
                 var item = Find(carved.Grid, LogicalTile.ItemBall);
-                Assert.True(RoomMask(carved.Grid)[item.X, item.Y],
+                Assert.True(carved.Rooms.Any(r => r.Contains(item.X, item.Y)),
                     $"seed {seed}/{badges} area {area.Id}: item is outside a room");
 
                 if (!area.OnCriticalPath || area.Archetype is not
                         (AreaArchetype.StandardCave or AreaArchetype.MountainPath or AreaArchetype.VictoryRoad))
                     continue;
 
+                // The through-passage runs between the two spine openings, whichever borders those are —
+                // a transit cave the spine crosses top-to-bottom has no left or right opening at all.
+                var from = SpineOpenings.Entry(region, area);
+                var to = SpineOpenings.Exit(region, area);
+                if (from is null || to is null) continue;
+
                 checkedTransitCaves++;
-                var from = carved.Openings.First(o => o.X == 0);
-                var to = carved.Openings.First(o => o.X == carved.Grid.Width - 1);
-                var path = ShortestPath(carved, from, to);
+                var path = ShortestPath(carved, from.Value, to.Value);
                 Assert.NotEmpty(path);
                 Assert.Contains(path.Zip(path.Skip(1)), pair => pair.First.X != pair.Second.X);
                 Assert.Contains(path.Zip(path.Skip(1)), pair => pair.First.Y != pair.Second.Y);
@@ -50,50 +63,6 @@ public class CaveCarverTests
 
         Assert.True(checkedCaves > 0, "no cave areas were exercised across the corpus");
         Assert.True(checkedTransitCaves > 0, "no transit caves were exercised across the corpus");
-    }
-
-    private static bool[,] RoomMask(TileGrid grid)
-    {
-        var mask = new bool[grid.Width, grid.Height];
-        for (var y = 1; y < grid.Height - 3; y++)
-            for (var x = 1; x < grid.Width - 4; x++)
-            {
-                var open = true;
-                for (var dy = 0; dy < 3 && open; dy++)
-                    for (var dx = 0; dx < 4; dx++)
-                        open &= grid[x + dx, y + dy].IsWalkable();
-                if (!open) continue;
-                for (var dy = 0; dy < 3; dy++)
-                    for (var dx = 0; dx < 4; dx++)
-                        mask[x + dx, y + dy] = true;
-            }
-        return mask;
-    }
-
-    private static int RoomComponents(TileGrid grid)
-    {
-        var mask = RoomMask(grid);
-        var seen = new bool[grid.Width, grid.Height];
-        var components = 0;
-        for (var y = 0; y < grid.Height; y++)
-            for (var x = 0; x < grid.Width; x++)
-            {
-                if (!mask[x, y] || seen[x, y]) continue;
-                components++;
-                var queue = new Queue<(int X, int Y)>([(x, y)]);
-                seen[x, y] = true;
-                while (queue.Count > 0)
-                {
-                    var current = queue.Dequeue();
-                    foreach (var next in Neighbours(current))
-                        if (grid.InBounds(next.X, next.Y) && mask[next.X, next.Y] && !seen[next.X, next.Y])
-                        {
-                            seen[next.X, next.Y] = true;
-                            queue.Enqueue(next);
-                        }
-                }
-            }
-        return components;
     }
 
     private static (int X, int Y) Find(TileGrid grid, LogicalTile tile)

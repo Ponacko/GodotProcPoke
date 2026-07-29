@@ -105,4 +105,94 @@ public class TopologyTests
             Assert.Equal(AreaArchetype.League, g.CriticalPath[^1].Archetype);
         }
     }
+
+    // ---- spatial invariants -------------------------------------------------
+
+    /// <summary>Consecutive spine areas must share a border, or the spine cannot be walked on a 2-D map.</summary>
+    [Theory]
+    [InlineData(1)]
+    [InlineData(4)]
+    [InlineData(8)]
+    [InlineData(16)]
+    public void SpineStepsBetweenBorderingCells(int badges)
+    {
+        for (ulong seed = 1; seed <= 1000; seed++)
+        {
+            var path = Generate(seed, badges).CriticalPath;
+            for (var i = 0; i < path.Count - 1; i++)
+                Assert.True(path[i].Cell.IsAdjacentTo(path[i + 1].Cell),
+                    $"seed {seed}/{badges}: path {i} at {path[i].Cell} does not border {i + 1} at {path[i + 1].Cell}");
+        }
+    }
+
+    [Theory]
+    [InlineData(1)]
+    [InlineData(4)]
+    [InlineData(8)]
+    [InlineData(16)]
+    public void NoTwoAreasShareACellAndEveryConnectionBorders(int badges)
+    {
+        for (ulong seed = 1; seed <= 1000; seed++)
+        {
+            var g = Generate(seed, badges);
+
+            var cells = g.Areas.Select(a => a.Cell).ToList();
+            Assert.Equal(cells.Count, cells.Distinct().Count());
+
+            foreach (var c in g.Connections)
+                Assert.True(g[c.AreaA].Cell.IsAdjacentTo(g[c.AreaB].Cell),
+                    $"seed {seed}/{badges}: connection {c.AreaA}–{c.AreaB} spans "
+                    + $"{g[c.AreaA].Cell.ManhattanTo(g[c.AreaB].Cell)} cells");
+        }
+    }
+
+    /// <summary>
+    /// The region must occupy two dimensions rather than reading as one long corridor in a single direction.
+    /// The spine's bounding box has to be at least 2 cells on both axes, and the walk has to change heading
+    /// at least twice — for badge counts of 4 and up the box the walk is bounded to makes a straight or
+    /// single-elbow spine impossible, so this is a construction guarantee, not a statistical one.
+    /// </summary>
+    [Theory]
+    [InlineData(4)]
+    [InlineData(8)]
+    [InlineData(12)]
+    [InlineData(16)]
+    public void SpineWandersInTwoDimensions(int badges)
+    {
+        for (ulong seed = 1; seed <= 1000; seed++)
+        {
+            var path = Generate(seed, badges).CriticalPath;
+            var cells = path.Select(a => a.Cell).ToList();
+
+            var colExtent = cells.Max(c => c.Col) - cells.Min(c => c.Col) + 1;
+            var rowExtent = cells.Max(c => c.Row) - cells.Min(c => c.Row) + 1;
+            Assert.True(colExtent >= 2 && rowExtent >= 2,
+                $"seed {seed}/{badges}: spine bounding box is {colExtent}x{rowExtent} — a straight line");
+
+            var headings = new List<Heading>();
+            for (var i = 0; i < cells.Count - 1; i++) headings.Add(cells[i].HeadingTo(cells[i + 1]));
+            var changes = headings.Where((h, i) => i > 0 && h != headings[i - 1]).Count();
+            Assert.True(changes >= 2, $"seed {seed}/{badges}: spine changes heading only {changes} time(s)");
+        }
+    }
+
+    /// <summary>
+    /// Regions should not all wander the same way. Across a corpus the spine's shape has to actually vary —
+    /// several distinct bounding boxes, and both axes used as the long one.
+    /// </summary>
+    [Fact]
+    public void SpineShapeVariesAcrossSeeds()
+    {
+        var shapes = new HashSet<(int Cols, int Rows)>();
+        for (ulong seed = 1; seed <= 300; seed++)
+        {
+            var cells = Generate(seed).CriticalPath.Select(a => a.Cell).ToList();
+            shapes.Add((cells.Max(c => c.Col) - cells.Min(c => c.Col) + 1,
+                cells.Max(c => c.Row) - cells.Min(c => c.Row) + 1));
+        }
+
+        Assert.True(shapes.Count >= 4, $"only {shapes.Count} distinct spine bounding boxes across 300 seeds");
+        Assert.Contains(shapes, s => s.Cols > s.Rows);
+        Assert.Contains(shapes, s => s.Rows > s.Cols);
+    }
 }

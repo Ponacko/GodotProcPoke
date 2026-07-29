@@ -38,8 +38,12 @@ for (var i = 0; i < count; i++)
 
         if (carve)
         {
-            // Show the first few critical-path areas as ASCII.
-            foreach (var a in region.Graph.CriticalPath.Take(4))
+            // Show critical-path areas as ASCII — the first few by default, or just one with --area N.
+            var only = ParseInt(Flag("--area"), -1);
+            var picked = only >= 0
+                ? region.Graph.Areas.Where(a => a.Id == only)
+                : region.Graph.CriticalPath.Take(4);
+            foreach (var a in picked)
             {
                 var carved = carvedById[a.Id];
                 Console.WriteLine($"── [{a.PathIndex}] {a.Archetype}  {a.Size}  {region.Biomes.Of(a.Id)}  ({carved.Grid.Width}×{carved.Grid.Height}) ──");

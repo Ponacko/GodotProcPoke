@@ -20,6 +20,53 @@ namespace ProcPoke.Generation.Debug;
 /// </summary>
 public static class RegionGraphText
 {
+    /// <summary>
+    /// The region's actual 2-D shape, drawn from the lattice cells the topology pass assigned. Spine areas
+    /// show their path index, off-spine areas their archetype initial and a <c>*</c>; loop-backs are drawn
+    /// with double rules. Every connection is a shared border, so a drawn line is always a real one — which
+    /// is the point of having this view: a spine that ran straight east, or an edge between areas nowhere
+    /// near each other, is obvious here and invisible in the tree below.
+    /// </summary>
+    public static string RenderLattice(RegionGraph g)
+    {
+        var byCell = g.Areas.ToDictionary(a => a.Cell);
+        var cols = g.Areas.Select(a => a.Cell.Col).ToList();
+        var rows = g.Areas.Select(a => a.Cell.Row).ToList();
+
+        Connection? Between(GridCell from, GridCell to)
+            => byCell.TryGetValue(from, out var a) && byCell.TryGetValue(to, out var b)
+                ? g.ConnectionsOf(a.Id).FirstOrDefault(c => c.Other(a.Id) == b.Id)
+                : null;
+
+        var sb = new StringBuilder();
+        sb.AppendLine("Overview lattice (NN = path index, * = off-spine, ═ ║ = loop-back):");
+
+        for (var row = rows.Min(); row <= rows.Max(); row++)
+        {
+            var areaLine = new StringBuilder("  ");
+            var linkLine = new StringBuilder("  ");
+            for (var col = cols.Min(); col <= cols.Max(); col++)
+            {
+                var here = new GridCell(col, row);
+                areaLine.Append(byCell.TryGetValue(here, out var area) ? CellLabel(area) : "  ");
+
+                var east = Between(here, here.Step(Heading.East));
+                areaLine.Append(east is null ? "   " : east.IsLoopBack ? "═══" : "───");
+
+                var south = Between(here, here.Step(Heading.South));
+                linkLine.Append(south is null ? "     " : south.IsLoopBack ? " ║   " : " │   ");
+            }
+            sb.AppendLine(areaLine.ToString().TrimEnd());
+            if (row < rows.Max() && linkLine.ToString().Trim().Length > 0)
+                sb.AppendLine(linkLine.ToString().TrimEnd());
+        }
+        sb.AppendLine();
+        return sb.ToString();
+    }
+
+    private static string CellLabel(Area a)
+        => a.OnCriticalPath ? $"{a.PathIndex:00}" : $"{a.Archetype.ToString()[0]}*";
+
     public static string Render(RegionGraph g, GatingPlan? gating = null, BiomeMap? biomes = null,
         RegionNames? names = null, RegionIdentity? identity = null, StarterPlan? starters = null,
         DexPlan? dex = null, GameData? data = null, SpecialSpecies? special = null,
@@ -45,6 +92,7 @@ public static class RegionGraphText
             sb.AppendLine($"Rival: {identity.Rival}");
             sb.AppendLine(identity.ChampionIsRival ? "Champion: the rival" : "Champion: generated NPC");
         }
+        sb.Append(RenderLattice(g));
         sb.AppendLine("Critical path (start → League):");
 
         var gateAtEdge = gating?.Gates.ToDictionary(x => x.BlockPathIndex) ?? [];

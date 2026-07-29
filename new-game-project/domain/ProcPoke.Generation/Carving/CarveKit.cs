@@ -5,6 +5,52 @@ namespace ProcPoke.Generation.Carving;
 /// <summary>Shared primitives used by the archetype carvers — dimensions, borders, corridors, rectangles.</summary>
 internal static class CarveKit
 {
+    /// <summary>
+    /// The row an area's guaranteed trunk corridor runs along.
+    /// <para>
+    /// When the spine leaves through a left or right border, the trunk <em>must</em> arrive at that opening's
+    /// own row. A gate necks the exit two tiles in, and on a horizontal exit that barrier is a column — the
+    /// very column a stub from the exit opening would run down. Wall it and the stub goes with it, leaving the
+    /// exit stranded even after the gate is cleared. Aligning the trunk to the exit row means the exit needs
+    /// no stub at all. A vertical exit has no such clash: its stub runs perpendicular to the barrier and
+    /// passes straight through the gap, so the trunk can sit wherever the horizontal borders want it.
+    /// </para>
+    /// </summary>
+    public static int TrunkRow(IReadOnlyList<AreaOpening> planned, EdgeSide? spineExit, int height)
+        => spineExit is EdgeSide.Left or EdgeSide.Right
+            ? planned.OffsetOr(spineExit.Value, height / 2)
+            : planned.OffsetOr(EdgeSide.Right, planned.OffsetOr(EdgeSide.Left, height / 2));
+
+    /// <summary>
+    /// The line a gate barrier would occupy if this area's spine exit is gated — the full span two tiles in
+    /// from the exit border. Carvers add it to their protected set so decoration never lands there: the
+    /// barrier overwrites the line wholesale, and an item ball or trainer post on it simply disappears.
+    /// <para>
+    /// This used to need no expressing. The exit was always the right border, so the barrier was always
+    /// column <c>w-2</c>, and the placement rules just avoided that column by construction.
+    /// </para>
+    /// </summary>
+    public static IEnumerable<(int X, int Y)> BarrierLine(EdgeSide? spineExit, int width, int height)
+    {
+        if (spineExit is null) yield break;
+        var inset = GateCarver.BarrierInsetFromRightEdge;
+        switch (spineExit.Value)
+        {
+            case EdgeSide.Right:
+                for (var y = 1; y <= height - 2; y++) yield return (width - inset, y);
+                break;
+            case EdgeSide.Left:
+                for (var y = 1; y <= height - 2; y++) yield return (inset - 1, y);
+                break;
+            case EdgeSide.Bottom:
+                for (var x = 1; x <= width - 2; x++) yield return (x, height - inset);
+                break;
+            default:
+                for (var x = 1; x <= width - 2; x++) yield return (x, inset - 1);
+                break;
+        }
+    }
+
     public static (int W, int H) Dimensions(SizeClass size) => size switch
     {
         SizeClass.Small => (24, 12),

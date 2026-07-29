@@ -32,9 +32,12 @@ public class HideoutCarverTests
                     Assert.Contains(post, reachable);
                 Assert.Contains(Find(carved.Grid, LogicalTile.ItemBall)[0], reachable);
 
+                // The contract is that the loot sits in the room farthest from the door — two doorways away,
+                // diagonally opposite it. Asserting fixed coordinates instead only held while every hideout
+                // was entered from the bottom; the complex is now laid out relative to its entrance.
                 var item = Find(carved.Grid, LogicalTile.ItemBall)[0];
-                Assert.True(item.X >= 20 && item.X <= 25 && item.Y >= 2 && item.Y <= 5,
-                    $"seed {seed}/{badges} area {area.Id}: item is not in the top-right boss room");
+                Assert.True(IsInFarthestRoom(carved.Grid, entrance, item),
+                    $"seed {seed}/{badges} area {area.Id}: loot is not in the room farthest from the entrance");
             }
         }
         Assert.True(checkedCount > 0, "no villain hideouts were exercised across the corpus");
@@ -110,5 +113,74 @@ public class HideoutCarverTests
         yield return (cell.X - 1, cell.Y);
         yield return (cell.X, cell.Y + 1);
         yield return (cell.X, cell.Y - 1);
+    }
+
+    /// <summary>Whether <paramref name="cell"/> lies in the room component whose closest tile to the entrance
+    /// is farther than every other room's.</summary>
+    private static bool IsInFarthestRoom(TileGrid grid, (int X, int Y) entrance, (int X, int Y) cell)
+    {
+        var labels = RoomLabels(grid, out var count);
+        if (count == 0 || labels[cell.X, cell.Y] == 0) return false;
+
+        var distance = Distances(grid, entrance);
+        var nearest = new Dictionary<int, int>();
+        for (var y = 0; y < grid.Height; y++)
+            for (var x = 0; x < grid.Width; x++)
+            {
+                var label = labels[x, y];
+                if (label == 0 || distance[x, y] < 0) continue;
+                if (!nearest.TryGetValue(label, out var best) || distance[x, y] < best)
+                    nearest[label] = distance[x, y];
+            }
+
+        if (!nearest.TryGetValue(labels[cell.X, cell.Y], out var mine)) return false;
+        return nearest.Values.All(d => d <= mine);
+    }
+
+    /// <summary>Room components, labelled from 1; 0 means "not part of any room".</summary>
+    private static int[,] RoomLabels(TileGrid grid, out int count)
+    {
+        var mask = RoomMask(grid);
+        var labels = new int[grid.Width, grid.Height];
+        count = 0;
+        for (var y = 0; y < grid.Height; y++)
+            for (var x = 0; x < grid.Width; x++)
+            {
+                if (!mask[x, y] || labels[x, y] != 0) continue;
+                var label = ++count;
+                var queue = new Queue<(int X, int Y)>([(x, y)]);
+                labels[x, y] = label;
+                while (queue.Count > 0)
+                    foreach (var next in Neighbours(queue.Dequeue()))
+                        if (grid.InBounds(next.X, next.Y) && mask[next.X, next.Y] && labels[next.X, next.Y] == 0)
+                        {
+                            labels[next.X, next.Y] = label;
+                            queue.Enqueue(next);
+                        }
+            }
+        return labels;
+    }
+
+    /// <summary>Walkable step distance from <paramref name="start"/>; -1 where unreachable.</summary>
+    private static int[,] Distances(TileGrid grid, (int X, int Y) start)
+    {
+        var distance = new int[grid.Width, grid.Height];
+        for (var y = 0; y < grid.Height; y++)
+            for (var x = 0; x < grid.Width; x++) distance[x, y] = -1;
+
+        distance[start.X, start.Y] = 0;
+        var queue = new Queue<(int X, int Y)>([start]);
+        while (queue.Count > 0)
+        {
+            var current = queue.Dequeue();
+            foreach (var next in Neighbours(current))
+                if (grid.InBounds(next.X, next.Y) && grid[next.X, next.Y].IsWalkable()
+                    && distance[next.X, next.Y] < 0)
+                {
+                    distance[next.X, next.Y] = distance[current.X, current.Y] + 1;
+                    queue.Enqueue(next);
+                }
+        }
+        return distance;
     }
 }

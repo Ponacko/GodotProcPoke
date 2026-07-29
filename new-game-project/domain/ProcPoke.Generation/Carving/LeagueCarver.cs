@@ -40,18 +40,19 @@ public static class LeagueCarver
             CarveKit.FillRect(grid, chamber.X0, usableTop, chamber.X1, usableBottom, LogicalTile.Ground);
         CarveKit.FillRect(grid, throne.X0, usableTop, throne.X1, usableBottom, LogicalTile.Ground);
 
-        var plannedEntrance = planned.FirstOrDefault(o => o.Edge == EdgeSide.Left);
-        var entranceOffset = plannedEntrance?.Offset ?? h / 2;
+        // The gauntlet runs left-to-right internally, so its spine row follows a side-to-side border when the
+        // area has one; Victory Road can now arrive from any direction, and a top/bottom offset is an x, not
+        // a row, so it must not be read as one.
+        var sideEntrance = planned.FirstOrDefault(o => o.Edge is EdgeSide.Left or EdgeSide.Right);
         // Keep the internal spine away from the one-tile outer frame. The edge opening remains at its
         // planned coordinate; OpenSpineEdge links it vertically to this safe chamber row when needed.
         // Leave one wall row above and below the spine even when a planned branch sits on a separator;
         // that keeps every separator's doorway recognisable by its north/south wall signature.
-        var spineY = Math.Clamp(entranceOffset, 3, h - 4);
+        var spineY = Math.Clamp(sideEntrance?.Offset ?? h / 2, 3, h - 4);
         var guarded = new HashSet<(int X, int Y)>();
         var openings = new List<(int X, int Y)>();
         var separatorXs = chambers.Select(chamber => chamber.X1 + 1).ToHashSet();
 
-        AddOpening(grid, guarded, openings, EdgeSide.Left, entranceOffset, spineY);
         CarveKit.CarveCorridor(grid, 1, spineY, chambers[0].X0, spineY, LogicalTile.Ground);
 
         // Four separator columns remain walls except for their one-wide spine doors. A door's north and

@@ -61,7 +61,8 @@ public static class RegionGenerator
             // so later population passes can read TrainerPost/ItemBall tile counts. Each area draws only
             // from its own "carve/<id>" stream (ADR-0005), so output is independent of pass order.
             var carved = graph.Areas.ToDictionary(a => a.Id, a => AreaCarver.Carve(
-                a, biomes.Of(a.Id), streams.Stream("carve", a.Id), openings, AreaCarver.GateOnExitOf(a, gating)));
+                a, biomes.Of(a.Id), streams.Stream("carve", a.Id), openings,
+                AreaCarver.GateOnExitOf(a, gating), GateGeometry.SpineExitSideOf(graph, a)));
             var trainers = TrainerPass.Generate(graph, carved, biomes, identity, dex, data, streams);
             var bosses = BossPass.Generate(graph, identity, dex, starters, settings, data, streams);
             var rivals = RivalPass.Generate(identity, dex, starters, settings, data, streams);

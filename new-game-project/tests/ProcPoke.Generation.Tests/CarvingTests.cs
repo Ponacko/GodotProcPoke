@@ -72,7 +72,8 @@ public class CarvingTests
         foreach (var area in region.Graph.Areas)
         {
             var reCarved = AreaCarver.Carve(area, region.Biomes.Of(area.Id), streams.Stream("carve", area.Id),
-                region.Openings, AreaCarver.GateOnExitOf(area, region.Gating));
+                region.Openings, AreaCarver.GateOnExitOf(area, region.Gating),
+                GateGeometry.SpineExitSideOf(region.Graph, area));
             Assert.Equal(AsciiRenderer.Render(region.Carved[area.Id]), AsciiRenderer.Render(reCarved));
         }
     }
@@ -133,18 +134,32 @@ public class CarvingTests
         // while the gate tiles are walls, and reachable once they are cleared.
         var gatedSeen = 0;
         for (ulong seed = 1; seed <= 400; seed++)
-            foreach (var carved in CarveAll(seed, badges).Where(c => c.GateTiles.Count > 0))
+        {
+            var region = RegionGenerator.Generate(new GenerationSettings { Seed = seed, BadgeCount = badges }, TestData.Data);
+            foreach (var area in region.Graph.Areas)
             {
-                gatedSeen++;
-                var entry = carved.Openings[0];
-                var exit = carved.Openings.First(o => o.X == carved.Grid.Width - 1);
-                var cleared = GateSet(carved);
+                var carved = region.Carved[area.Id];
+                if (carved.GateTiles.Count == 0) continue;
 
-                Assert.False(Reachable(carved.Grid, entry, exit),
-                    $"seed {seed}/{badges} area {carved.AreaId}: gate did not block the spine while locked");
-                Assert.True(Reachable(carved.Grid, entry, exit, cleared),
-                    $"seed {seed}/{badges} area {carved.AreaId}: spine not passable once the gate is cleared");
+                // The gated exit is the opening facing the next critical-path area — not whatever sits on the
+                // right edge, which since the spine started wandering may be a branch the gate never blocks.
+                var exit = SpineOpenings.Exit(region, area);
+                Assert.NotNull(exit);
+
+                var elsewhere = carved.Openings.Where(o => o != exit.Value).ToList();
+                if (elsewhere.Count == 0) continue; // gated area with no other way in: nothing to walk from
+
+                gatedSeen++;
+                var cleared = GateSet(carved);
+                foreach (var entry in elsewhere)
+                {
+                    Assert.False(Reachable(carved.Grid, entry, exit.Value),
+                        $"seed {seed}/{badges} area {area.Id}: gate did not block the spine while locked");
+                    Assert.True(Reachable(carved.Grid, entry, exit.Value, cleared),
+                        $"seed {seed}/{badges} area {area.Id}: spine not passable once the gate is cleared");
+                }
             }
+        }
         Assert.True(gatedSeen > 0, "no gated areas were produced across the corpus — nothing was tested");
     }
 
@@ -162,7 +177,8 @@ public class CarvingTests
             {
                 var area = region.Graph.CriticalPath.First(a => a.PathIndex == gate.BlockPathIndex);
                 var carved = AreaCarver.Carve(area, region.Biomes.Of(area.Id),
-                    new RngStreams(seed).Stream("carve", area.Id), region.Openings, gate);
+                    new RngStreams(seed).Stream("carve", area.Id), region.Openings, gate,
+                    GateGeometry.SpineExitSideOf(region.Graph, area));
                 if (carved.GateTiles.Count == 0) continue;
 
                 var expected = GateCarver.TileFor(gate.Obstacle);
@@ -182,5 +198,37 @@ public class CarvingTests
         Assert.Contains(LogicalTile.Boulder, seen);   // Strength is guaranteed in every seed
         Assert.Contains(LogicalTile.Water, seen);     // Surf is guaranteed in every seed
         Assert.True(waterSpans > 0, "no terrain-bound water gate was exercised");
+    }
+
+    /// <summary>
+    /// A carved edge opening must face an area that is actually there. The spine can now leave an area on
+    /// any border, so a carver that always opens its Left and Right edges would punch walkable tiles onto a
+    /// border with nothing behind it — a hole leading off the map.
+    /// </summary>
+    [Fact]
+    public void CarvedOpeningsOnlyFaceRealNeighbours()
+    {
+        var offenders = new List<string>();
+        for (ulong seed = 1; seed <= 60; seed++)
+        {
+            var region = RegionGenerator.Generate(new GenerationSettings { Seed = seed, BadgeCount = 8 }, TestData.Data);
+            var byCell = region.Graph.Areas.ToDictionary(a => a.Cell, a => a.Id);
+
+            foreach (var area in region.Graph.Areas)
+            {
+                var carved = region.Carved[area.Id];
+                var (w, h) = (carved.Grid.Width, carved.Grid.Height);
+                foreach (var (x, y) in carved.Openings)
+                {
+                    Heading? heading = x == 0 ? Heading.West : x == w - 1 ? Heading.East
+                        : y == 0 ? Heading.North : y == h - 1 ? Heading.South : null;
+                    if (heading is null) continue;
+                    if (!byCell.ContainsKey(area.Cell.Step(heading.Value)))
+                        offenders.Add($"seed {seed}: area {area.Id} ({area.Archetype}) opens {heading} onto nothing");
+                }
+            }
+        }
+        Assert.True(offenders.Count == 0,
+            $"{offenders.Count} openings face no neighbour:\n  " + string.Join("\n  ", offenders.Take(12)));
     }
 }

@@ -19,24 +19,23 @@ public static class TownCarver
         var midY = h / 2;
 
         CarveKit.Border(grid, LogicalTile.Tree);
-        var leftY = planned.OffsetOr(EdgeSide.Left, midY);
-        var rightY = planned.OffsetOr(EdgeSide.Right, midY);
-        grid[0, leftY] = LogicalTile.Warp;
-        grid[w - 1, rightY] = LogicalTile.Warp;
 
-        var openings = new List<(int X, int Y)> { (0, leftY), (w - 1, rightY) };
+        var openings = new List<(int X, int Y)>();
         var buildingWalls = new HashSet<(int X, int Y)>();
 
-        // Spine-first (ADR-0001). A left/right warp is safe unguarded — the bands never reach column 1 or
-        // w-2 — but a top/bottom warp lands on any interior column, so it needs a protected run into the
-        // street that the bands then refuse to build over. Punching the border tile alone leaves a
-        // connection opening into the back of a house, stranding it from the whole town.
+        // Spine-first (ADR-0001). Only borders facing a neighbour are opened — a town on a corner of the
+        // spine has two of its four sides against nothing, and punching those would open the street onto
+        // blank space. A left/right warp is safe unguarded — the bands never reach column 1 or w-2 — but a
+        // top/bottom warp lands on any interior column, so it needs a protected run into the street that the
+        // bands then refuse to build over. Punching the border tile alone leaves a connection opening into
+        // the back of a house, stranding it from the whole town.
         var guarded = new HashSet<(int X, int Y)>();
-        foreach (var o in planned.Where(o => o.Edge is EdgeSide.Top or EdgeSide.Bottom))
+        foreach (var o in planned)
         {
             var tile = o.TileOn(w, h);
             grid[tile.X, tile.Y] = LogicalTile.Warp;
             openings.Add(tile);
+            if (o.Edge is EdgeSide.Left or EdgeSide.Right) continue;
             CarveKit.ConnectSpineColumn(
                 grid, guarded, tile.X, o.Edge == EdgeSide.Top ? 1 : h - 2, midY, LogicalTile.Ground);
         }

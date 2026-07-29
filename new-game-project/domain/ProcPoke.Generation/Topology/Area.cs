@@ -19,6 +19,12 @@ public sealed record Area
     /// <summary>Position along the critical path (0 = start), or -1 for off-spine areas.</summary>
     public required int PathIndex { get; init; }
 
+    /// <summary>
+    /// Where the area sits on the region's overview lattice. Assigned by the topology pass, which only
+    /// connects areas on adjacent cells — so this is the region's actual 2-D shape, not a rendering hint.
+    /// </summary>
+    public required GridCell Cell { get; init; }
+
     public bool IsPlain => Archetype.IsPlain();
     public bool IsDungeon => Archetype.IsDungeon();
 }

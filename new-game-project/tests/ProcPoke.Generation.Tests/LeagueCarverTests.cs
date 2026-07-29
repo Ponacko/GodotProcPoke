@@ -22,9 +22,15 @@ public class LeagueCarverTests
             checkedCount++;
 
             Assert.Equal(5, carved.Grid.Count(LogicalTile.TrainerPost));
-            var entrance = carved.Openings.Single(o => o.X == 0);
+
+            // The gauntlet is authored west-to-east with the throne at the far end, so SpineEmbedder makes the
+            // walk's last step eastward and the challenger always arrives on the League's western edge.
+            // Entering from any other side would reach the throne without crossing the four doorways.
+            var entrance = SpineOpenings.Entry(region, league);
+            Assert.NotNull(entrance);
+            Assert.Equal(0, entrance.Value.X);
             var thronePost = FindPosts(carved.Grid).OrderBy(p => p.X).Last();
-            var path = ShortestPath(carved.Grid, entrance, thronePost);
+            var path = ShortestPath(carved.Grid, entrance.Value, thronePost);
             Assert.NotEmpty(path);
 
             var doorwayCount = path.Count(tile => tile.X > 0 && tile.X < carved.Grid.Width - 1

@@ -30,10 +30,11 @@ public static class CaveCarver
     /// <summary>Compatibility overload for callers that do not have an opening plan (for example, a
     /// standalone preview); generated regions use the planned-opening overload below.</summary>
     public static CarvedArea Carve(Area area, Biome biome, Pcg32 rng, bool transit)
-        => Carve(area, biome, rng, [], transit);
+        => Carve(area, biome, rng, [], transit, spineExit: null);
 
     public static CarvedArea Carve(
-        Area area, Biome biome, Pcg32 rng, IReadOnlyList<AreaOpening> planned, bool transit)
+        Area area, Biome biome, Pcg32 rng, IReadOnlyList<AreaOpening> planned, bool transit,
+        EdgeSide? spineExit)
     {
         var (w, h) = CarveKit.Dimensions(area.Size);
         var grid = new TileGrid(w, h, LogicalTile.Wall);
@@ -53,29 +54,36 @@ public static class CaveCarver
             ConnectRooms(grid, rooms[i - 1], rooms[i], rng, corridorCenterline);
 
         var openings = new List<(int X, int Y)>();
+        // Every border facing a neighbour gets a mouth, and nothing else does — the spine can pass through on
+        // any axis now, so opening Left and Right unconditionally would hole the walls of a vertical transit.
+        // A side-to-side mouth still reaches for the room at that end, which is what keeps a transit cave a
+        // through-passage rather than a pocket; other mouths take the nearest room.
         if (transit)
         {
-            var spineY = planned.OffsetOr(EdgeSide.Right, h / 2);
-            AddOpening(grid, guarded, openings, EdgeSide.Left, planned.OffsetOr(EdgeSide.Left, h / 2), spineY);
-            AddOpening(grid, guarded, openings, EdgeSide.Right, spineY, spineY);
-
-            ConnectToRoom(grid, openings[0], rooms[0], corridorCenterline);
-            ConnectToRoom(grid, openings[1], rooms[^1], corridorCenterline);
-
-            foreach (var opening in planned.Where(o => o.Edge is EdgeSide.Top or EdgeSide.Bottom))
+            var spineY = CarveKit.TrunkRow(planned, spineExit, h);
+            foreach (var opening in planned)
             {
                 AddOpening(grid, guarded, openings, opening.Edge, opening.Offset, spineY);
-                ConnectToNearestRoom(grid, openings[^1], rooms, corridorCenterline);
+                var mouth = openings[^1];
+                switch (opening.Edge)
+                {
+                    case EdgeSide.Left: ConnectToRoom(grid, mouth, rooms[0], corridorCenterline); break;
+                    case EdgeSide.Right: ConnectToRoom(grid, mouth, rooms[^1], corridorCenterline); break;
+                    default: ConnectToNearestRoom(grid, mouth, rooms, corridorCenterline); break;
+                }
             }
         }
         else
         {
-            var plannedEntrance = planned.FirstOrDefault();
-            var edge = plannedEntrance is null ? EdgeSide.Bottom : plannedEntrance.Edge;
-            var offset = plannedEntrance is null ? w / 2 : plannedEntrance.Offset;
+            // Destination dungeon: enclosed, but a loop-back can give it a second way in — carve that too, or
+            // the back door exists in the graph and nowhere on the map.
             var spineY = rooms[0].CenterY;
-            AddOpening(grid, guarded, openings, edge, offset, spineY);
-            ConnectToNearestRoom(grid, openings[0], rooms, corridorCenterline);
+            if (planned.Count == 0)
+                AddOpening(grid, guarded, openings, EdgeSide.Bottom, w / 2, spineY);
+            foreach (var opening in planned)
+                AddOpening(grid, guarded, openings, opening.Edge, opening.Offset, spineY);
+            foreach (var mouth in openings)
+                ConnectToNearestRoom(grid, mouth, rooms, corridorCenterline);
         }
 
         var entrance = openings[0];
@@ -95,7 +103,13 @@ public static class CaveCarver
         PlaceBoulders(grid, openings, itemCell, rooms, rng);
         if (transit) EnsureBend(grid, openings, itemCell, rooms);
 
-        return new CarvedArea { AreaId = area.Id, Grid = grid, Openings = openings };
+        return new CarvedArea
+        {
+            AreaId = area.Id,
+            Grid = grid,
+            Openings = openings,
+            Rooms = rooms.Select(r => new TileRect(r.X0, r.Y0, r.X1, r.Y1)).ToList(),
+        };
     }
 
     private static List<Room> PickRooms(TileGrid grid, Pcg32 rng)

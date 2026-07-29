@@ -76,7 +76,8 @@ public class OpeningAlignmentTests
             // *and* League, which is neither Plain nor Dungeon (a loop-back fallback can reach it directly).
             var carved = region.Graph.Areas.Where(a => !a.IsDungeon).ToDictionary(a => a.Id,
                 a => AreaCarver.Carve(a, region.Biomes.Of(a.Id), streams.Stream("carve", a.Id),
-                    region.Openings, AreaCarver.GateOnExitOf(a, region.Gating)));
+                    region.Openings, AreaCarver.GateOnExitOf(a, region.Gating),
+                    GateGeometry.SpineExitSideOf(region.Graph, a)));
 
             foreach (var (areaId, area) in carved)
                 foreach (var o in region.Openings.OpeningsOf(areaId))

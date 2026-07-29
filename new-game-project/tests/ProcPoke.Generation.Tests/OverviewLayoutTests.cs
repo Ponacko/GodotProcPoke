@@ -6,9 +6,15 @@ using Xunit;
 namespace ProcPoke.Generation.Tests;
 
 /// <summary>
-/// Overview-layout invariants (2b): every area lands on exactly one grid cell, no two areas share a cell,
-/// the critical path runs left→right in path order, and every off-spine area sits adjacent (one row off)
-/// its anchor's column.
+/// Overview-layout invariants (2b). The layout is no longer invented here — it is the embedding the topology
+/// pass chose (<c>Area.Cell</c>), so these tests check the read-out is faithful and, above all, that the
+/// picture is *drawable*: every connection joins two areas that share a border.
+/// <para>
+/// The earlier version of this suite asserted the critical path ran along row 0 with one column per path
+/// index, and that off-spine areas stacked above and below their anchor's column. Those assertions passed on
+/// a layout that rendered every region as a single corridor running east and drew connections between areas
+/// many columns apart — they pinned the defect in place, so they are gone.
+/// </para>
 /// </summary>
 public class OverviewLayoutTests
 {
@@ -36,18 +42,43 @@ public class OverviewLayoutTests
     [InlineData(4)]
     [InlineData(8)]
     [InlineData(12)]
-    public void CriticalPathRunsLeftToRightInPathOrder(int badges)
+    public void ReportsTheCellTheTopologyPassChose(int badges)
+    {
+        for (ulong seed = 1; seed <= 200; seed++)
+        {
+            var region = RegionGenerator.Generate(new GenerationSettings { Seed = seed, BadgeCount = badges }, TestData.Data);
+            var cells = OverviewLayout.Plan(region.Graph).ToDictionary(c => c.AreaId);
+
+            foreach (var area in region.Graph.Areas)
+            {
+                Assert.Equal(area.Cell.Col, cells[area.Id].Col);
+                Assert.Equal(area.Cell.Row, cells[area.Id].Row);
+            }
+        }
+    }
+
+    /// <summary>
+    /// The invariant the old layout could not hold: a connection means a shared border. This is what rules
+    /// out a tower joined to both the 4th and the 9th area of the spine — a graph edge no 2-D layout can draw.
+    /// </summary>
+    [Theory]
+    [InlineData(4)]
+    [InlineData(8)]
+    [InlineData(12)]
+    public void EveryConnectionJoinsAreasOnAdjacentCells(int badges)
     {
         for (ulong seed = 1; seed <= 500; seed++)
         {
             var region = RegionGenerator.Generate(new GenerationSettings { Seed = seed, BadgeCount = badges }, TestData.Data);
             var cells = OverviewLayout.Plan(region.Graph).ToDictionary(c => c.AreaId);
 
-            foreach (var area in region.Graph.CriticalPath)
+            foreach (var c in region.Graph.Connections)
             {
-                var cell = cells[area.Id];
-                Assert.Equal(area.PathIndex, cell.Col);
-                Assert.Equal(0, cell.Row);
+                var (a, b) = (cells[c.AreaA], cells[c.AreaB]);
+                var distance = Math.Abs(a.Col - b.Col) + Math.Abs(a.Row - b.Row);
+                Assert.True(distance == 1,
+                    $"seed {seed}/{badges}: areas {c.AreaA} ({a.Col},{a.Row}) and {c.AreaB} ({b.Col},{b.Row}) "
+                    + $"are connected but {distance} cells apart — the connection cannot be laid out");
             }
         }
     }
@@ -56,46 +87,26 @@ public class OverviewLayoutTests
     [InlineData(4)]
     [InlineData(8)]
     [InlineData(12)]
-    public void OffSpineAreaSharesItsAnchorsColumn(int badges)
+    public void OffSpineAreaBordersItsAnchor(int badges)
     {
         var offSpineChecked = 0;
-        for (ulong seed = 1; seed <= 500; seed++)
+        for (ulong seed = 1; seed <= 300; seed++)
         {
             var region = RegionGenerator.Generate(new GenerationSettings { Seed = seed, BadgeCount = badges }, TestData.Data);
-            var cells = OverviewLayout.Plan(region.Graph).ToDictionary(c => c.AreaId);
             var anchors = GatingGenerator.OffSpineAnchors(region.Graph);
 
             foreach (var area in region.Graph.OffSpineAreas)
             {
-                var cell = cells[area.Id];
-                Assert.NotEqual(0, cell.Row); // off-spine areas never sit in the critical-path row
-                if (anchors.TryGetValue(area.Id, out var anchorPathIndex))
-                {
-                    Assert.Equal(anchorPathIndex, cell.Col);
-                    offSpineChecked++;
-                }
+                Assert.True(anchors.ContainsKey(area.Id),
+                    $"seed {seed}/{badges}: off-spine area {area.Id} has no critical-path neighbour");
+
+                var anchor = region.Graph.CriticalPath.First(a => a.PathIndex == anchors[area.Id]);
+                Assert.True(area.Cell.IsAdjacentTo(anchor.Cell),
+                    $"seed {seed}/{badges}: area {area.Id} at {area.Cell} does not border its anchor {anchor.Cell}");
+                offSpineChecked++;
             }
         }
         Assert.True(offSpineChecked > 0, "no off-spine area was exercised across the corpus — nothing was tested");
-    }
-
-    [Theory]
-    [InlineData(4)]
-    [InlineData(8)]
-    [InlineData(12)]
-    public void EveryConnectionsEndpointsAreBothPlaced(int badges)
-    {
-        for (ulong seed = 1; seed <= 300; seed++)
-        {
-            var region = RegionGenerator.Generate(new GenerationSettings { Seed = seed, BadgeCount = badges }, TestData.Data);
-            var placedIds = OverviewLayout.Plan(region.Graph).Select(c => c.AreaId).ToHashSet();
-
-            foreach (var c in region.Graph.Connections)
-            {
-                Assert.Contains(c.AreaA, placedIds);
-                Assert.Contains(c.AreaB, placedIds);
-            }
-        }
     }
 
     [Fact]
