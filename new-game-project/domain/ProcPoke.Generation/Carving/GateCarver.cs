@@ -45,10 +45,19 @@ public static class GateCarver
         var barrierX = w - BarrierInsetFromRightEdge;
         var obstacle = TileFor(gate.Obstacle);
 
-        // Guarantee a straight approach along the spine row so the entry always reaches the neck, whatever
-        // decoration the carver left — then the neck is the only way through.
-        for (var x = 1; x < barrierX; x++)
-            if (!g[x, midY].IsWalkable()) g[x, midY] = LogicalTile.Ground;
+        // Guarantee the entry reaches the neck, whatever decoration the carver left — then the neck is the
+        // only way through. Carving the whole spine row unconditionally would do it, but it also flattens a
+        // winding cave (ticket 5b) into one dead-straight corridor. So grow the approach leftward from the
+        // neck one tile at a time and stop the moment it meets ground the carver already laid: routes, whose
+        // protected spine row arrives on its own, are untouched, and a cave keeps its bends. If nothing ever
+        // connects the loop still carves the full row, which is the old unconditional behaviour as a floor.
+        if (!ApproachReachesNeck(carved, g, barrierX, midY))
+            GrowApproach(carved, g, barrierX, midY);
+
+        // Town walls may intersect an edge-aligned exit row. Restore those walls after the generic
+        // approach straightening pass; TownCarver excludes its actual doorway coordinates from this set.
+        foreach (var (x, y) in carved.BuildingWallTiles)
+            if (g.InBounds(x, y) && g[x, y] == LogicalTile.Ground) g[x, y] = LogicalTile.Wall;
 
         var gateTiles = new List<(int X, int Y)>();
         if (obstacle == LogicalTile.Water)
@@ -66,6 +75,60 @@ public static class GateCarver
         }
 
         return carved with { GateTiles = gateTiles };
+    }
+
+    /// <summary>
+    /// Grows the approach leftward from the neck, one tile at a time, stopping the moment it meets ground the
+    /// carver already laid — so the repair is as short as the layout allows. Reaching x = 1 without connecting
+    /// leaves the whole row carved, which is the old unconditional behaviour as a floor.
+    /// </summary>
+    private static void GrowApproach(CarvedArea carved, TileGrid g, int barrierX, int midY)
+    {
+        for (var x = barrierX - 1; x >= 1; x--)
+        {
+            if (!g[x, midY].IsWalkable()) g[x, midY] = LogicalTile.Ground;
+            if (ApproachReachesNeck(carved, g, barrierX, midY)) return;
+        }
+    }
+
+    /// <summary>
+    /// Whether every opening except the gated exit already walks to the tile just inside the neck. The
+    /// barrier column is treated as blocked, since it is about to become one — so a true answer means the
+    /// lock still works without touching the carver's layout.
+    /// </summary>
+    private static bool ApproachReachesNeck(CarvedArea carved, TileGrid g, int barrierX, int midY)
+    {
+        var neck = (X: barrierX - 1, Y: midY);
+        if (!g.InBounds(neck.X, neck.Y) || !g[neck.X, neck.Y].IsWalkable()) return false;
+
+        foreach (var opening in carved.Openings)
+        {
+            // The exit sits beyond the barrier; it is reached through the gap once the gate is cleared.
+            if (opening.X == g.Width - 1) continue;
+            if (!Reaches(g, opening, neck, blockedX: barrierX)) return false;
+        }
+        return true;
+    }
+
+    private static bool Reaches(TileGrid g, (int X, int Y) from, (int X, int Y) to, int blockedX)
+    {
+        if (!g[from.X, from.Y].IsWalkable()) return false;
+
+        var seen = new HashSet<(int X, int Y)> { from };
+        var queue = new Queue<(int X, int Y)>([from]);
+        while (queue.Count > 0)
+        {
+            var (x, y) = queue.Dequeue();
+            if ((x, y) == to) return true;
+            foreach (var (dx, dy) in new[] { (1, 0), (-1, 0), (0, 1), (0, -1) })
+            {
+                var next = (X: x + dx, Y: y + dy);
+                if (!g.InBounds(next.X, next.Y) || next.X == blockedX) continue;
+                if (!g[next.X, next.Y].IsWalkable() || !seen.Add(next)) continue;
+                queue.Enqueue(next);
+            }
+        }
+        return false;
     }
 
     private static (int X, int Y)? FindRightEdgeOpening(CarvedArea carved, int width)

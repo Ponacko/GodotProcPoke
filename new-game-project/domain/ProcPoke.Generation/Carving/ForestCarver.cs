@@ -74,7 +74,7 @@ public static class ForestCarver
             StampClump(grid, cx, cy, halfW, halfH, guarded, nearOpening);
         }
 
-        // Tall grass straddling the path (walkable), and one item off the beaten track — as before.
+        // Tall grass straddling the path (walkable).
         for (var i = 0; i < 4; i++)
         {
             var cx = rng.NextInt(3, w - 3);
@@ -82,9 +82,8 @@ public static class ForestCarver
             CarveKit.FillRect(grid, cx - 1, cy - 1, cx + 1, cy + 1, LogicalTile.TallGrass);
         }
 
-        var ix = rng.NextInt(2, w - 2);
-        var iy = rng.Chance(0.5) ? 2 : h - 3;
-        if (grid[ix, iy] == LogicalTile.Ground) grid[ix, iy] = LogicalTile.ItemBall;
+        DecorationKit.PlaceItemNook(grid, LogicalTile.Ground, LogicalTile.Tree, spineY, rng, guarded, nearOpening);
+        DecorationKit.PlaceTrainerPosts(grid, LogicalTile.Ground, spineY, 1 + rng.NextInt(2), rng, guarded, nearOpening);
 
         return new CarvedArea { AreaId = area.Id, Grid = grid, Openings = openings };
     }

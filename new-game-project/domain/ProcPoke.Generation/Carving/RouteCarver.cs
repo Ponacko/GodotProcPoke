@@ -50,6 +50,8 @@ public static class RouteCarver
         foreach (var o in planned.Where(o => o.Edge is EdgeSide.Top or EdgeSide.Bottom))
             openings.Add(CarveKit.OpenSpineEdge(grid, canvas.Protected, o.Edge, o.Offset, canvas.SpineY, floor));
 
+        var nearOpening = OpeningNeighbourhood(openings);
+
         var grassPatches = biome == Biome.Forest ? 4 : 3;
         var treeClumps = biome == Biome.Forest ? 5 : biome == Biome.Desert ? 1 : 3;
         var spineY = canvas.SpineY;
@@ -72,17 +74,9 @@ public static class RouteCarver
             Stamp(canvas, cx - 1, cy - 1, cx + 1, cy, clumpTile, allowCorridor: false);
         }
 
-        // One ledge run in the lower flank (a shortcut you drop down toward the entrance).
-        var ledgeY = Math.Min(h - 2, spineY + 2);
-        var ledgeX0 = rng.NextInt(3, w / 2);
-        for (var x = ledgeX0; x < ledgeX0 + rng.NextInt(4, 8) && x < w - 1; x++)
-            if (grid[x, ledgeY].IsWalkable()) grid[x, ledgeY] = LogicalTile.Ledge;
-
-        // A trainer watching the path.
-        PlaceOnFloor(grid, rng.NextInt(6, w - 6), spineY + (rng.Chance(0.5) ? -1 : 1), LogicalTile.TrainerPost, floor);
-
-        // An item tucked into a flank pocket.
-        PlaceOnFloor(grid, rng.NextInt(3, w - 3), rng.Chance(0.5) ? 2 : h - 3, LogicalTile.ItemBall, floor);
+        PlaceLedges(grid, canvas, rng, nearOpening);
+        DecorationKit.PlaceItemNook(grid, floor, clumpTile, spineY, rng, canvas.Protected, nearOpening);
+        DecorationKit.PlaceTrainerPosts(grid, floor, spineY, 1 + rng.NextInt(2), rng, canvas.Protected, nearOpening);
 
         return new CarvedArea { AreaId = area.Id, Grid = grid, Openings = openings };
     }
@@ -96,8 +90,64 @@ public static class RouteCarver
                 if (allowCorridor || !c.Protected.Contains((x, y))) g[x, y] = tile;
     }
 
-    private static void PlaceOnFloor(TileGrid g, int x, int y, LogicalTile tile, LogicalTile floor)
+    private static void PlaceLedges(
+        TileGrid grid, Canvas canvas, Pcg32 rng, IReadOnlySet<(int X, int Y)> nearOpening)
     {
-        if (g.InBounds(x, y) && g[x, y] == floor) g[x, y] = tile;
+        var minY = canvas.SpineY + 2;
+        var maxY = Math.Min(grid.Height - 2, canvas.SpineY + 4);
+        if (minY > maxY) return; // An edge-aligned spine at the bottom has no legal south flank.
+
+        var runs = 1 + rng.NextInt(2);
+        for (var run = 0; run < runs; run++)
+        {
+            var placed = false;
+            for (var attempt = 0; attempt < 30 && !placed; attempt++)
+            {
+                var length = 4 + rng.NextInt(5);
+                var y = rng.NextInt(minY, maxY + 1);
+                var x0 = rng.NextInt(2, grid.Width - length - 1);
+                var valid = true;
+                for (var x = x0; x < x0 + length; x++)
+                {
+                    if (!grid[x, y].IsWalkable() || canvas.Protected.Contains((x, y)) || nearOpening.Contains((x, y))
+                        || !grid[x, y - 1].IsWalkable() || !grid[x, y + 1].IsWalkable())
+                    {
+                        valid = false;
+                        break;
+                    }
+                }
+                if (!valid) continue;
+                for (var x = x0; x < x0 + length; x++) grid[x, y] = LogicalTile.Ledge;
+                placed = true;
+            }
+
+            if (!placed)
+            {
+                const int length = 4;
+                for (var y = minY; y <= maxY && !placed; y++)
+                    for (var x0 = 2; x0 <= grid.Width - length - 2 && !placed; x0++)
+                    {
+                        var valid = Enumerable.Range(x0, length)
+                            .All(x => !canvas.Protected.Contains((x, y)) && !nearOpening.Contains((x, y)));
+                        if (!valid) continue;
+                        for (var x = x0; x < x0 + length; x++)
+                        {
+                            if (!canvas.Protected.Contains((x, y - 1))) grid[x, y - 1] = LogicalTile.Ground;
+                            if (!canvas.Protected.Contains((x, y + 1))) grid[x, y + 1] = LogicalTile.Ground;
+                            grid[x, y] = LogicalTile.Ledge;
+                        }
+                        placed = true;
+                    }
+            }
+        }
+    }
+
+    private static HashSet<(int X, int Y)> OpeningNeighbourhood(IReadOnlyList<(int X, int Y)> openings)
+    {
+        var near = new HashSet<(int X, int Y)>();
+        foreach (var (x, y) in openings)
+            for (var dx = -1; dx <= 1; dx++)
+                for (var dy = -1; dy <= 1; dy++) near.Add((x + dx, y + dy));
+        return near;
     }
 }

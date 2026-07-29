@@ -12,7 +12,7 @@ public enum LogicalTile
     Wall,          // impassable filler / cliff face
     Tree,          // border/decorative tree clump (impassable)
     TallGrass,     // walkable, wild-encounter tile
-    Ledge,         // one-way hop (walkable for connectivity)
+    Ledge,         // one-way hop south: north→south only (walkable for connectivity)
     Water,         // surfable water (impassable on foot)
     Sand,          // desert floor (walkable)
     Boulder,       // Strength obstacle

@@ -7,8 +7,8 @@ namespace ProcPoke.Generation.Carving;
 
 /// <summary>
 /// Dispatches each area to its archetype carver (ADR-0001: one carver per archetype). Archetypes without
-/// a bespoke MVP carver yet reuse the nearest fit — mountains/interiors carve as caves, the League as a
-/// settlement — a deliberate variety cut to be paid back in Phase 6.
+/// a bespoke MVP carver yet reuse the nearest fit — mountains/interiors carve as caves, while the League
+/// has its dedicated E4 gauntlet layout.
 /// </summary>
 public static class AreaCarver
 {
@@ -17,15 +17,24 @@ public static class AreaCarver
         AreaArchetype.Route => RouteCarver.Carve(area, biome, rng, openings.OpeningsOf(area.Id)),
         AreaArchetype.Forest => ForestCarver.Carve(area, biome, rng, openings.OpeningsOf(area.Id)),
 
-        AreaArchetype.StartTown or AreaArchetype.Town or AreaArchetype.League
+        AreaArchetype.StartTown or AreaArchetype.Town
             => TownCarver.Carve(area, biome, rng, openings.OpeningsOf(area.Id)),
 
+        AreaArchetype.League
+            => LeagueCarver.Carve(area, biome, rng, openings.OpeningsOf(area.Id)),
+
         AreaArchetype.StandardCave or AreaArchetype.MountainPath or AreaArchetype.VictoryRoad
-            => CaveCarver.Carve(area, biome, rng, transit: area.OnCriticalPath),
+            => CaveCarver.Carve(area, biome, rng, openings.OpeningsOf(area.Id), transit: area.OnCriticalPath),
+
+        AreaArchetype.VillainHideout
+            => HideoutCarver.Carve(area, biome, rng, openings.OpeningsOf(area.Id)),
+
+        AreaArchetype.Tower
+            => TowerCarver.Carve(area, biome, rng, openings.OpeningsOf(area.Id)),
 
         // Destination dungeons: single-entrance enclosed layouts.
-        AreaArchetype.DeepCave or AreaArchetype.VillainHideout or AreaArchetype.Tower
-            => CaveCarver.Carve(area, biome, rng, transit: false),
+        AreaArchetype.DeepCave
+            => CaveCarver.Carve(area, biome, rng, openings.OpeningsOf(area.Id), transit: false),
 
         _ => RouteCarver.Carve(area, biome, rng, openings.OpeningsOf(area.Id)),
     };

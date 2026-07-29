@@ -1,0 +1,237 @@
+[gd_scene load_steps=4 format=3]
+
+[ext_resource type="Script" path="res://debug/RegionViewer.cs" id="1_viewer"]
+[ext_resource type="Script" path="res://debug/RegionMapView.cs" id="2_mapview"]
+
+[sub_resource type="SystemFont" id="SystemFont_mono"]
+font_names = PackedStringArray("DejaVu Sans Mono", "Liberation Mono", "Noto Sans Mono", "Consolas", "Courier New", "monospace")
+
+[node name="RegionViewer" type="Control"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_viewer")
+
+[node name="Frame" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/separation = 0
+
+[node name="TopBar" type="PanelContainer" parent="Frame"]
+layout_mode = 2
+
+[node name="Pad" type="MarginContainer" parent="Frame/TopBar"]
+layout_mode = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 6
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 6
+
+[node name="Rows" type="VBoxContainer" parent="Frame/TopBar/Pad"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="Controls" type="HBoxContainer" parent="Frame/TopBar/Pad/Rows"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="SeedLabel" type="Label" parent="Frame/TopBar/Pad/Rows/Controls"]
+layout_mode = 2
+text = "Seed"
+
+[node name="SeedInput" type="SpinBox" parent="Frame/TopBar/Pad/Rows/Controls"]
+unique_name_in_owner = true
+layout_mode = 2
+max_value = 4294967295.0
+value = 7.0
+alignment = 2
+tooltip_text = "Master seed — the whole region is a pure function of this plus the settings beside it."
+
+[node name="PrevSeedButton" type="Button" parent="Frame/TopBar/Pad/Rows/Controls"]
+unique_name_in_owner = true
+layout_mode = 2
+tooltip_text = "Previous seed"
+text = "◀"
+
+[node name="NextSeedButton" type="Button" parent="Frame/TopBar/Pad/Rows/Controls"]
+unique_name_in_owner = true
+layout_mode = 2
+tooltip_text = "Next seed"
+text = "▶"
+
+[node name="Sep1" type="VSeparator" parent="Frame/TopBar/Pad/Rows/Controls"]
+layout_mode = 2
+
+[node name="BadgeLabel" type="Label" parent="Frame/TopBar/Pad/Rows/Controls"]
+layout_mode = 2
+text = "Badges"
+
+[node name="BadgeInput" type="SpinBox" parent="Frame/TopBar/Pad/Rows/Controls"]
+unique_name_in_owner = true
+layout_mode = 2
+min_value = 1.0
+max_value = 16.0
+value = 8.0
+alignment = 2
+tooltip_text = "Gym cities. Region size scales with this; gate timing is a fraction of progression, so it holds at any count."
+
+[node name="DexLabel" type="Label" parent="Frame/TopBar/Pad/Rows/Controls"]
+layout_mode = 2
+text = "Dex"
+
+[node name="DexInput" type="SpinBox" parent="Frame/TopBar/Pad/Rows/Controls"]
+unique_name_in_owner = true
+layout_mode = 2
+min_value = 16.0
+max_value = 649.0
+value = 150.0
+alignment = 2
+tooltip_text = "Regional dex size, before the four legendaries are appended."
+
+[node name="CapLabel" type="Label" parent="Frame/TopBar/Pad/Rows/Controls"]
+layout_mode = 2
+text = "Roster cap"
+
+[node name="CapInput" type="SpinBox" parent="Frame/TopBar/Pad/Rows/Controls"]
+unique_name_in_owner = true
+layout_mode = 2
+min_value = 1.0
+max_value = 5.0
+value = 5.0
+alignment = 2
+tooltip_text = "Highest generation species may be drawn from. Filters the species pool only — mechanics stay Gen 5."
+
+[node name="Sep2" type="VSeparator" parent="Frame/TopBar/Pad/Rows/Controls"]
+layout_mode = 2
+
+[node name="GenerateButton" type="Button" parent="Frame/TopBar/Pad/Rows/Controls"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Generate"
+
+[node name="FitButton" type="Button" parent="Frame/TopBar/Pad/Rows/Controls"]
+unique_name_in_owner = true
+layout_mode = 2
+tooltip_text = "Fit the whole region in the view"
+text = "Fit"
+
+[node name="AreaNav" type="HBoxContainer" parent="Frame/TopBar/Pad/Rows"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="AreaLabel" type="Label" parent="Frame/TopBar/Pad/Rows/AreaNav"]
+layout_mode = 2
+text = "Area"
+
+[node name="AreaPicker" type="OptionButton" parent="Frame/TopBar/Pad/Rows/AreaNav"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+tooltip_text = "Every area in first-availability order — the same order the dex numbers by."
+
+[node name="PrevAreaButton" type="Button" parent="Frame/TopBar/Pad/Rows/AreaNav"]
+unique_name_in_owner = true
+layout_mode = 2
+tooltip_text = "Previous area"
+text = "◀"
+
+[node name="NextAreaButton" type="Button" parent="Frame/TopBar/Pad/Rows/AreaNav"]
+unique_name_in_owner = true
+layout_mode = 2
+tooltip_text = "Next area"
+text = "▶"
+
+[node name="StartButton" type="Button" parent="Frame/TopBar/Pad/Rows/AreaNav"]
+unique_name_in_owner = true
+layout_mode = 2
+tooltip_text = "Back to the start town"
+text = "Start"
+
+[node name="Body" type="HSplitContainer" parent="Frame"]
+layout_mode = 2
+size_flags_vertical = 3
+
+[node name="MapView" type="Control" parent="Frame/Body"]
+unique_name_in_owner = true
+clip_contents = true
+custom_minimum_size = Vector2(320, 240)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+script = ExtResource("2_mapview")
+
+[node name="Tabs" type="TabContainer" parent="Frame/Body"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(620, 0)
+layout_mode = 2
+
+[node name="Region" type="ScrollContainer" parent="Frame/Body/Tabs"]
+layout_mode = 2
+
+[node name="ReportText" type="Label" parent="Frame/Body/Tabs/Region"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_fonts/font = SubResource("SystemFont_mono")
+theme_override_font_sizes/font_size = 12
+text = "Press Generate to run the pipeline."
+
+[node name="Area" type="ScrollContainer" parent="Frame/Body/Tabs"]
+visible = false
+layout_mode = 2
+
+[node name="AreaText" type="Label" parent="Frame/Body/Tabs/Area"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_fonts/font = SubResource("SystemFont_mono")
+theme_override_font_sizes/font_size = 12
+text = "Click an area on the map to inspect it."
+
+[node name="Map key" type="ScrollContainer" parent="Frame/Body/Tabs"]
+visible = false
+layout_mode = 2
+
+[node name="LegendPad" type="MarginContainer" parent="Frame/Body/Tabs/Map key"]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 8
+
+[node name="LegendList" type="VBoxContainer" parent="Frame/Body/Tabs/Map key/LegendPad"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="Built so far" type="ScrollContainer" parent="Frame/Body/Tabs"]
+visible = false
+layout_mode = 2
+
+[node name="RoadmapText" type="Label" parent="Frame/Body/Tabs/Built so far"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_fonts/font = SubResource("SystemFont_mono")
+theme_override_font_sizes/font_size = 12
+
+[node name="StatusBar" type="PanelContainer" parent="Frame"]
+layout_mode = 2
+
+[node name="StatusPad" type="MarginContainer" parent="Frame/StatusBar"]
+layout_mode = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 4
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 4
+
+[node name="StatusLabel" type="Label" parent="Frame/StatusBar/StatusPad"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_fonts/font = SubResource("SystemFont_mono")
+theme_override_font_sizes/font_size = 12
+text = "Starting up…"

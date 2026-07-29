@@ -7,8 +7,8 @@ using Xunit;
 namespace ProcPoke.Generation.Tests;
 
 /// <summary>
-/// Ticket 6a: the encounter framework — table shapes (method per area), base wild levels, and the shared
-/// <see cref="LevelCurve"/>. Slot filling is 6b, so tables carry empty slot lists here.
+/// Tickets 6a/6b: encounter table shapes, filled regional pools, base wild levels, and the shared
+/// <see cref="LevelCurve"/>.
 /// </summary>
 public class EncounterFrameworkTests
 {
@@ -84,9 +84,47 @@ public class EncounterFrameworkTests
                     Assert.DoesNotContain(EncounterMethod.Fishing, methods);
                 }
 
-                // 6a leaves every slot list empty; overlays are 6b.
-                Assert.All(entry.Tables, t => Assert.Empty(t.Slots));
-                Assert.Null(entry.Overlay);
+                foreach (var table in entry.Tables)
+                {
+                    var layout = table.Method switch
+                    {
+                        EncounterMethod.Land => SlotLayouts.Land,
+                        EncounterMethod.Surf => SlotLayouts.Surf,
+                        EncounterMethod.Fishing => SlotLayouts.Fishing,
+                        _ => throw new ArgumentOutOfRangeException(),
+                    };
+                    Assert.Equal(layout, table.Slots.Select(s => s.Percent));
+                    Assert.Equal(100, table.Slots.Sum(s => s.Percent));
+                    Assert.Equal(0, table.HiddenAbilityChance);
+                    Assert.All(table.Slots, slot =>
+                    {
+                        Assert.Contains(slot.SpeciesId, region.Dex.Entries.Select(e => e.SpeciesId));
+                        Assert.DoesNotContain(slot.SpeciesId, region.Dex.FossilFamilySpecies);
+                        Assert.False(TestData.Data.Species[slot.SpeciesId].IsLegendary);
+                        Assert.False(TestData.Data.Species[slot.SpeciesId].IsMythical);
+                        Assert.InRange(slot.MinLevel, Math.Max(2, entry.BaseLevel - 2), entry.BaseLevel - 2);
+                        Assert.InRange(slot.MaxLevel, entry.BaseLevel + 2, entry.BaseLevel + 2);
+                    });
+                }
+
+                var availability = AvailabilityOrder.Of(region.Graph, GatingGenerator.OffSpineAnchors(region.Graph));
+                var fraction = availability.Count <= 1
+                    ? 1
+                    : availability.Select((id, index) => (id, index)).First(x => x.id == area.Id).index
+                        / (availability.Count - 1.0);
+                var shouldOverlay = area.Archetype is AreaArchetype.Route or AreaArchetype.Forest
+                    && fraction >= 0.5;
+                Assert.Equal(shouldOverlay, entry.Overlay is not null);
+                if (entry.Overlay is not null)
+                {
+                    Assert.Equal(SlotLayouts.Land, entry.Overlay.Slots.Select(s => s.Percent));
+                    Assert.Equal(0.5, entry.Overlay.HiddenAbilityChance);
+                    Assert.All(entry.Overlay.Slots, slot =>
+                    {
+                        Assert.Equal(entry.BaseLevel + 3, slot.MinLevel);
+                        Assert.Equal(entry.BaseLevel + 7, slot.MaxLevel);
+                    });
+                }
             }
             checkedCount++;
         }
@@ -146,7 +184,14 @@ public class EncounterFrameworkTests
             {
                 Assert.Equal(a.ByArea[id].BaseLevel, b.ByArea[id].BaseLevel);
                 Assert.Equal(a.ByArea[id].Tables.Select(t => t.Method), b.ByArea[id].Tables.Select(t => t.Method));
+                Assert.Equal(a.ByArea[id].Tables.Select(TableSignature), b.ByArea[id].Tables.Select(TableSignature));
+                Assert.Equal(TableSignature(a.ByArea[id].Overlay), TableSignature(b.ByArea[id].Overlay));
             }
         }
     }
+
+    private static string? TableSignature(EncounterTable? table)
+        => table is null
+            ? null
+            : $"{table.Method}|{table.HiddenAbilityChance}|{string.Join(',', table.Slots.Select(s => $"{s.Percent}/{s.SpeciesId}/{s.MinLevel}/{s.MaxLevel}"))}";
 }

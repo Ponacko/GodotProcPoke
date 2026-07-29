@@ -1,11 +1,15 @@
 using System.Text;
 using ProcPoke.Data;
 using ProcPoke.Generation.Biomes;
+using ProcPoke.Generation.Bosses;
 using ProcPoke.Generation.Encounters;
 using ProcPoke.Generation.Gating;
 using ProcPoke.Generation.Identity;
 using ProcPoke.Generation.Roster;
+using ProcPoke.Generation.Rivals;
+using ProcPoke.Generation.Npcs;
 using ProcPoke.Generation.Topology;
+using ProcPoke.Generation.Trainers;
 
 namespace ProcPoke.Generation.Debug;
 
@@ -19,7 +23,8 @@ public static class RegionGraphText
     public static string Render(RegionGraph g, GatingPlan? gating = null, BiomeMap? biomes = null,
         RegionNames? names = null, RegionIdentity? identity = null, StarterPlan? starters = null,
         DexPlan? dex = null, GameData? data = null, SpecialSpecies? special = null,
-        EncounterPlan? encounters = null)
+        EncounterPlan? encounters = null, TrainerPlan? trainers = null, BossPlan? bosses = null,
+        RivalPlan? rivals = null, NpcPlan? npcs = null)
     {
         var sb = new StringBuilder();
         sb.AppendLine($"Region  badges={g.BadgeCount}  areas={g.Areas.Count}  connections={g.Connections.Count}  connected={g.IsConnected()}");
@@ -96,17 +101,84 @@ public static class RegionGraphText
         if (encounters is not null)
             AppendEncounters(sb, g, encounters, names);
 
+        if (trainers is not null)
+            AppendTrainers(sb, g, trainers, names);
+
+        if (bosses is not null)
+            AppendBosses(sb, g, bosses, names);
+
+        if (rivals is not null)
+            AppendRivals(sb, rivals);
+
+        if (npcs is not null)
+            AppendNpcs(sb, g, npcs, names);
+
         return sb.ToString();
     }
 
-    /// <summary>Per-area encounter methods and base wild level (slots are filled in 6b).</summary>
+    /// <summary>Per-area encounter methods, filled slot species, overlays, and base wild level.</summary>
     private static void AppendEncounters(StringBuilder sb, RegionGraph g, EncounterPlan encounters, RegionNames? names)
     {
-        sb.AppendLine("Encounters (methods @ base wild level):");
+        sb.AppendLine("Encounters (methods, slots @ base wild level):");
         foreach (var (areaId, area) in encounters.ByArea.OrderBy(kv => kv.Key))
         {
-            var methods = string.Join("/", area.Tables.Select(t => t.Method));
-            sb.AppendLine($"    {AreaName(g, names, areaId),-22} {methods,-18} Lv{area.BaseLevel}");
+            static string TableText(EncounterTable table)
+                => $"{table.Method}[{string.Join(',', table.Slots.Select(s => s.SpeciesId))}]";
+
+            var methods = string.Join(" ", area.Tables.Select(TableText));
+            var overlay = area.Overlay is null ? "" : $" overlay[{string.Join(',', area.Overlay.Slots.Select(s => s.SpeciesId))}]";
+            sb.AppendLine($"    {AreaName(g, names, areaId),-22} {methods} Lv{area.BaseLevel}{overlay}");
+        }
+    }
+
+    /// <summary>Per-area trainer class/ace summaries and item-ball contents.</summary>
+    private static void AppendTrainers(StringBuilder sb, RegionGraph g, TrainerPlan trainers, RegionNames? names)
+    {
+        sb.AppendLine("Trainers & items:");
+        foreach (var areaId in trainers.ByArea.Keys.Union(trainers.ItemsByArea.Keys).OrderBy(id => id))
+        {
+            var areaTrainers = trainers.TrainersOf(areaId);
+            var classes = string.Join(", ", areaTrainers.Select(t => $"{t.DisplayClass} Lv{t.AceLevel}"));
+            var items = string.Join(", ", trainers.ItemsOf(areaId).Select(i => $"item#{i.ItemId}"));
+            sb.AppendLine($"    {AreaName(g, names, areaId),-22} {classes}  items[{items}]");
+        }
+    }
+
+    /// <summary>Per-boss team type, size, and levels.</summary>
+    private static void AppendBosses(StringBuilder sb, RegionGraph g, BossPlan bosses, RegionNames? names)
+    {
+        sb.AppendLine("Boss teams:");
+        foreach (var (areaId, leader) in bosses.GymLeaders.OrderBy(kv => g[kv.Key].PathIndex))
+            sb.AppendLine($"    gym {AreaName(g, names, areaId)} {leader.Name} {leader.AssignedType} [{string.Join(',', leader.Members.Select(m => $"#{m.SpeciesId}/Lv{m.Level}"))}]");
+        foreach (var team in bosses.EliteFour)
+            sb.AppendLine($"    {team.Name} {team.AssignedType} [{string.Join(',', team.Members.Select(m => $"#{m.SpeciesId}/Lv{m.Level}"))}]");
+        sb.AppendLine($"    {bosses.Champion.Name} [{string.Join(',', bosses.Champion.Members.Select(m => $"#{m.SpeciesId}/Lv{m.Level}"))}]");
+    }
+
+    private static void AppendRivals(StringBuilder sb, RivalPlan rivals)
+    {
+        sb.AppendLine("Rival teams:");
+        foreach (var variant in rivals.Variants.OrderBy(v => v.PlayerCornerIndex))
+        {
+            sb.AppendLine($"    player corner {variant.PlayerCornerIndex + 1} → rival corner {variant.RivalCornerIndex + 1}");
+            foreach (var team in variant.Beats)
+                sb.AppendLine($"      {team.Beat} ace Lv{team.AceLevel} [{string.Join(',', team.Members.Select(m => $"#{m.SpeciesId}/Lv{m.Level}"))}]");
+            if (variant.ChampionTeam is not null)
+                sb.AppendLine($"      {variant.ChampionTeam.Name} [{string.Join(',', variant.ChampionTeam.Members.Select(m => $"#{m.SpeciesId}/Lv{m.Level}"))}]");
+        }
+    }
+
+    /// <summary>Per-area NPC post counts and generated dialogue.</summary>
+    private static void AppendNpcs(StringBuilder sb, RegionGraph g, NpcPlan npcs, RegionNames? names)
+    {
+        sb.AppendLine("NPC posts:");
+        foreach (var (areaId, posts) in npcs.ByArea.OrderBy(kv => g[kv.Key].PathIndex < 0 ? int.MaxValue : g[kv.Key].PathIndex)
+                     .ThenBy(kv => kv.Key))
+        {
+            if (posts.Count == 0) continue;
+            sb.AppendLine($"    {AreaName(g, names, areaId),-22} {posts.Count} posts");
+            foreach (var post in posts)
+                sb.AppendLine($"      {post.Kind}: {post.Text}");
         }
     }
 

@@ -5,17 +5,12 @@ using ProcPoke.Generation.Topology;
 namespace ProcPoke.Generation.Carving;
 
 /// <summary>
-/// Carves a settlement: an open plaza with a clear central street (which also carries the spine between
-/// the left/right openings), buildings arranged in a band above and below the street, each with a door
-/// (Warp) facing it. The open street guarantees every door and every edge opening are mutually reachable.
-/// Left/right openings line up with the spine neighbours they were edge-aligned against; any branch or
-/// loop-back connection gets its own opening on the top or bottom edge.
+/// Carves a settlement with an open central street, edge-aligned connections, and deterministic varied
+/// building bands. Buildings face the street through one Warp door each, keeping every service reachable.
 /// </summary>
 public static class TownCarver
 {
-    // Building footprints (width); heights are a fixed 3. Gym and Center are the wide ones.
-    private static readonly int[] TopBand = [4, 4, 3];   // gym, centre, mart
-    private static readonly int[] BottomBand = [3, 3, 3]; // houses
+    private readonly record struct Building(int X, int Y, int Width, int Height);
 
     public static CarvedArea Carve(Area area, Biome biome, Pcg32 rng, IReadOnlyList<AreaOpening> planned)
     {
@@ -24,47 +19,119 @@ public static class TownCarver
         var midY = h / 2;
 
         CarveKit.Border(grid, LogicalTile.Tree);
-        // Edge-aligned with the spine neighbours, so — unlike the old fixed midY — this can land inside a
-        // building band's row. If this town's exit is also gated, GateCarver's approach-straightening pass
-        // could then force a gap through that building's wall (cosmetic only: it only adds floor, so
-        // reachability never breaks). Accepted for now; 5d's decoration-rules pass is the place to route
-        // bands around a gated exit row if it ever reads badly in the sign-off packet.
         var leftY = planned.OffsetOr(EdgeSide.Left, midY);
         var rightY = planned.OffsetOr(EdgeSide.Right, midY);
         grid[0, leftY] = LogicalTile.Warp;
         grid[w - 1, rightY] = LogicalTile.Warp;
 
         var openings = new List<(int X, int Y)> { (0, leftY), (w - 1, rightY) };
+        var buildingWalls = new HashSet<(int X, int Y)>();
+
+        // Spine-first (ADR-0001). A left/right warp is safe unguarded — the bands never reach column 1 or
+        // w-2 — but a top/bottom warp lands on any interior column, so it needs a protected run into the
+        // street that the bands then refuse to build over. Punching the border tile alone leaves a
+        // connection opening into the back of a house, stranding it from the whole town.
+        var guarded = new HashSet<(int X, int Y)>();
         foreach (var o in planned.Where(o => o.Edge is EdgeSide.Top or EdgeSide.Bottom))
         {
             var tile = o.TileOn(w, h);
             grid[tile.X, tile.Y] = LogicalTile.Warp;
             openings.Add(tile);
+            CarveKit.ConnectSpineColumn(
+                grid, guarded, tile.X, o.Edge == EdgeSide.Top ? 1 : h - 2, midY, LogicalTile.Ground);
         }
 
-        var topY = 2;                 // building rows 2..4
-        var bottomY = midY + 3;       // building rows midY+3..midY+5
-        if (bottomY + 2 <= h - 2)
-            PlaceBand(grid, rng, BottomBand, bottomY, doorOnBottom: false, openings);
-        PlaceBand(grid, rng, TopBand, topY, doorOnBottom: true, openings);
+        // Two clear street rows keep the small StartTown footprint viable while leaving the central
+        // spine row exactly where the original fixed-band carver placed it.
+        var topY = 2;
+        var bottomY = midY + 2;
+        PlaceBand(grid, rng, topY, Math.Max(0, midY - topY - 1), doorOnBottom: true, gymFirst: true,
+            openings: openings, buildingWalls: buildingWalls, guarded: guarded);
+        PlaceBand(grid, rng, bottomY, Math.Max(0, h - 2 - bottomY + 1), doorOnBottom: false, gymFirst: false,
+            openings: openings, buildingWalls: buildingWalls, guarded: guarded);
 
-        return new CarvedArea { AreaId = area.Id, Grid = grid, Openings = openings };
+        return new CarvedArea { AreaId = area.Id, Grid = grid, Openings = openings, BuildingWallTiles = buildingWalls };
     }
 
-    private static void PlaceBand(TileGrid g, Pcg32 rng, int[] widths, int y0, bool doorOnBottom, List<(int, int)> openings)
+    private static void PlaceBand(
+        TileGrid grid, Pcg32 rng, int y0, int availableHeight, bool doorOnBottom, bool gymFirst,
+        List<(int X, int Y)> openings, HashSet<(int X, int Y)> buildingWalls,
+        IReadOnlySet<(int X, int Y)> guarded)
     {
-        var x = 2 + rng.NextInt(0, 2);
-        foreach (var bw in widths)
+        if (availableHeight < 3) return;
+
+        var count = 2 + rng.NextInt(3);
+        var widths = Enumerable.Range(0, count).Select(_ => 3 + rng.NextInt(3)).ToArray();
+        var heights = Enumerable.Range(0, count)
+            .Select(_ => Math.Min(3 + rng.NextInt(2), availableHeight)).ToArray();
+        if (gymFirst) widths[0] = widths.Max();
+        FitWidths(widths, grid.Width - 4);
+
+        var buildings = TryPlace(widths, heights, y0, rng, grid.Width);
+        foreach (var building in buildings)
         {
-            if (x + bw > g.Width - 2) break;
-            CarveKit.FillRect(g, x, y0, x + bw - 1, y0 + 2, LogicalTile.Wall);
+            // The connection outranks the street furniture: a plot straddling an opening's approach column
+            // is simply left empty, which reads as the road out of town rather than a sealed warp.
+            if (Covers(building, guarded)) continue;
 
-            var doorX = x + bw / 2;
-            var doorY = doorOnBottom ? y0 + 2 : y0;
-            g[doorX, doorY] = LogicalTile.Warp; // door
+            CarveKit.FillRect(grid, building.X, building.Y, building.X + building.Width - 1,
+                building.Y + building.Height - 1, LogicalTile.Wall);
+            for (var y = building.Y; y < building.Y + building.Height; y++)
+                for (var x = building.X; x < building.X + building.Width; x++) buildingWalls.Add((x, y));
+            var doorX = building.X + building.Width / 2;
+            var doorY = doorOnBottom ? building.Y + building.Height - 1 : building.Y;
+            grid[doorX, doorY] = LogicalTile.Warp;
+            buildingWalls.Remove((doorX, doorY));
             openings.Add((doorX, doorY));
-
-            x += bw + 2;
         }
+    }
+
+    private static bool Covers(Building building, IReadOnlySet<(int X, int Y)> guarded)
+    {
+        for (var y = building.Y; y < building.Y + building.Height; y++)
+            for (var x = building.X; x < building.X + building.Width; x++)
+                if (guarded.Contains((x, y))) return true;
+        return false;
+    }
+
+    private static void FitWidths(int[] widths, int usableWidth)
+    {
+        while (widths.Sum() + widths.Length - 1 > usableWidth)
+        {
+            var index = Enumerable.Range(0, widths.Length)
+                .OrderByDescending(i => widths[i])
+                .FirstOrDefault(i => widths[i] > 3);
+            if (widths[index] <= 3) break;
+            widths[index]--;
+        }
+    }
+
+    private static IReadOnlyList<Building> TryPlace(
+        IReadOnlyList<int> widths, IReadOnlyList<int> heights, int y0, Pcg32 rng, int gridWidth)
+    {
+        for (var attempt = 0; attempt < 100; attempt++)
+        {
+            var x = 2 + rng.NextInt(3);
+            var buildings = new List<Building>();
+            for (var i = 0; i < widths.Count; i++)
+            {
+                var building = new Building(x, y0, widths[i], heights[i]);
+                if (building.X + building.Width > gridWidth - 2) break;
+                buildings.Add(building);
+                x += building.Width + 1 + rng.NextInt(3);
+            }
+            if (buildings.Count == widths.Count) return buildings;
+        }
+
+        // The compact fallback is deterministic and always fits after FitWidths; random retries still
+        // provide the intended per-seed layout variation on the normal path.
+        var fallback = new List<Building>();
+        var compactX = 2;
+        for (var i = 0; i < widths.Count; i++)
+        {
+            fallback.Add(new Building(compactX, y0, widths[i], heights[i]));
+            compactX += widths[i] + 1;
+        }
+        return fallback;
     }
 }

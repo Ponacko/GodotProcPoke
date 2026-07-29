@@ -160,7 +160,7 @@ Town A (start)
  └─ Route 1 (open) → Town B
  └─ Town B → Forest (transit dungeon) → Route 2
  └─ Route 2 [gate: Rock Smash Rubble] — key: reward for clearing
-      "Hideout Alpha" (destination dungeon, optional detour from Town B)
+	  "Hideout Alpha" (destination dungeon, optional detour from Town B)
  └─ Route 2 (open) → Town C
 ```
 

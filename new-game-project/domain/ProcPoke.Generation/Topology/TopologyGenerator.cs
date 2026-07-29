@@ -43,7 +43,7 @@ public static class TopologyGenerator
         }
         spine.Add(b.Add(AreaArchetype.Route, SizeClass.Medium)); // final approach route
         spine.Add(b.Add(AreaArchetype.VictoryRoad, SizeClass.Large));
-        spine.Add(b.Add(AreaArchetype.League, SizeClass.Medium));
+        spine.Add(b.Add(AreaArchetype.League, SizeClass.Large));
         return spine;
     }
 

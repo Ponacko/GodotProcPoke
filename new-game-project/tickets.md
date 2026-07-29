@@ -275,7 +275,13 @@ render as scattered clumps with a clear walkable spine. Full suite green (171 te
 
 </details>
 
-## 5b. Cave carver: rooms, winding passages, boulder fields
+## 5b. Cave carver: rooms, winding passages, boulder fields — ✅ DONE
+
+Delivered in the cave-carver follow-up. `CaveCarver` now accepts planned openings, rejection-samples 2–3
+wall-separated rooms, joins them with bent passages, places the item in the BFS-farthest room away from
+the corridor centerlines, and accepts boulders only when all openings and the item remain reachable.
+`AreaCarver` passes the opening plan for transit and destination caves. `CaveCarverTests` fuzzes all cave
+archetypes across badges 4/8/12 for room components, item placement, boulder count, and transit bends.
 
 **Model:** Qwen-OK with care (the algorithm and every assert below are pinned; the only subtlety is re-checking reachability after each boulder).
 
@@ -285,12 +291,18 @@ render as scattered clumps with a clear walkable spine. Full suite green (171 te
 
 **Blocked by:** None (2a done). Coordinate with 5a on the `AreaCarver` switch.
 
-- [ ] Assert: ≥2 rooms — count connected components over cells that belong to at least one fully-open 4×3 rectangle
-- [ ] Assert: the BFS shortest path between the two transit openings contains both a horizontal and a vertical step (bend); ≥3 `Boulder` tiles exist; mutual-reachability invariant still green
-- [ ] Item cell is inside a room (member of a fully-open 4×3 rectangle) and not on a corridor centerline
-- [ ] Deterministic
+- [x] Assert: ≥2 rooms — count connected components over cells that belong to at least one fully-open 4×3 rectangle
+- [x] Assert: the BFS shortest path between the two transit openings contains both a horizontal and a vertical step (bend); ≥3 `Boulder` tiles exist; mutual-reachability invariant still green
+- [x] Item cell is inside a room (member of a fully-open 4×3 rectangle) and not on a corridor centerline
+- [x] Deterministic
 
-## 5c-1. League carver (split from 5c)
+## 5c-1. League carver (split from 5c) — ✅ DONE
+
+Delivered in the League-carver follow-up. `LeagueCarver` now builds a large wall-filled map with four
+full-height Elite Four chambers, one doorway per separator, and an 8-wide throne room. It stamps exactly
+five centered `TrainerPost` tiles, preserves the planned entrance and any additional openings, and is
+wired as the dedicated `AreaArchetype.League` dispatch. `LeagueCarverTests` fuzzes seeds 1..200 across
+badges 4/8/12 for the five posts and four-doorway throne path.
 
 **Model:** Qwen-OK.
 
@@ -300,12 +312,17 @@ render as scattered clumps with a clear walkable spine. Full suite green (171 te
 
 **Blocked by:** None. Coordinate on the `AreaCarver` switch with 5a/5b/5c-2/5c-3.
 
-- [ ] `AreaCarver` dispatches `League` to `LeagueCarver`
-- [ ] Signature asserts: exactly 5 `TrainerPost` tiles; the BFS path from entrance to the throne-room post passes ≥4 doorway tiles (walkable tiles whose north and south neighbours are both `Wall`)
-- [ ] All carving invariants (spine walkability, mutual reachability, chokepoint if gated) stay green
-- [ ] Deterministic; ASCII render visibly differs from a town
+- [x] `AreaCarver` dispatches `League` to `LeagueCarver`
+- [x] Signature asserts: exactly 5 `TrainerPost` tiles; the BFS path from entrance to the throne-room post passes ≥4 doorway tiles (walkable tiles whose north and south neighbours are both `Wall`)
+- [x] All carving invariants (spine walkability, mutual reachability, chokepoint if gated) stay green
+- [x] Deterministic; ASCII render visibly differs from a town
 
-## 5c-2. Villain-hideout carver (split from 5c)
+## 5c-2. Villain-hideout carver (split from 5c) — ✅ DONE
+
+Delivered in the hideout-carver follow-up. `HideoutCarver` now builds a medium 2×2 room complex with
+one-tile cross-corridors, a top-right boss room containing the item and boss post, and two grunt posts.
+`AreaCarver` dispatches villain hideouts to it, while other destination caves retain `CaveCarver`.
+`HideoutCarverTests` fuzzes the corpus across badges 4/8/12 for room count, placements, and reachability.
 
 **Model:** Qwen-OK.
 
@@ -315,12 +332,18 @@ render as scattered clumps with a clear walkable spine. Full suite green (171 te
 
 **Blocked by:** None. Coordinate on the `AreaCarver` switch.
 
-- [ ] `AreaCarver` dispatches `VillainHideout` to `HideoutCarver`
-- [ ] Signature asserts: ≥4 rooms (4×3-rectangle component count, as in 5b); ≥3 `TrainerPost` tiles; `ItemBall` in the BFS-farthest room from the entrance
-- [ ] Single-entrance reachability invariant green (item + all posts reachable from the entrance)
-- [ ] Deterministic; ASCII render visibly differs from a cave
+- [x] `AreaCarver` dispatches `VillainHideout` to `HideoutCarver`
+- [x] Signature asserts: ≥4 rooms (4×3-rectangle component count, as in 5b); ≥3 `TrainerPost` tiles; `ItemBall` in the BFS-farthest room from the entrance
+- [x] Single-entrance reachability invariant green (item + all posts reachable from the entrance)
+- [x] Deterministic; ASCII render visibly differs from a cave
 
-## 5c-3. Tower carver (split from 5c)
+## 5c-3. Tower carver (split from 5c) — ✅ DONE
+
+Delivered in the tower-carver follow-up. `TowerCarver` now builds a medium stacked-floor layout with
+three or four bands, alternating one-tile stair gaps in full-width separator rows, and a top-band item
+and trainer post. `AreaCarver` dispatches towers to it; top planned entrances route through the prescribed
+gaps. `TowerCarverTests` fuzzes the corpus across badges 4/8/12 for alternating gaps, top rewards, and
+reachability.
 
 **Model:** Qwen-OK (pure geometry — the stair-*warp* version was descoped, see note).
 
@@ -330,12 +353,17 @@ render as scattered clumps with a clear walkable spine. Full suite green (171 te
 
 **Blocked by:** None. Coordinate on the `AreaCarver` switch.
 
-- [ ] `AreaCarver` dispatches `Tower` to `TowerCarver`
-- [ ] Signature asserts: ≥2 interior full-width wall rows each with exactly one walkable gap; consecutive gaps on opposite halves of the width; `ItemBall` in the top band
-- [ ] Single-entrance reachability invariant green (item reachable via the zigzag)
-- [ ] Deterministic; ASCII render visibly differs from cave, hideout, and League
+- [x] `AreaCarver` dispatches `Tower` to `TowerCarver`
+- [x] Signature asserts: ≥2 interior full-width wall rows each with exactly one walkable gap; consecutive gaps on opposite halves of the width; `ItemBall` in the top band
+- [x] Single-entrance reachability invariant green (item reachable via the zigzag)
+- [x] Deterministic; ASCII render visibly differs from cave, hideout, and League
 
-## 5d-1. Town layout variation (split from 5d)
+## 5d-1. Town layout variation (split from 5d) — ✅ DONE
+
+Delivered in the town-layout follow-up. `TownCarver` now rejection-samples 2–4 buildings per band,
+with widths 3–5, heights 3–4, one-tile gaps, and a widest first top building for the gym. It preserves
+the central spine, planned edge openings, and street-facing Warp doors. `TownCarverTests` verifies first-town
+variation across seeds 1..50 and door reachability across badges 4/8/12.
 
 **Model:** Qwen-OK.
 
@@ -343,11 +371,16 @@ render as scattered clumps with a clear walkable spine. Full suite green (171 te
 
 **Blocked by:** None (2a done).
 
-- [ ] Assert across seeds 1..50 (badges 8): ≥2 distinct building-rectangle sets occur for the first town (layouts genuinely vary)
-- [ ] Every building has a door `Warp` on its south wall reachable from the spine; carving invariants stay green
-- [ ] Deterministic per seed
+- [x] Assert across seeds 1..50 (badges 8): ≥2 distinct building-rectangle sets occur for the first town (layouts genuinely vary)
+- [x] Every building has a door `Warp` on its south wall reachable from the spine; carving invariants stay green
+- [x] Deterministic per seed
 
-## 5d-2. Decoration rules: directional ledges, item nooks, trainer sightlines (split from 5d)
+## 5d-2. Decoration rules: directional ledges, item nooks, trainer sightlines (split from 5d) — ✅ DONE
+
+Delivered in the decoration-rules follow-up. Routes now receive 1–2 south-of-spine ledge runs, nook items,
+and 1–2 sightline trainer posts; forests receive the nook/post rules as well. `LogicalTile.Ledge` documents
+the one-way-south convention. Town building-wall metadata lets `GateCarver` restore walls after approach
+straightening without closing service doors. `DecorationRulesTests` fuzzes routes/forests and gated towns.
 
 **Model:** Sonnet (touches the tile-model contract plus two carvers; the semantics call is the risky part, pinned below).
 
@@ -361,20 +394,20 @@ render as scattered clumps with a clear walkable spine. Full suite green (171 te
 
 **Blocked by:** 5d-1 (same file), 5a (forest signature).
 
-- [ ] Asserts, per fuzz corpus: every `Ledge` tile has walkable north+south neighbours and sits south of the spine row; no `ItemBall` on the spine row and each has ≥2 non-walkable neighbours; every route `TrainerPost` has a clear straight sightline to a spine tile
-- [ ] `LogicalTile.Ledge` docstring states the one-way-south contract
-- [ ] Carving invariants stay green; deterministic
+- [x] Asserts, per fuzz corpus: every `Ledge` tile has walkable north+south neighbours and sits south of the spine row; no `ItemBall` on the spine row and each has ≥2 non-walkable neighbours; every route `TrainerPost` has a clear straight sightline to a spine tile
+- [x] `LogicalTile.Ledge` docstring states the one-way-south contract
+- [x] Carving invariants stay green; deterministic
 
 ## 6a. Encounter framework: level curve, table shapes, method assignment (split from 6) — ✅ DONE
 
 Delivered in commit "Implement ticket 6a: encounter framework". `Encounters/` holds the records
 (`EncounterMethod`, `EncounterSlot`, `EncounterTable`, `AreaEncounters` with the recommended `int BaseLevel`,
 `EncounterPlan`, `SlotLayouts`), the shared `LevelCurve` (`GymAce` + `WildLevel`), and `EncounterPass` which
-emits per-area tables with correct methods and base levels but **empty slots** (6b fills them). Land tables
+emits per-area tables with correct methods and base levels; 6b fills the slot contents. Land tables
 go on Route/Forest/cave-family/VictoryRoad/Tower; Surf+Fishing additionally on Water-biome or water-gated
 areas; towns/League/hideouts get no entry. `EncounterPlan Encounters` added to `GeneratedRegion`;
-`RegionGraphText` prints per-area methods + base level. `EncounterFrameworkTests` (12 cases) cover the
-`GymAce` endpoints/monotonicity, per-area method assignment + empty slots across the corpus, non-decreasing
+`RegionGraphText` prints per-area methods + base level. `EncounterFrameworkTests` cover the
+`GymAce` endpoints/monotonicity, per-area method assignment + filled slots across the corpus, non-decreasing
 base levels along availability order (dungeon +2 removed), slot-layout sums, and determinism. Full suite
 green (168 tests).
 
@@ -419,9 +452,9 @@ badges). Per the blueprints README ("the ticket is the spec"), `LevelCurve` uses
 
 **Blocked by:** 6a.
 
-- [ ] Fuzz invariant: every slot's percentages match the pinned layouts and sum to 100; every wild species ∈ regional dex, never a legendary or fossil-family member; each slot species' type ∈ the area's affinity set (or the widened pool was in effect — assert via the pool-size precondition, not by skipping)
-- [ ] Overlays exist exactly on late (≥0.5) Routes/Forests and are the only tables with `HiddenAbilityChance > 0`
-- [ ] Wild levels track the curve (non-decreasing along availability order within the ±2 jitter + dungeon +2 tolerance); deterministic; printed by `RegionGraphText`
+- [x] Fuzz invariant: every slot's percentages match the pinned layouts and sum to 100; every wild species ∈ regional dex, never a legendary or fossil-family member; each slot species' type ∈ the area's affinity set (or the widened pool was in effect — assert via the pool-size precondition, not by skipping)
+- [x] Overlays exist exactly on late (≥0.5) Routes/Forests and are the only tables with `HiddenAbilityChance > 0`
+- [x] Wild levels track the curve (non-decreasing along availability order within the ±2 jitter + dungeon +2 tolerance); deterministic; printed by `RegionGraphText`
 
 ## 7a. Route & gym-building trainers, item balls
 
@@ -437,9 +470,9 @@ badges). Per the blueprints README ("the ticket is the spec"), `LevelCurve` uses
 
 **Blocked by:** 2c (carved tiles in the region), 4a-2 (dex), 6a (levels), 3c (grunt team names).
 
-- [ ] Every carved `TrainerPost` has a trainer (count matches tile count per area); every `ItemBall` has contents; classes match the pinned table
-- [ ] Fuzz invariant: all trainer species ∈ regional dex; trainer ace levels non-decreasing along the critical path within a ±4 tolerance
-- [ ] Deterministic; printed by `RegionGraphText` (per-area class/ace summaries)
+- [x] Every carved `TrainerPost` has a trainer (count matches tile count per area); every `ItemBall` has contents; classes match the pinned table
+- [x] Fuzz invariant: all trainer species ∈ regional dex; trainer ace levels non-decreasing along the critical path within a ±4 tolerance
+- [x] Deterministic; printed by `RegionGraphText` (per-area class/ace summaries)
 
 ## 7b. Gym leader, Elite Four & Champion teams
 
@@ -451,10 +484,10 @@ badges). Per the blueprints README ("the ticket is the spec"), `LevelCurve` uses
 
 **Blocked by:** 4a-2 (dex), 3b (done), 6a (`LevelCurve`).
 
-- [ ] Each leader's team is mono-type in its assigned type until the candidate pool exhausts (padding admitted only then); size and ace follow the pinned formulas exactly
-- [ ] E4 single-type per member, types distinct; Champion team typeless (no type constraint), includes the pseudo-legendary/starter pick, distinct families, ≤2 per type
-- [ ] Fuzz invariant: all boss species ∈ regional dex (legendaries #151+ excluded); levels match the formulas exactly
-- [ ] Deterministic; printed by `RegionGraphText`
+- [x] Each leader's team is mono-type in its assigned type until the candidate pool exhausts (padding admitted only then); size and ace follow the pinned formulas exactly
+- [x] E4 single-type per member, types distinct; Champion team typeless (no type constraint), includes the pseudo-legendary/starter pick, distinct families, ≤2 per type
+- [x] Fuzz invariant: all boss species ∈ regional dex (legendaries #151+ excluded); levels match the formulas exactly
+- [x] Deterministic; printed by `RegionGraphText`
 
 ## 7c. Rival team across beats & rival-Champion team
 
@@ -466,12 +499,19 @@ badges). Per the blueprints README ("the ticket is the spec"), `LevelCurve` uses
 
 **Blocked by:** 4b (done), 3c (`ChampionIsRival`, archetype), 6a (`LevelCurve`), 7b (Champion formula reuse).
 
-- [ ] For every player corner: rival starter is the corner that beats it (assert via the triangle order, and independently via `TypeChart` effectiveness); teams exist at all four beats with non-decreasing ace levels and sizes
-- [ ] Starter evolution stage at each beat re-derived in the test from raw `MinLevel` chains
-- [ ] Rival-Champion seeds: the Champion team contains the rival starter final stage for each player corner; non-rival seeds keep 7b's team
-- [ ] All rival species ∈ regional dex; deterministic; printed by `RegionGraphText`
+- [x] For every player corner: rival starter is the corner that beats it (assert via the triangle order, and independently via `TypeChart` effectiveness); teams exist at all four beats with non-decreasing ace levels and sizes
+- [x] Starter evolution stage at each beat re-derived in the test from raw `MinLevel` chains
+- [x] Rival-Champion seeds: the Champion team contains the rival starter final stage for each player corner; non-rival seeds keep 7b's team
+- [x] All rival species ∈ regional dex; deterministic; printed by `RegionGraphText`
 
-## 8a. NPC plan: hints, furniture, flavor (split from 8)
+## 8a. NPC plan: hints, furniture, flavor (split from 8) — ✅ DONE
+
+Delivered in `Npcs/`. `NpcPass` emits immutable per-area posts from the dedicated `"npcs"` stream:
+one generated-name hint per gate, gym guides and nearest-hideout Center gossip, signs for every Route
+(including off-spine branches), and 1–2 parameterized flavor posts per town. `GeneratedRegion.Npcs`,
+`RegionGraphText`, and MapGen are wired. `NpcPassTests` fuzzes gate-side placement across badge counts,
+checks furniture/sign/flavor cardinalities and generated-name dialogue, and verifies determinism. Focused
+8a suite green (5 tests).
 
 **Model:** Qwen-OK (the reachability re-derivation below is spelled out; everything else is templating).
 

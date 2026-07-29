@@ -2,12 +2,12 @@ namespace ProcPoke.Generation.Encounters;
 
 public enum EncounterMethod { Land, Surf, Fishing }
 
-/// <summary>One slot in a Gen 5 style table. Percent is the fixed slot weight; the species and level band
-/// are filled by ticket 6b (empty/zeroed until then).</summary>
+/// <summary>One slot in a Gen 5 style table. Percent is the fixed slot weight; species and level bands are
+/// filled deterministically by the encounter pass.</summary>
 public sealed record EncounterSlot(int Percent, int SpeciesId, int MinLevel, int MaxLevel);
 
 /// <summary>One method's table for an area. HiddenAbilityChance is 0 for base tables; only a Special
-/// Encounter Overlay (6b) sets it (GDD §6.3 / §3 — overlays are the sole hidden-ability source).</summary>
+/// Encounter Overlay sets it (GDD §6.3 / §3 — overlays are the sole hidden-ability source).</summary>
 public sealed record EncounterTable(
     EncounterMethod Method,
     IReadOnlyList<EncounterSlot> Slots,
