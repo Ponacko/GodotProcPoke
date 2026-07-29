@@ -557,3 +557,68 @@ checks furniture/sign/flavor cardinalities and generated-name dialogue, and veri
 - [ ] `Invariants.CheckAll` passes on ≥10,000 seeds × {4, 8, 12} badges via one command
 - [ ] One command generates the packet; overviews are spatially stitched (2b); packet includes the per-archetype distinctness self-check
 - [ ] Human verdict recorded: pass, or a gap list + explicit decision on ADR-0001
+
+---
+
+## 10. Seamless world canvas (region reads as one landmass)
+
+**Model:** Sonnet (a new compositing pass plus a filler rule per biome; the placement maths is pinned below but the tile-choice judgment is not).
+
+**Problem.** Areas are independent grids (24×12 / 32×16 / 40×22) drawn into lattice cells with a gap between them, each grid centred in its cell. The region therefore reads as floating tiles joined by connector lines, not as a landmass. The gameplay borders are wanted — you should only cross at an opening — but the *visual* discontinuity is not.
+
+**Two approaches were considered.**
+
+*(A) Landmass first, then place areas on it.* Generate a terrain field (land/water, elevation) over one large grid, then seat areas on the land and carve their interiors against the underlying terrain. This is the approach that yields genuinely coherent geography: coastlines, ranges and rivers spanning several areas, and biomes falling out of the terrain rather than being assigned. **Not recommended now**, for two reasons. It inverts the pipeline that ADR-0004 fixes deliberately — puzzle before terrain — because the chokepoint and key-before-gate guarantees are *constructed* on the graph and validated before any tile exists; making terrain the input means area placement can fail and has to backtrack, and the solvability guarantee would have to be re-derived. It also duplicates work the topology pass now does: the spine is already embedded on a lattice with every connection a shared border.
+
+*(B) Areas first, then fill the gaps.* Compose the existing area grids into one canvas and fill what is left over. **Recommended** — purely additive, touches no invariant, and the embedding work makes it land cleanly: openings on a shared border already agree on their offset, so adjacent grids line up tile-for-tile with no gap to bridge.
+
+**What to build.** A `WorldCanvas` pass in `domain/ProcPoke.Generation/Carving/`, after carving, producing one `TileGrid` for the whole region plus each area's origin on it.
+
+- **Cell size** = the largest grid footprint over all areas (40×22 as it stands), so every cell is uniform and cells abut exactly. Seat each area's grid at its cell origin — do *not* centre it; anchor it so its shared borders coincide with the cell edge the neighbour meets. Where an area is smaller than the cell, the leftover strip inside the cell is filler, not gap.
+- **Filler** for the strip inside a cell and for cells holding no area: pick from the area's (or, for an empty cell, the nearest occupied neighbour's) biome — `Tree` for Forest/Grassland, `Wall` for Mountain/Cave, `Sand` for Desert, `Water` for Water, `Wall` for Urban. Filler is never walkable, which is what preserves "borders you cannot cross".
+- **Seams.** Two adjacent areas' shared border becomes two adjacent border rings. Collapse them: where both sides carved a `Warp` at the same offset, the pair becomes one walkable crossing; everywhere else the ring stays impassable filler.
+- Render it: `MapImage.SaveWorld` and a viewer tab, replacing the gap-and-connector-line overview.
+
+**Later, if the geography still reads flat:** layer a low-frequency terrain field over the finished canvas and use it only to *bias filler choice* and border tiles (so a range of hills runs across several cells). That buys most of approach (A)'s coherence without moving terrain ahead of the puzzle.
+
+**Blocked by:** nothing — the lattice embedding it needs is in place.
+
+- [ ] Every area appears exactly once on the canvas at its cell origin; no two areas overlap; canvas size = cellW × cols by cellH × rows
+- [ ] Fuzz invariant: every tile on a cell boundary is either non-walkable or one of a matched `Warp` pair, so the only crossings are the planned openings
+- [ ] Fuzz invariant: walking the canvas from the start area reaches every area that is reachable in the region graph ignoring gates — the canvas adds no crossing and loses none
+- [ ] Deterministic; rendered by `MapImage.SaveWorld` and shown in the viewer
+
+---
+
+## 11. Carvers follow the travel axis
+
+**Model:** Sonnet (needs a design call on ledge direction, below).
+
+**Problem.** `RouteCarver` and `ForestCarver` lay their trunk corridor horizontally whatever direction the spine actually travels. An area the spine crosses top-to-bottom is connected and legal — the openings stub into that trunk — but reads as a clearing rather than a passage, and an area where the spine turns gets an elbow it was not designed for. `TowerCarver`, `HideoutCarver` and `GateCarver` already work in `CarveFrame` and are orientation-independent; these two are what is left.
+
+**What to build.** Port both onto `CarveFrame`, keyed on the area's travel axis (entry border → exit border), so the trunk runs along it and an L-shaped trunk handles a turning area.
+
+**The design call this needs first.** Some decoration rules are world-space, not travel-space: a ledge is hopped *southward*, so "ledges sit south of the trunk" cannot simply rotate with the frame. Decide one of:
+- ledges stay world-south and are only placed on trunk segments that run east–west (fewer ledges, rule unchanged); or
+- ledges rotate with the trunk and the one-way direction becomes "away from the trunk", which changes what a ledge means for shortcut asymmetry.
+
+**Blocked by:** nothing.
+
+- [ ] Trunk runs along the travel axis; a turning area gets an L, and all openings stay mutually reachable (existing `CarvingTests` invariant)
+- [ ] Gate locks still hold on all four exit borders (existing `GatesBlockTheSpineUntilCleared`)
+- [ ] Decoration rules hold under the chosen ledge decision, asserted as now in `DecorationRulesTests`
+
+---
+
+## 12. Cave boulder field starves in tight layouts
+
+**Model:** Qwen-OK once the ordering below is chosen; the ordering itself is a Sonnet call.
+
+**Problem.** `CaveCarverTests` fails on a small number of seeds with "fewer than three boulders" (currently 1 case in the 200-seed × {4,8,12} corpus; it was 3 before the topology work). The item pocket is chosen before the boulder field, and in a tight cave it takes the cells the boulders needed.
+
+**What to build.** Choose the reward's cell *after* the rubble rather than before. This needs the room-fragmentation and reachability guards designed together rather than bolted on — an earlier attempt traded these three failures for a wider set and was reverted.
+
+**Blocked by:** nothing.
+
+- [ ] `CavesHaveRoomsItemsBouldersAndReachableTransitBends` passes on the full corpus
+- [ ] Every boulder placement still preserves reachability; the item still sits inside a recorded room
