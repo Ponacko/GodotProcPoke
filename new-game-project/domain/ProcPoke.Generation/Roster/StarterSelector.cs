@@ -91,8 +91,10 @@ public static class StarterSelector
     private static bool IsPlainLevelUp(EvolutionRule rule)
         => rule.Trigger == EvolutionTrigger.LevelUp && rule.MinHappiness is null;
 
+    /// <summary>A corner's type must show up on the line's unevolved (base) form — the type the player
+    /// actually sees at level 5 — not merely appear somewhere by the final stage (GDD §5.3).</summary>
     private static List<Line> PoolFor(List<Line> eligible, GameData data, PokeType cornerType)
-        => eligible.Where(l => data.Species[l.Final].Types.Contains(cornerType)).ToList();
+        => eligible.Where(l => data.Species[l.Base].Types.Contains(cornerType)).ToList();
 
     /// <summary>Brute-forces the corner-triple with the smallest final-BST spread — pools are small
     /// (dozens of 3-stage lines at most), so an exhaustive search is cheap and simple.</summary>

@@ -37,7 +37,7 @@ public class StarterSelectorTests
 
         var finalSpecies = data.Species[finalId];
         Assert.True(Bst(finalSpecies) <= 540, $"final stage #{finalId} BST exceeds 540");
-        Assert.Contains(corner.Type, finalSpecies.Types);
+        Assert.Contains(corner.Type, data.Species[baseId].Types);
 
         foreach (var id in corner.LineSpeciesIds)
             Assert.True(SpeciesGeneration.Of(id) <= rosterCap, $"species #{id} exceeds Roster Cap {rosterCap}");

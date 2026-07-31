@@ -21,6 +21,7 @@ public enum LogicalTile
     Warp,          // connection point (edge opening / door)
     TrainerPost,   // a trainer stands here
     ItemBall,      // a collectible item
+    NpcPost,       // a generated NPC or sign stands here
 }
 
 public static class LogicalTileExtensions
@@ -29,7 +30,7 @@ public static class LogicalTileExtensions
     public static bool IsWalkable(this LogicalTile t) => t switch
     {
         LogicalTile.Ground or LogicalTile.TallGrass or LogicalTile.Ledge or LogicalTile.Sand
-            or LogicalTile.Warp or LogicalTile.TrainerPost or LogicalTile.ItemBall => true,
+            or LogicalTile.Warp or LogicalTile.TrainerPost or LogicalTile.ItemBall or LogicalTile.NpcPost => true,
         _ => false,
     };
 }

@@ -21,6 +21,7 @@ public static class AsciiRenderer
         LogicalTile.Warp => '>',
         LogicalTile.TrainerPost => 'P',
         LogicalTile.ItemBall => 'i',
+        LogicalTile.NpcPost => 'n',
         _ => '?',
     };
 

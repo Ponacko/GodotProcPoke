@@ -30,6 +30,14 @@ public sealed class TileGrid
         foreach (var t in _tiles) if (t == tile) n++;
         return n;
     }
+
+    /// <summary>Copies the grid so a later population pass can stamp markers without changing raw carving.</summary>
+    public TileGrid Clone()
+    {
+        var copy = new TileGrid(Width, Height);
+        Array.Copy(_tiles, copy._tiles, _tiles.Length);
+        return copy;
+    }
 }
 
 /// <summary>A carved area: its id and tile grid, plus the edge openings where it connects to neighbours.</summary>

@@ -13,11 +13,12 @@ namespace ProcPoke.Generation.Carving;
 public static class AreaCarver
 {
     public static CarvedArea Carve(
-        Area area, Biome biome, Pcg32 rng, OpeningPlan openings, EdgeSide? spineExit = null)
+        Area area, Biome biome, Pcg32 rng, OpeningPlan openings,
+        EdgeSide? spineExit = null, EdgeSide? spineEntry = null)
         => area.Archetype switch
     {
-        AreaArchetype.Route => RouteCarver.Carve(area, biome, rng, openings.EdgesOf(area.Id), spineExit),
-        AreaArchetype.Forest => ForestCarver.Carve(area, biome, rng, openings.EdgesOf(area.Id), spineExit),
+        AreaArchetype.Route => RouteCarver.Carve(area, biome, rng, openings.EdgesOf(area.Id), spineExit, spineEntry),
+        AreaArchetype.Forest => ForestCarver.Carve(area, biome, rng, openings.EdgesOf(area.Id), spineExit, spineEntry),
 
         AreaArchetype.StartTown or AreaArchetype.Town
             => TownCarver.Carve(area, biome, rng, openings.EdgesOf(area.Id)),
@@ -38,7 +39,7 @@ public static class AreaCarver
         AreaArchetype.DeepCave
             => CaveCarver.Carve(area, biome, rng, openings.EdgesOf(area.Id), transit: false, spineExit),
 
-        _ => RouteCarver.Carve(area, biome, rng, openings.EdgesOf(area.Id), spineExit),
+        _ => RouteCarver.Carve(area, biome, rng, openings.EdgesOf(area.Id), spineExit, spineEntry),
     };
 
     /// <summary>
@@ -47,12 +48,13 @@ public static class AreaCarver
     /// next; a gate with no exit side is left uncarved, as a Warp exit already was.
     /// </summary>
     public static CarvedArea Carve(
-        Area area, Biome biome, Pcg32 rng, OpeningPlan openings, Gate? gateOnExit, EdgeSide? exitSide)
+        Area area, Biome biome, Pcg32 rng, OpeningPlan openings, Gate? gateOnExit, EdgeSide? exitSide,
+        EdgeSide? entrySide = null)
     {
-        var carved = Carve(area, biome, rng, openings, exitSide);
-        return gateOnExit is null || exitSide is null
-            ? carved
-            : GateCarver.Apply(carved, gateOnExit, exitSide.Value);
+        var carved = Carve(area, biome, rng, openings, exitSide, entrySide);
+        if (gateOnExit is not null && exitSide is not null)
+            carved = GateCarver.Apply(carved, gateOnExit, exitSide.Value);
+        return carved.Rooms.Count == 0 ? carved : CaveCarver.EnsureBoulderMinimum(carved, rng);
     }
 
     /// <summary>The gate blocking this area's spine exit, or null — off-spine areas never hold a spine gate.</summary>

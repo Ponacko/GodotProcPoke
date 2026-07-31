@@ -167,14 +167,23 @@ public static class RegionGraphText
     /// <summary>Per-area encounter methods, filled slot species, overlays, and base wild level.</summary>
     private static void AppendEncounters(StringBuilder sb, RegionGraph g, EncounterPlan encounters, RegionNames? names)
     {
-        sb.AppendLine("Encounters (methods, slots @ base wild level):");
+        sb.AppendLine("Encounters (species@rate%, commonest first, @ base wild level):");
         foreach (var (areaId, area) in encounters.ByArea.OrderBy(kv => kv.Key))
         {
-            static string TableText(EncounterTable table)
-                => $"{table.Method}[{string.Join(',', table.Slots.Select(s => s.SpeciesId))}]";
+            // Summed per species rather than listed per slot. A species holding four slots is one Pokémon at
+            // the combined rate; a bare row of twelve slot ids reads as though it were twelve of them.
+            static string SpeciesRates(EncounterTable table)
+                => string.Join(' ', table.Slots
+                    .GroupBy(s => s.SpeciesId)
+                    .Select(g => (Species: g.Key, Rate: g.Sum(s => s.Percent)))
+                    .OrderByDescending(x => x.Rate)
+                    .ThenBy(x => x.Species)
+                    .Select(x => $"{x.Species}@{x.Rate}%"));
+
+            static string TableText(EncounterTable table) => $"{table.Method}[{SpeciesRates(table)}]";
 
             var methods = string.Join(" ", area.Tables.Select(TableText));
-            var overlay = area.Overlay is null ? "" : $" overlay[{string.Join(',', area.Overlay.Slots.Select(s => s.SpeciesId))}]";
+            var overlay = area.Overlay is null ? "" : $" overlay[{SpeciesRates(area.Overlay)}]";
             sb.AppendLine($"    {AreaName(g, names, areaId),-22} {methods} Lv{area.BaseLevel}{overlay}");
         }
     }

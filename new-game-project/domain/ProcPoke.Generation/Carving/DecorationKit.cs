@@ -39,15 +39,37 @@ internal static class DecorationKit
             }
         }
 
-        // A dense decoration seed should still get an item rather than silently losing the interactable.
-        // The normal route/forest footprints always find a nook before this defensive fallback.
-        var fallback = Interior(grid).First(p => p.X >= 2 && p.X <= grid.Width - 3
-            && p.Y != spineY && grid[p.X, p.Y].IsWalkable());
-        grid[fallback.X, fallback.Y] = LogicalTile.ItemBall;
+        // A turning corridor can consume the pockets the normal search uses. Build a nook around the first
+        // safe fallback instead of placing an exposed item and silently violating the decoration contract.
+        var fallbacks = Interior(grid)
+            .Where(p => p.X >= 2 && p.X <= grid.Width - 3 && p.Y != spineY
+                && grid[p.X, p.Y].IsWalkable() && !protectedTiles.Contains(p))
+            .OrderBy(_ => rng.NextUInt());
+        foreach (var fallback in fallbacks)
+        {
+            foreach (var (dx, dy) in Directions)
+            {
+                if (NonWalkableNeighbours(grid, fallback) >= 2) break;
+                var neighbour = (X: fallback.X + dx, Y: fallback.Y + dy);
+                if (!grid.InBounds(neighbour.X, neighbour.Y) || protectedTiles.Contains(neighbour)
+                    || nearOpening.Contains(neighbour) || !grid[neighbour.X, neighbour.Y].IsWalkable()
+                    || grid[neighbour.X, neighbour.Y] == LogicalTile.Ledge
+                    || WouldStrandLedge(grid, neighbour)) continue;
+                grid[neighbour.X, neighbour.Y] = blocker;
+            }
+            if (NonWalkableNeighbours(grid, fallback) < 2) continue;
+            grid[fallback.X, fallback.Y] = LogicalTile.ItemBall;
+            return;
+        }
+
+        // This is only reachable for a pathological one-tile interior. Keep the interactable rather than
+        // throwing during generation; normal route/forest footprints always have a repairable fallback.
+        var lastResort = Interior(grid).First(p => p.Y != spineY && grid[p.X, p.Y].IsWalkable());
+        grid[lastResort.X, lastResort.Y] = LogicalTile.ItemBall;
     }
 
     public static void PlaceTrainerPosts(
-        TileGrid grid, LogicalTile floor, int spineY, int count, Pcg32 rng,
+        TileGrid grid, LogicalTile floor, LogicalTile blocker, int spineY, int count, Pcg32 rng,
         IReadOnlySet<(int X, int Y)> protectedTiles, IReadOnlySet<(int X, int Y)> nearOpening)
     {
         var candidates = Interior(grid)
@@ -66,7 +88,8 @@ internal static class DecorationKit
                 var fallbackY = spineY + (i % 2 == 0 ? -1 : 1);
                 fallbackY = Math.Clamp(fallbackY, 1, grid.Height - 2);
                 for (var y = Math.Min(fallbackY, spineY); y <= Math.Max(fallbackY, spineY); y++)
-                    if (!grid[fallbackX, y].IsWalkable()) grid[fallbackX, y] = floor;
+                    if (!grid[fallbackX, y].IsWalkable()
+                        && !AdjacentToItem(grid, (fallbackX, y))) grid[fallbackX, y] = floor;
                 grid[fallbackX, fallbackY] = LogicalTile.TrainerPost;
                 continue;
             }
@@ -75,6 +98,8 @@ internal static class DecorationKit
             candidates.Remove(post);
             grid[post.X, post.Y] = LogicalTile.TrainerPost;
         }
+
+        EnsureItemNook(grid, floor, blocker, spineY, protectedTiles, nearOpening);
     }
 
     /// <summary>Whether blocking <paramref name="cell"/> would strand a Ledge. A ledge is a one-way hop
@@ -100,6 +125,50 @@ internal static class DecorationKit
         for (var y = Math.Min(candidate.Y, spineY); y <= Math.Max(candidate.Y, spineY); y++)
             if (!grid[candidate.X, y].IsWalkable()) return false;
         return true;
+    }
+
+    private static bool AdjacentToItem(TileGrid grid, (int X, int Y) cell)
+        => Directions.Any(d => grid.InBounds(cell.X + d.X, cell.Y + d.Y)
+            && grid[cell.X + d.X, cell.Y + d.Y] == LogicalTile.ItemBall);
+
+    private static void EnsureItemNook(
+        TileGrid grid, LogicalTile floor, LogicalTile blocker, int spineY,
+        IReadOnlySet<(int X, int Y)> protectedTiles, IReadOnlySet<(int X, int Y)> nearOpening)
+    {
+        var item = Interior(grid).FirstOrDefault(p => grid[p.X, p.Y] == LogicalTile.ItemBall);
+        if (!grid.InBounds(item.X, item.Y) || NonWalkableNeighbours(grid, item) >= 2) return;
+
+        if (TryBlockAround(grid, item, blocker, protectedTiles, nearOpening)
+            && NonWalkableNeighbours(grid, item) >= 2) return;
+
+        foreach (var candidate in Interior(grid).Where(p => p.X >= 2 && p.X <= grid.Width - 3
+            && p.Y != spineY && grid[p.X, p.Y].IsWalkable() && grid[p.X, p.Y] != LogicalTile.TrainerPost
+            && grid[p.X, p.Y] != LogicalTile.ItemBall && !protectedTiles.Contains(p)))
+        {
+            if (!TryBlockAround(grid, candidate, blocker, protectedTiles, nearOpening)
+                || NonWalkableNeighbours(grid, candidate) < 2) continue;
+            grid[item.X, item.Y] = floor;
+            grid[candidate.X, candidate.Y] = LogicalTile.ItemBall;
+            return;
+        }
+
+    }
+
+    private static bool TryBlockAround(
+        TileGrid grid, (int X, int Y) cell, LogicalTile blocker,
+        IReadOnlySet<(int X, int Y)> protectedTiles, IReadOnlySet<(int X, int Y)> nearOpening)
+    {
+        foreach (var (dx, dy) in Directions)
+        {
+            if (NonWalkableNeighbours(grid, cell) >= 2) break;
+            var neighbour = (X: cell.X + dx, Y: cell.Y + dy);
+            if (!grid.InBounds(neighbour.X, neighbour.Y) || protectedTiles.Contains(neighbour)
+                || nearOpening.Contains(neighbour) || grid[neighbour.X, neighbour.Y] == LogicalTile.Ledge
+                || WouldStrandLedge(grid, neighbour) || !grid[neighbour.X, neighbour.Y].IsWalkable()
+                || grid[neighbour.X, neighbour.Y] == LogicalTile.TrainerPost) continue;
+            grid[neighbour.X, neighbour.Y] = blocker;
+        }
+        return NonWalkableNeighbours(grid, cell) >= 2;
     }
 
     private static IEnumerable<(int X, int Y)> Interior(TileGrid grid)

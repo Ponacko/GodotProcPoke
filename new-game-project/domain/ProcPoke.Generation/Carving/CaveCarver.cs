@@ -40,6 +40,7 @@ public static class CaveCarver
         var grid = new TileGrid(w, h, LogicalTile.Wall);
         var guarded = new HashSet<(int X, int Y)>();
         var corridorCenterline = new HashSet<(int X, int Y)>();
+        var barrierTiles = CarveKit.BarrierLine(spineExit, w, h).ToHashSet();
 
         CarveKit.Border(grid, LogicalTile.Wall);
         var rooms = PickRooms(grid, rng);
@@ -91,17 +92,14 @@ public static class CaveCarver
             .OrderByDescending(room => Distance(grid, entrance, (room.CenterX, room.CenterY)))
             .First();
 
-        var itemCell = itemRoom.Cells
-            .Where(cell => grid[cell.X, cell.Y] == LogicalTile.Ground && !corridorCenterline.Contains(cell))
-            .OrderBy(cell => cell.Y)
-            .ThenBy(cell => cell.X)
-            .FirstOrDefault();
+        // Rubble is laid before the reward is chosen. Protecting one guessed reward cell here made tight
+        // rooms reject otherwise-valid boulders; the reward can be seated in whichever open pocket survives.
+        PlaceBoulders(grid, openings, rooms, barrierTiles, rng);
+        var itemCell = FindItemCell(grid, itemRoom, corridorCenterline);
         if (itemCell == default || grid[itemCell.X, itemCell.Y] != LogicalTile.Ground)
-            throw new InvalidOperationException($"room in cave area {area.Id} has no item cell");
+            throw new InvalidOperationException($"room in cave area {area.Id} has no item cell after rubble");
         grid[itemCell.X, itemCell.Y] = LogicalTile.ItemBall;
-
-        PlaceBoulders(grid, openings, itemCell, rooms, rng);
-        if (transit) EnsureBend(grid, openings, itemCell, rooms);
+        if (transit) EnsureBend(grid, openings, itemCell, rooms, barrierTiles);
 
         return new CarvedArea
         {
@@ -110,6 +108,37 @@ public static class CaveCarver
             Openings = openings,
             Rooms = rooms.Select(r => new TileRect(r.X0, r.Y0, r.X1, r.Y1)).ToList(),
         };
+    }
+
+    /// <summary>
+    /// Restores the cave's minimum rubble after a gate approach has straightened the map. Gate repair may
+    /// legitimately reopen a boulder to reach the neck; any replacement boulder is accepted only when the
+    /// openings remain reachable with the gate cleared and every recorded room retains a pocket.
+    /// </summary>
+    public static CarvedArea EnsureBoulderMinimum(CarvedArea carved, Pcg32 rng)
+    {
+        if (carved.Rooms.Count == 0 || carved.Grid.Count(LogicalTile.Boulder) >= 3) return carved;
+
+        var grid = carved.Grid;
+        var openings = carved.Openings;
+        var gateTiles = carved.GateTiles.ToHashSet();
+        var rooms = carved.Rooms.Select(room => new Room(room.X0, room.Y0, room.X1, room.Y1)).ToList();
+        var item = FindTile(grid, LogicalTile.ItemBall);
+        var candidates = GroundCandidates(grid, openings)
+            .Where(cell => !gateTiles.Contains(cell))
+            .OrderBy(_ => rng.NextUInt())
+            .ToList();
+
+        foreach (var cell in candidates)
+        {
+            if (grid.Count(LogicalTile.Boulder) >= 3) break;
+            grid[cell.X, cell.Y] = LogicalTile.Boulder;
+            if (!AllReachable(grid, openings, gateTiles) || !RoomsRemainOpen(grid, rooms)
+                || !carved.Rooms.Any(room => room.Contains(item.X, item.Y))
+                || !ItemStandsInOpenRoom(grid, item))
+                grid[cell.X, cell.Y] = LogicalTile.Ground;
+        }
+        return carved;
     }
 
     private static List<Room> PickRooms(TileGrid grid, Pcg32 rng)
@@ -263,36 +292,64 @@ public static class CaveCarver
     }
 
     private static void PlaceBoulders(
-        TileGrid grid, IReadOnlyList<(int X, int Y)> openings, (int X, int Y) item,
-        IReadOnlyList<Room> rooms, Pcg32 rng)
+        TileGrid grid, IReadOnlyList<(int X, int Y)> openings, IReadOnlyList<Room> rooms,
+        IReadOnlySet<(int X, int Y)> barrierTiles, Pcg32 rng)
     {
-        for (var attempt = 0; attempt < 8; attempt++)
-        {
-            var candidates = new List<(int X, int Y)>();
-            for (var y = 1; y < grid.Height - 1; y++)
-                for (var x = 1; x < grid.Width - 1; x++)
-                    if (grid[x, y] == LogicalTile.Ground && !IsAdjacentToOpening(x, y, openings))
-                        candidates.Add((x, y));
-            if (candidates.Count == 0) break;
+        var candidates = GroundCandidates(grid, openings)
+            .Where(cell => !barrierTiles.Contains(cell))
+            .OrderBy(_ => rng.NextUInt())
+            .ToList();
 
-            var cell = rng.Pick(candidates);
-            grid[cell.X, cell.Y] = LogicalTile.Boulder;
-            if (!AllReachable(grid, openings, item) || !RoomsRemainOpen(grid, rooms)
-                || !ItemStandsInOpenRoom(grid, item))
-                grid[cell.X, cell.Y] = LogicalTile.Ground;
-        }
+        // Greedy placement can consume a room's only safe pocket before it reaches the minimum field size.
+        // Search combinations of three instead: the depth is fixed and tiny, while each accepted prefix is
+        // still checked against the same connectivity and room-fragmentation guards.
+        if (TryPlaceBoulders(grid, candidates, rooms, openings, start: 0, placed: 0)) return;
 
-        // Eight random attempts are the normal path. If they all land on the few connectivity-critical
-        // cells, finish from a stable candidate order so the visible cave still meets the minimum field
-        // dressing contract rather than silently producing an under-populated room layout.
-        foreach (var cell in GroundCandidates(grid, openings))
+        // Keep generation defensive if a future footprint makes three guarded cells impossible. The normal
+        // corpus has a valid combination; this fallback preserves the old best-effort behaviour.
+        foreach (var cell in candidates)
         {
             if (grid.Count(LogicalTile.Boulder) >= 3) break;
             grid[cell.X, cell.Y] = LogicalTile.Boulder;
-            if (!AllReachable(grid, openings, item) || !RoomsRemainOpen(grid, rooms)
-                || !ItemStandsInOpenRoom(grid, item))
+            if (!AllReachable(grid, openings) || !RoomsRemainOpen(grid, rooms))
                 grid[cell.X, cell.Y] = LogicalTile.Ground;
         }
+    }
+
+    private static bool TryPlaceBoulders(
+        TileGrid grid, IReadOnlyList<(int X, int Y)> candidates, IReadOnlyList<Room> rooms,
+        IReadOnlyList<(int X, int Y)> openings, int start, int placed)
+    {
+        if (placed == 3) return true;
+        if (candidates.Count - start < 3 - placed) return false;
+
+        for (var i = start; i < candidates.Count; i++)
+        {
+            var cell = candidates[i];
+            if (grid[cell.X, cell.Y] != LogicalTile.Ground) continue;
+            grid[cell.X, cell.Y] = LogicalTile.Boulder;
+            var valid = AllReachable(grid, openings) && RoomsRemainOpen(grid, rooms);
+            if (valid && TryPlaceBoulders(grid, candidates, rooms, openings, i + 1, placed + 1)) return true;
+            grid[cell.X, cell.Y] = LogicalTile.Ground;
+        }
+        return false;
+    }
+
+    private static (int X, int Y) FindItemCell(
+        TileGrid grid, Room itemRoom, IReadOnlySet<(int X, int Y)> corridorCenterline)
+        => itemRoom.Cells
+            .Where(cell => grid[cell.X, cell.Y] == LogicalTile.Ground && !corridorCenterline.Contains(cell))
+            .OrderByDescending(cell => ItemStandsInOpenRoom(grid, cell))
+            .ThenBy(cell => cell.Y)
+            .ThenBy(cell => cell.X)
+            .FirstOrDefault();
+
+    private static (int X, int Y) FindTile(TileGrid grid, LogicalTile tile)
+    {
+        for (var y = 0; y < grid.Height; y++)
+            for (var x = 0; x < grid.Width; x++)
+                if (grid[x, y] == tile) return (x, y);
+        throw new InvalidOperationException($"tile {tile} not found in cave");
     }
 
     /// <summary>
@@ -322,7 +379,8 @@ public static class CaveCarver
     /// reachable rule <see cref="PlaceBoulders"/> uses. A cave with no such cell is left as it is.
     /// </summary>
     private static void EnsureBend(
-        TileGrid grid, IReadOnlyList<(int X, int Y)> openings, (int X, int Y) item, IReadOnlyList<Room> rooms)
+        TileGrid grid, IReadOnlyList<(int X, int Y)> openings, (int X, int Y) item,
+        IReadOnlyList<Room> rooms, IReadOnlySet<(int X, int Y)> barrierTiles)
     {
         var entry = openings.FirstOrDefault(o => o.X == 0);
         var exit = openings.FirstOrDefault(o => o.X == grid.Width - 1);
@@ -331,10 +389,10 @@ public static class CaveCarver
         foreach (var cell in ShortestPath(grid, entry, exit))
         {
             if (cell == item || grid[cell.X, cell.Y] != LogicalTile.Ground) continue;
-            if (IsAdjacentToOpening(cell.X, cell.Y, openings)) continue;
+            if (IsAdjacentToOpening(cell.X, cell.Y, openings) || barrierTiles.Contains(cell)) continue;
 
             grid[cell.X, cell.Y] = LogicalTile.Boulder;
-            if (AllReachable(grid, openings, item) && RoomsRemainOpen(grid, rooms)
+            if (AllReachable(grid, openings) && RoomsRemainOpen(grid, rooms)
                 && ItemStandsInOpenRoom(grid, item) && PathBends(grid, entry, exit))
                 return;
             grid[cell.X, cell.Y] = LogicalTile.Ground;
@@ -378,10 +436,12 @@ public static class CaveCarver
     }
 
     private static bool RoomsRemainOpen(TileGrid grid, IReadOnlyList<Room> rooms)
+        // Keep a readable chamber pocket, but leave enough surplus cells in the smallest rooms for the
+        // three-boulder minimum. The reward's stronger 4×3 pocket is selected after rubble settles.
         => rooms.All(room =>
-            Enumerable.Range(room.X0, room.X1 - room.X0 - 2)
-                .Any(x => Enumerable.Range(room.Y0, room.Y1 - room.Y0 - 1)
-                    .Any(y => Enumerable.Range(x, 4).All(px => Enumerable.Range(y, 3)
+            Enumerable.Range(room.X0, room.X1 - room.X0)
+                .Any(x => Enumerable.Range(room.Y0, room.Y1 - room.Y0)
+                    .Any(y => Enumerable.Range(x, 2).All(px => Enumerable.Range(y, 2)
                         .All(py => grid[px, py].IsWalkable())))));
 
     private static IEnumerable<(int X, int Y)> GroundCandidates(
@@ -397,14 +457,16 @@ public static class CaveCarver
         => openings.Any(o => Math.Abs(o.X - x) <= 1 && Math.Abs(o.Y - y) <= 1);
 
     private static bool AllReachable(
-        TileGrid grid, IReadOnlyList<(int X, int Y)> openings, (int X, int Y) item)
+        TileGrid grid, IReadOnlyList<(int X, int Y)> openings,
+        IReadOnlySet<(int X, int Y)>? cleared = null)
     {
         if (openings.Count == 0) return false;
-        var seen = Reachable(grid, openings[0]);
-        return openings.Skip(1).All(seen.Contains) && seen.Contains(item);
+        var seen = Reachable(grid, openings[0], cleared);
+        return openings.Skip(1).All(seen.Contains);
     }
 
-    private static HashSet<(int X, int Y)> Reachable(TileGrid grid, (int X, int Y) start)
+    private static HashSet<(int X, int Y)> Reachable(
+        TileGrid grid, (int X, int Y) start, IReadOnlySet<(int X, int Y)>? cleared = null)
     {
         var seen = new HashSet<(int X, int Y)> { start };
         var queue = new Queue<(int X, int Y)>([start]);
@@ -414,7 +476,9 @@ public static class CaveCarver
             foreach (var (dx, dy) in new[] { (1, 0), (-1, 0), (0, 1), (0, -1) })
             {
                 var next = (x + dx, y + dy);
-                if (grid.InBounds(next.Item1, next.Item2) && grid[next.Item1, next.Item2].IsWalkable() && seen.Add(next))
+                if (grid.InBounds(next.Item1, next.Item2)
+                    && (grid[next.Item1, next.Item2].IsWalkable() || cleared?.Contains(next) == true)
+                    && seen.Add(next))
                     queue.Enqueue(next);
             }
         }

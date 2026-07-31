@@ -1,7 +1,9 @@
 using ProcPoke.Generation;
+using ProcPoke.Generation.Carving;
 using ProcPoke.Generation.Debug;
 using ProcPoke.Generation.Gating;
 using ProcPoke.Generation.Npcs;
+using ProcPoke.Generation.Rng;
 using ProcPoke.Generation.Topology;
 using Xunit;
 
@@ -73,11 +75,51 @@ public class NpcPassTests
         var a = Generate(999);
         var b = Generate(999);
         Assert.Equal(Signature(a.Npcs), Signature(b.Npcs));
+        foreach (var area in a.Graph.Areas)
+            Assert.Equal(AsciiRenderer.Render(a.Carved[area.Id]), AsciiRenderer.Render(b.Carved[area.Id]));
 
         var text = RegionGraphText.Render(a.Graph, names: a.Names, npcs: a.Npcs);
         Assert.Contains("NPC posts:", text);
         Assert.Contains("Hint:", text);
         Assert.Contains(a.Names.Of(a.Gating.Gates[0].KeyAreaId), text);
+    }
+
+    [Theory]
+    [InlineData(4)]
+    [InlineData(8)]
+    [InlineData(12)]
+    public void EveryNpcPlanEntryHasAWalkableTile(int badges)
+    {
+        var checkedCount = 0;
+        for (ulong seed = 1; seed <= 200; seed++)
+        {
+            var region = Generate(seed, badges);
+            var raw = region.Graph.Areas.ToDictionary(area => area.Id, area => AreaCarver.Carve(
+                area, region.Biomes.Of(area.Id), new RngStreams(seed).Stream("carve", area.Id), region.Openings,
+                AreaCarver.GateOnExitOf(area, region.Gating), GateGeometry.SpineExitSideOf(region.Graph, area),
+                GateGeometry.SpineEntrySideOf(region.Graph, area)));
+
+            foreach (var area in region.Graph.Areas)
+            {
+                var grid = region.Carved[area.Id].Grid;
+                Assert.Equal(region.Npcs.Of(area.Id).Count, grid.Count(LogicalTile.NpcPost));
+
+                for (var y = 0; y < grid.Height; y++)
+                for (var x = 0; x < grid.Width; x++)
+                {
+                    if (grid[x, y] != LogicalTile.NpcPost) continue;
+                    Assert.True(raw[area.Id].Grid[x, y].IsWalkable(),
+                        $"seed {seed}/{badges} area {area.Id}: NPC replaced a non-walkable tile");
+                    Assert.True(grid[x, y].IsWalkable());
+                    Assert.DoesNotContain((x, y), region.Carved[area.Id].Openings);
+                    Assert.DoesNotContain((x, y), region.Carved[area.Id].GateTiles);
+                }
+            }
+
+            checkedCount++;
+        }
+
+        Assert.True(checkedCount > 0, "empty corpus — nothing was checked");
     }
 
     private static int Position(Area area, IReadOnlyDictionary<int, int> anchors)

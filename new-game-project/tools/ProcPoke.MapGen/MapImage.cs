@@ -24,12 +24,20 @@ internal static class MapImage
         LogicalTile.Warp => (240, 220, 60),
         LogicalTile.TrainerPost => (220, 60, 180),
         LogicalTile.ItemBall => (240, 150, 40),
+        LogicalTile.NpcPost => (80, 220, 220),
         _ => (0, 0, 0),
     };
 
     public static void SaveArea(string path, CarvedArea area, int scale = 8)
     {
         var (w, h, rgb) = Render(area.Grid, scale);
+        Png.WriteRgb(path, w, h, rgb);
+    }
+
+    /// <summary>Renders the fixed-cell, seam-collapsed world canvas as one landmass image.</summary>
+    public static void SaveWorld(string path, WorldCanvasMap world, int scale = 4)
+    {
+        var (w, h, rgb) = Render(world.Grid, scale);
         Png.WriteRgb(path, w, h, rgb);
     }
 

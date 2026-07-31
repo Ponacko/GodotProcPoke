@@ -438,7 +438,14 @@ badges). Per the blueprints README ("the ticket is the spec"), `LevelCurve` uses
 
 </details>
 
-## 6b. Encounter slot filling & special overlays (split from 6)
+## 6b. Encounter slot filling & special overlays (split from 6) — ✅ DONE
+
+Delivered in `Encounters/EncounterPass.cs`. Every wild area now builds its full affinity pool from the regional
+dex (with the pinned Normal/all-dex widening fallbacks), sorts by family Final BST into common/uncommon/rare/
+very-rare tiers, and fills the pinned Land, Surf, and Fishing layouts from the corresponding tiers. Land and
+water tables enforce the required distinct-species minimums; all level bands are derived from the 6a wild
+level. Late Route/Forest overlays use only rare and very-rare species, add five levels, and are the sole source
+of hidden abilities. The encounter framework corpus remains deterministic and green (12 focused tests).
 
 **Model:** Sonnet recommended (pinned, but the pool-widening and rarity-tiering interact; Qwen-class feasible after 6a merges).
 
@@ -456,7 +463,13 @@ badges). Per the blueprints README ("the ticket is the spec"), `LevelCurve` uses
 - [x] Overlays exist exactly on late (≥0.5) Routes/Forests and are the only tables with `HiddenAbilityChance > 0`
 - [x] Wild levels track the curve (non-decreasing along availability order within the ±2 jitter + dungeon +2 tolerance); deterministic; printed by `RegionGraphText`
 
-## 7a. Route & gym-building trainers, item balls
+## 7a. Route & gym-building trainers, item balls — ✅ DONE
+
+Delivered in `Trainers/TrainerPass.cs` and `Trainers/TrainerPlan.cs`. The pass deterministically populates every
+carved TrainerPost in row-major order, adds two mono-type Ace Trainers to each gym city, assigns archetype and
+biome class biases (including alternating named villain Grunts), builds availability-aware rosters from the
+dex, and fills every ItemBall from the pinned progression pools with the 10% TM substitution. `RegionGenerator`
+and `RegionGraphText` expose the plan. The focused TrainerPass corpus is green (12 tests).
 
 **Model:** Sonnet recommended (pinned tables, but it consumes four upstream plans and the carved tile grid; Qwen-class only after 2c/6a are merged and stable).
 
@@ -474,7 +487,14 @@ badges). Per the blueprints README ("the ticket is the spec"), `LevelCurve` uses
 - [x] Fuzz invariant: all trainer species ∈ regional dex; trainer ace levels non-decreasing along the critical path within a ±4 tolerance
 - [x] Deterministic; printed by `RegionGraphText` (per-area class/ace summaries)
 
-## 7b. Gym leader, Elite Four & Champion teams
+## 7b. Gym leader, Elite Four & Champion teams — ✅ DONE
+
+Delivered in `Bosses/BossPass.cs` and `Bosses/BossPlan.cs`. Gym leaders follow the pinned size, level, typed
+BST-cap, family-distinct selection and fallback chain; Elite Four teams are full mono-type rosters with their
+specified level bands. The Champion selects six distinct-family, type-balanced high-BST species, guarantees a
+regional pseudo-legendary final stage when available (otherwise a starter final), and uses the `"bosses"` stream
+for the fallback choice. The pass is wired into `GeneratedRegion` and `RegionGraphText`; the focused corpus is
+green (4 tests).
 
 **Model:** Sonnet recommended (formulas pinned below, but the species-picking fallback chain wants judgment; Qwen-class possible if 7a's roster helper is reused).
 
@@ -489,7 +509,14 @@ badges). Per the blueprints README ("the ticket is the spec"), `LevelCurve` uses
 - [x] Fuzz invariant: all boss species ∈ regional dex (legendaries #151+ excluded); levels match the formulas exactly
 - [x] Deterministic; printed by `RegionGraphText`
 
-## 7c. Rival team across beats & rival-Champion team
+## 7c. Rival team across beats & rival-Champion team — ✅ DONE
+
+Delivered in `Rivals/RivalPass.cs` and `Rivals/RivalPlan.cs`. The pass generates all three starter-choice
+variants with the counter triangle, four pinned progression beats, highest permitted starter evolution stages,
+distinct-family BST-nearest support picks, and deterministic `"rival"` draws. When the identity roll makes the
+rival the Champion, each variant receives a Champion-formula team forced to include that rival starter's final
+stage; otherwise no rival Champion replacement is emitted. Output is wired into `GeneratedRegion` and
+`RegionGraphText`. The focused corpus is green (4 tests).
 
 **Model:** Sonnet (three player-choice variants × four beats × evolution-stage resolution against real `MinLevel` data, plus consuming 3c's roll — genuinely cross-cutting).
 
@@ -530,7 +557,14 @@ checks furniture/sign/flavor cardinalities and generated-name dialogue, and veri
 - [ ] Hint/gossip/sign text contains generated names and never an internal area id
 - [ ] Deterministic; printed by `RegionGraphText` (post counts per area + hint texts)
 
-## 8b. NPC posts on tiles (split from 8)
+## 8b. NPC posts on tiles (split from 8) — ✅ DONE
+
+Delivered in `Npcs/NpcTilePlacer.cs`. `RegionGenerator` now realizes every `NpcPlan` entry onto a cloned
+carved grid using the dedicated `"npc-tiles"` stream: preferred Ground tiles avoid the spine row and the
+opening/gate neighbourhood, with a safe walkable fallback that preserves trainer/item markers. `NpcPost`
+is walkable and renders as `n` in ASCII and cyan in both PNG/debug palettes. `NpcPassTests` covers count,
+walkability, marker protection, deterministic placement, and the full badge-count corpus; the carving
+determinism check replays the realization pass as well.
 
 **Model:** Qwen-OK.
 
@@ -552,15 +586,29 @@ checks furniture/sign/flavor cardinalities and generated-name dialogue, and veri
 
 **(2) Human.** The user judges whether the maps read hand-crafted (trainers guard the path, ledges create shortcut asymmetry, item nooks reward poking around, no mush). Record the verdict in `PACKET.md`; if it fails, the deliverable is a documented gap list feeding an ADR-0001 reconsideration.
 
+Implemented mechanically in `Invariants.cs`, `Debug/CarverSignatures.cs`, and the MapGen `--packet [seeds]`
+mode. The shared checker covers topology/chokepoints, gate keys and hints, edge alignment, names, dex
+numbering/families/type coverage, encounter/trainer/boss/rival membership, and level monotonicity. Packet mode
+defaults to the required 10,000-seed × {4, 8, 12} parallel sweep, renders the pinned showcase set with per-area PNGs,
+stitched `_overview.png`/`_world.png` images, and writes `PACKET.md`; a 100-seed smoke sweep (300 regions) is green. The
+mechanical test corpus exercises the same checker. The human visual verdict remains pending.
+
 **Blocked by:** every other ticket in this file.
 
 - [ ] `Invariants.CheckAll` passes on ≥10,000 seeds × {4, 8, 12} badges via one command
-- [ ] One command generates the packet; overviews are spatially stitched (2b); packet includes the per-archetype distinctness self-check
+- [x] One command generates the packet; overviews are spatially stitched (2b); packet includes the per-archetype distinctness self-check
 - [ ] Human verdict recorded: pass, or a gap list + explicit decision on ADR-0001
 
 ---
 
-## 10. Seamless world canvas (region reads as one landmass)
+## 10. Seamless world canvas (region reads as one landmass) — ✅ DONE
+
+Delivered in `Carving/WorldCanvas.cs`. `GeneratedRegion.World` now composes every carved area into a normalized
+fixed-cell canvas using the largest footprint, fills occupied and empty cells from biome-specific filler, and
+collapses paired map openings into boundary `Warp` crossings. Gate coordinates and area origins are retained
+for later overworld code. MapGen writes `_world.png`, and the Godot viewer paints the same domain canvas with
+no gap or connector overlay. `WorldCanvasTests` fuzzes cell dimensions/origins, matched seams, reachability
+with gates cleared, and determinism.
 
 **Model:** Sonnet (a new compositing pass plus a filler rule per biome; the placement maths is pinned below but the tile-choice judgment is not).
 
@@ -590,7 +638,7 @@ checks furniture/sign/flavor cardinalities and generated-name dialogue, and veri
 
 ---
 
-## 11. Carvers follow the travel axis
+## 11. Carvers follow the travel axis — ✅ DONE
 
 **Model:** Sonnet (needs a design call on ledge direction, below).
 
@@ -604,13 +652,20 @@ checks furniture/sign/flavor cardinalities and generated-name dialogue, and veri
 
 **Blocked by:** nothing.
 
-- [ ] Trunk runs along the travel axis; a turning area gets an L, and all openings stay mutually reachable (existing `CarvingTests` invariant)
-- [ ] Gate locks still hold on all four exit borders (existing `GatesBlockTheSpineUntilCleared`)
-- [ ] Decoration rules hold under the chosen ledge decision, asserted as now in `DecorationRulesTests`
+- [x] Trunk runs along the travel axis; a turning area gets an L, and all openings stay mutually reachable (existing `CarvingTests` invariant)
+- [x] Gate locks still hold on all four exit borders (existing `GatesBlockTheSpineUntilCleared`)
+- [x] Decoration rules hold under the chosen ledge decision, asserted as now in `DecorationRulesTests`
+
+Delivered: `TravelCorridor` authors route/forest trunks in an exit-oriented `CarveFrame`, using the graph's
+entry and exit borders and protected L-shaped corridors for turns. Branch openings connect to the same
+corridor, while `TrunkRow` remains the world-space decoration anchor. Ledges stay world-south and are not
+rotated; gate approach repair preserves item nooks and validates any replacement blocker against opening
+reachability. Entry-side resolution is shared through `GateGeometry`. The 34-test focused generation suite
+is green.
 
 ---
 
-## 12. Cave boulder field starves in tight layouts
+## 12. Cave boulder field starves in tight layouts — ✅ DONE
 
 **Model:** Qwen-OK once the ordering below is chosen; the ordering itself is a Sonnet call.
 
@@ -620,5 +675,12 @@ checks furniture/sign/flavor cardinalities and generated-name dialogue, and veri
 
 **Blocked by:** nothing.
 
-- [ ] `CavesHaveRoomsItemsBouldersAndReachableTransitBends` passes on the full corpus
-- [ ] Every boulder placement still preserves reachability; the item still sits inside a recorded room
+- [x] `CavesHaveRoomsItemsBouldersAndReachableTransitBends` passes on the full corpus
+- [x] Every boulder placement still preserves reachability; the item still sits inside a recorded room
+
+Delivered: cave rubble is selected before the reward cell. A bounded deterministic combination search chooses
+three boulders while preserving opening reachability and a readable 2×2 pocket in every recorded room; the
+reward then occupies a surviving ground cell in the farthest room, preferring a 4×3 open pocket when one
+remains. Gate approach repair reserves the barrier footprint during initial rubble placement and
+`EnsureBoulderMinimum` restores any boulder reopened by a gate, validating reachability with the gate cleared.
+The 37-test cave/carving/decorations/openings/NPC generation suite is green.

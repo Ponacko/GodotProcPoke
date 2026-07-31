@@ -192,6 +192,17 @@ theme_override_fonts/font = SubResource("SystemFont_mono")
 theme_override_font_sizes/font_size = 12
 text = "Click an area on the map to inspect it."
 
+[node name="Pokédex" type="ScrollContainer" parent="Frame/Body/Tabs"]
+visible = false
+layout_mode = 2
+
+[node name="DexText" type="Label" parent="Frame/Body/Tabs/Pokédex"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_fonts/font = SubResource("SystemFont_mono")
+theme_override_font_sizes/font_size = 12
+text = "Press Generate to run the pipeline."
+
 [node name="Map key" type="ScrollContainer" parent="Frame/Body/Tabs"]
 visible = false
 layout_mode = 2

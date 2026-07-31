@@ -90,6 +90,7 @@ public static class GateCarver
         }
 
         ForceApproach(carved, g, f, barrierU, midV);
+        if (carved.TrunkRow >= 0) RestoreItemNook(carved, gateTiles.ToHashSet());
         return carved with { GateTiles = gateTiles };
     }
 
@@ -207,5 +208,74 @@ public static class GateCarver
             if (u == f.U - 1) return v;
         }
         return null;
+    }
+
+    /// <summary>
+    /// Gate approach repair can legitimately reopen a decorative blocker. Restore the item-nook invariant
+    /// without compromising the gate: a replacement blocker is accepted only when every opening still
+    /// reaches every other opening with the gate tiles treated as cleared.
+    /// </summary>
+    private static void RestoreItemNook(CarvedArea carved, IReadOnlySet<(int X, int Y)> gateTiles)
+    {
+        var g = carved.Grid;
+        var wall = g[0, 0] is LogicalTile.Wall or LogicalTile.Tree ? g[0, 0] : LogicalTile.Wall;
+        var openings = carved.Openings;
+        foreach (var item in Interior(g).Where(p => g[p.X, p.Y] == LogicalTile.ItemBall))
+        {
+            if (NonWalkableNeighbours(g, item) >= 2) continue;
+            foreach (var candidate in Neighbours(item))
+            {
+                if (!g.InBounds(candidate.X, candidate.Y) || openings.Contains(candidate)
+                    || gateTiles.Contains(candidate) || g[candidate.X, candidate.Y] == LogicalTile.Ledge
+                    || WouldStrandLedge(g, candidate) || !g[candidate.X, candidate.Y].IsWalkable()) continue;
+
+                var old = g[candidate.X, candidate.Y];
+                g[candidate.X, candidate.Y] = wall;
+                if (NonWalkableNeighbours(g, item) >= 2 && OpeningsReachEachOther(g, openings, gateTiles)) break;
+                g[candidate.X, candidate.Y] = old;
+            }
+        }
+    }
+
+    private static bool OpeningsReachEachOther(
+        TileGrid grid, IReadOnlyList<(int X, int Y)> openings, IReadOnlySet<(int X, int Y)> cleared)
+    {
+        if (openings.Count < 2) return true;
+        var seen = new HashSet<(int X, int Y)> { openings[0] };
+        var queue = new Queue<(int X, int Y)>([openings[0]]);
+        while (queue.Count > 0)
+        {
+            var current = queue.Dequeue();
+            foreach (var next in Neighbours(current))
+            {
+                if (!grid.InBounds(next.X, next.Y) || !seen.Add(next)) continue;
+                if (!grid[next.X, next.Y].IsWalkable() && !cleared.Contains(next)) continue;
+                queue.Enqueue(next);
+            }
+        }
+        return openings.All(seen.Contains);
+    }
+
+    private static int NonWalkableNeighbours(TileGrid grid, (int X, int Y) cell)
+        => Neighbours(cell).Count(p => !grid.InBounds(p.X, p.Y) || !grid[p.X, p.Y].IsWalkable());
+
+    private static bool WouldStrandLedge(TileGrid grid, (int X, int Y) cell)
+        => IsLedge(grid, cell.X, cell.Y - 1) || IsLedge(grid, cell.X, cell.Y + 1);
+
+    private static bool IsLedge(TileGrid grid, int x, int y)
+        => grid.InBounds(x, y) && grid[x, y] == LogicalTile.Ledge;
+
+    private static IEnumerable<(int X, int Y)> Neighbours((int X, int Y) cell)
+    {
+        yield return (cell.X + 1, cell.Y);
+        yield return (cell.X - 1, cell.Y);
+        yield return (cell.X, cell.Y + 1);
+        yield return (cell.X, cell.Y - 1);
+    }
+
+    private static IEnumerable<(int X, int Y)> Interior(TileGrid grid)
+    {
+        for (var y = 1; y < grid.Height - 1; y++)
+            for (var x = 1; x < grid.Width - 1; x++) yield return (x, y);
     }
 }

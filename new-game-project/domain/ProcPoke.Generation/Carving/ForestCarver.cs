@@ -6,39 +6,29 @@ namespace ProcPoke.Generation.Carving;
 
 /// <summary>
 /// Carves a forest transit area: a walkable field framed by trees and dotted with organic tree clumps (not
-/// the old full-height stripe barriers). A protected three-row spine band always stays open between the
-/// edge-aligned left/right openings, and every branch (Top/Bottom) opening reaches it through a protected
-/// column, so all openings are mutually reachable. Tall grass straddles the path for wild encounters.
+/// the old full-height stripe barriers). A protected three-tile travel band follows the entry-to-exit axis
+/// and turns with the region lattice; branch openings reach it through protected stubs, so all openings are
+/// mutually reachable. Tall grass straddles the path for wild encounters.
 /// </summary>
 public static class ForestCarver
 {
     public static CarvedArea Carve(
-        Area area, Biome biome, Pcg32 rng, IReadOnlyList<AreaOpening> planned, EdgeSide? spineExit)
+        Area area, Biome biome, Pcg32 rng, IReadOnlyList<AreaOpening> planned,
+        EdgeSide? spineExit, EdgeSide? spineEntry = null)
     {
         var (w, h) = CarveKit.Dimensions(area.Size);
         var grid = new TileGrid(w, h, LogicalTile.Ground);
-        var midY = h / 2;
-
         CarveKit.Border(grid, LogicalTile.Tree);
 
-        // Spine = the row of whichever side-to-side border the area has, edge-aligned with that neighbour;
-        // midY when the spine runs top-to-bottom here and there is no horizontal border to align to.
+        // TrunkRow remains the world-space decoration anchor; the actual guarded corridor below follows the
+        // entry/exit borders and can turn vertically.
         var spineY = CarveKit.TrunkRow(planned, spineExit, h);
 
-        // Three protected spine rows: always Ground, so left↔right traversal is guaranteed and no interior
-        // column is ever entirely Tree. Clumps never overwrite a protected tile.
         var guarded = new HashSet<(int X, int Y)>();
-        for (var dy = -1; dy <= 1; dy++)
-        {
-            var y = spineY + dy;
-            if (y < 1 || y > h - 2) continue;
-            for (var x = 1; x < w - 1; x++) { grid[x, y] = LogicalTile.Ground; guarded.Add((x, y)); }
-        }
-
-        // Only borders that face a neighbour are opened; opening a blank border leaves a hole in the map.
-        var openings = planned
-            .Select(o => CarveKit.OpenSpineEdge(grid, guarded, o.Edge, o.Offset, spineY, LogicalTile.Ground))
-            .ToList();
+        // Only borders that face a neighbour are opened. The three-tile band is written in the
+        // exit-oriented CarveFrame, so a turn is an L rather than a horizontal stripe.
+        var openings = TravelCorridor.Carve(
+            grid, planned, spineEntry, spineExit, LogicalTile.Ground, guarded, halfWidth: 1);
 
         // Keep decoration off the line a gate barrier would wall over, or the item placed there is lost.
         foreach (var tile in CarveKit.BarrierLine(spineExit, w, h)) guarded.Add(tile);
@@ -83,7 +73,8 @@ public static class ForestCarver
         }
 
         DecorationKit.PlaceItemNook(grid, LogicalTile.Ground, LogicalTile.Tree, spineY, rng, guarded, nearOpening);
-        DecorationKit.PlaceTrainerPosts(grid, LogicalTile.Ground, spineY, 1 + rng.NextInt(2), rng, guarded, nearOpening);
+        DecorationKit.PlaceTrainerPosts(grid, LogicalTile.Ground, LogicalTile.Tree, spineY,
+            1 + rng.NextInt(2), rng, guarded, nearOpening);
 
         return new CarvedArea { AreaId = area.Id, Grid = grid, Openings = openings, TrunkRow = spineY };
     }

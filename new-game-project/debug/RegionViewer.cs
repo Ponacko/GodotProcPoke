@@ -45,6 +45,7 @@ public partial class RegionViewer : Control
     private TabContainer _tabs = null!;
     private Label _reportText = null!;
     private Label _areaText = null!;
+    private Label _dexText = null!;
     private Label _roadmapText = null!;
     private VBoxContainer _legendList = null!;
 
@@ -80,6 +81,7 @@ public partial class RegionViewer : Control
         _tabs = GetNode<TabContainer>("%Tabs");
         _reportText = GetNode<Label>("%ReportText");
         _areaText = GetNode<Label>("%AreaText");
+        _dexText = GetNode<Label>("%DexText");
         _roadmapText = GetNode<Label>("%RoadmapText");
         _legendList = GetNode<VBoxContainer>("%LegendList");
 
@@ -97,6 +99,7 @@ public partial class RegionViewer : Control
         _roadmapText.Text = Roadmap;
         _areaText.Text = "Click an area on the map to inspect it.";
         _reportText.Text = "Press Generate to run the pipeline.";
+        _dexText.Text = "Press Generate to run the pipeline.";
 
         Generate();
     }
@@ -175,6 +178,7 @@ public partial class RegionViewer : Control
             _region.Starters, _region.Dex, _data, _region.Special, _region.Encounters,
             _region.Trainers, _region.Bosses, _region.Rivals, _region.Npcs);
         _areaText.Text = "Click an area on the map to inspect it.";
+        _dexText.Text = BuildDexText(_region);
 
         var graph = _region.Graph;
         _statusLabel.Text =
@@ -411,6 +415,56 @@ public partial class RegionViewer : Control
     private string ItemName(int itemId) => _data is not null && _data.Items.TryGetValue(itemId, out var item)
         ? item.Name
         : $"item {itemId}";
+
+    // ── pokédex ─────────────────────────────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Every regional dex entry — <see cref="RegionGraphText"/>'s report truncates this to ten rows at
+    /// each end for console brevity, but a scrollable tab has no reason to.
+    /// </summary>
+    private string BuildDexText(GeneratedRegion region)
+    {
+        var dex = region.Dex;
+        var text = new StringBuilder();
+        text.AppendLine(region.Special.Legendaries.Count > 0
+            ? $"Regional dex — {dex.Entries.Count} species + {region.Special.Legendaries.Count} legendaries"
+            : $"Regional dex — {dex.Entries.Count} species");
+        text.AppendLine();
+
+        var areaOf = new Dictionary<int, int>();
+        foreach (var (areaId, speciesIds) in dex.SpeciesByArea)
+            foreach (var speciesId in speciesIds)
+                areaOf[speciesId] = areaId;
+        var fossilFamily = dex.FossilFamilySpecies.ToHashSet();
+
+        foreach (var entry in dex.Entries)
+        {
+            var species = _data!.Species[entry.SpeciesId];
+            var where = areaOf.TryGetValue(entry.SpeciesId, out var areaId)
+                ? region.Names.Of(areaId) + (fossilFamily.Contains(entry.SpeciesId) ? " [fossil]" : "")
+                : "—";
+            text.AppendLine($"#{entry.Number,3}  {species.Name,-14}{string.Join("/", species.Types),-14}" +
+                            $"BST {Bst(species),-5}{where}");
+        }
+
+        if (region.Special.Legendaries.Count > 0)
+        {
+            text.AppendLine();
+            text.AppendLine("Legendaries:");
+            foreach (var legendary in region.Special.Legendaries.OrderBy(l => l.DexNumber))
+            {
+                var species = _data!.Species[legendary.SpeciesId];
+                text.AppendLine($"#{legendary.DexNumber,3}  {species.Name,-14}{string.Join("/", species.Types),-14}" +
+                                $"Lv{legendary.Level,-4}{region.Names.Of(legendary.AreaId)}");
+            }
+        }
+
+        return text.ToString();
+    }
+
+    private static int Bst(PokemonSpecies species) => species.BaseStats.Hp + species.BaseStats.Attack +
+        species.BaseStats.Defense + species.BaseStats.SpecialAttack + species.BaseStats.SpecialDefense +
+        species.BaseStats.Speed;
 
     // ── map key ─────────────────────────────────────────────────────────────────────────────────────
 

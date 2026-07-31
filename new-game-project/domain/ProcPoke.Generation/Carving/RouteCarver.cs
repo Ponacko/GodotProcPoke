@@ -5,10 +5,10 @@ using ProcPoke.Generation.Topology;
 namespace ProcPoke.Generation.Carving;
 
 /// <summary>
-/// Carves a Route as a horizontal area, spine-first (ADR-0001): a guaranteed walkable corridor along the
-/// exit opening's row is laid first and never violated — every other opening (the entry, and any
-/// branch/loop-back openings on the top or bottom edge) reaches it through a short protected stub, so
-/// left↔right traversal and every other edge are always mutually reachable. Decoration is then applied
+/// Carves a Route spine-first (ADR-0001): a guaranteed walkable corridor follows the entry-to-exit travel
+/// axis in a <see cref="CarveFrame"/> and turns as an L when the area turns on the region lattice. Every
+/// other opening reaches that protected corridor through a short stub, so all connections remain mutually
+/// reachable. Decoration is then applied
 /// outward under placement rules that read hand-crafted — tall grass straddles the path, tree clumps and a
 /// ledge break up the flanks, a trainer watches the path, and an item hides in a pocket. Biome tints the
 /// fill (forest = denser trees/grass, desert = sand, mountain = rock walls).
@@ -26,7 +26,8 @@ public static class RouteCarver
     }
 
     public static CarvedArea Carve(
-        Area area, Biome biome, Pcg32 rng, IReadOnlyList<AreaOpening> planned, EdgeSide? spineExit)
+        Area area, Biome biome, Pcg32 rng, IReadOnlyList<AreaOpening> planned,
+        EdgeSide? spineExit, EdgeSide? spineEntry = null)
     {
         var (w, h) = CarveKit.Dimensions(area.Size);
         var border = biome is Biome.Mountain or Biome.Cave ? LogicalTile.Wall : LogicalTile.Tree;
@@ -38,19 +39,15 @@ public static class RouteCarver
         for (var x = 0; x < w; x++) { grid[x, 0] = border; grid[x, h - 1] = border; }
         for (var y = 0; y < h; y++) { grid[0, y] = border; grid[w - 1, y] = border; }
 
-        // The spine row is the exit opening's row (edge-aligned with the next area) — the one guaranteed
-        // walkable corridor every other opening reaches through a stub, kept clear of decoration below.
-        // The trunk row follows whichever side-to-side border the area has (the exit if it has one), or the
-        // middle when the spine runs top-to-bottom here and there is no horizontal border to align to.
+        // TrunkRow remains the world-space decoration anchor for compatibility with the route decoration
+        // contract. The actual protected travel corridor is axis-aware and may include a vertical leg.
         var trunkY = CarveKit.TrunkRow(planned, spineExit, h);
         var canvas = new Canvas(grid, floor, trunkY);
-        for (var x = 1; x < w - 1; x++) { grid[x, canvas.SpineY] = floor; canvas.Protected.Add((x, canvas.SpineY)); }
 
-        // Only borders that face a neighbour are opened — the spine can leave on any side now, and opening a
-        // border with nothing behind it would leave a walkable tile onto blank space.
-        var openings = planned
-            .Select(o => CarveKit.OpenSpineEdge(grid, canvas.Protected, o.Edge, o.Offset, canvas.SpineY, floor))
-            .ToList();
+        // Only borders that face a neighbour are opened. TravelCorridor writes the entry→exit trunk in the
+        // exit-oriented frame, including its turning leg, and connects branch openings to that trunk.
+        var openings = TravelCorridor.Carve(
+            grid, planned, spineEntry, spineExit, floor, canvas.Protected, halfWidth: 0);
 
         // Keep decoration off the line a gate barrier would wall over, or the item/post placed there is lost.
         foreach (var tile in CarveKit.BarrierLine(spineExit, w, h)) canvas.Protected.Add(tile);
@@ -84,9 +81,11 @@ public static class RouteCarver
             Stamp(canvas, cx - 1, cy - 1, cx + 1, cy, clumpTile, allowCorridor: false);
         }
 
-        PlaceLedges(grid, canvas, rng, nearOpening);
+        var ledgeRow = TravelCorridor.WorldSouthLedgeRow(grid, planned, spineEntry, spineExit);
+        PlaceLedges(grid, canvas, rng, nearOpening, ledgeRow);
         DecorationKit.PlaceItemNook(grid, floor, clumpTile, spineY, rng, canvas.Protected, nearOpening);
-        DecorationKit.PlaceTrainerPosts(grid, floor, spineY, 1 + rng.NextInt(2), rng, canvas.Protected, nearOpening);
+        DecorationKit.PlaceTrainerPosts(grid, floor, clumpTile, spineY, 1 + rng.NextInt(2), rng,
+            canvas.Protected, nearOpening);
 
         return new CarvedArea { AreaId = area.Id, Grid = grid, Openings = openings, TrunkRow = spineY };
     }
@@ -101,11 +100,12 @@ public static class RouteCarver
     }
 
     private static void PlaceLedges(
-        TileGrid grid, Canvas canvas, Pcg32 rng, IReadOnlySet<(int X, int Y)> nearOpening)
+        TileGrid grid, Canvas canvas, Pcg32 rng, IReadOnlySet<(int X, int Y)> nearOpening, int? ledgeRow)
     {
-        var minY = canvas.SpineY + 2;
-        var maxY = Math.Min(grid.Height - 2, canvas.SpineY + 4);
-        if (minY > maxY) return; // An edge-aligned spine at the bottom has no legal south flank.
+        if (ledgeRow is null) return; // Purely vertical travel has no east-west trunk to decorate southward.
+        var minY = Math.Max(canvas.SpineY + 2, ledgeRow.Value + 2);
+        var maxY = Math.Min(grid.Height - 2, ledgeRow.Value + 4);
+        if (minY > maxY) return; // An edge-aligned horizontal leg has no legal south flank.
 
         var runs = 1 + rng.NextInt(2);
         for (var run = 0; run < runs; run++)

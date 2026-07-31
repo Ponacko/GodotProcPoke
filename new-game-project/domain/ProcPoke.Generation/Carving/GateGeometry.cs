@@ -31,6 +31,19 @@ public static class GateGeometry
         return next is null ? null : area.Cell.HeadingTo(next.Cell).ToEdge();
     }
 
+    /// <summary>
+    /// The border <paramref name="area"/> shares with the previous critical-path area, or null for the
+    /// starting area and every off-spine area. Route-like carvers use this together with
+    /// <see cref="SpineExitSideOf"/> to orient their protected travel corridor.
+    /// </summary>
+    public static EdgeSide? SpineEntrySideOf(RegionGraph graph, Area area)
+    {
+        if (!area.OnCriticalPath || area.PathIndex <= 0) return null;
+
+        var previous = graph.Areas.FirstOrDefault(a => a.OnCriticalPath && a.PathIndex == area.PathIndex - 1);
+        return previous is null ? null : area.Cell.HeadingTo(previous.Cell).ToEdge();
+    }
+
     /// <summary>The side a gate necks off for <paramref name="area"/>, or null if no gate blocks its exit.</summary>
     public static EdgeSide? GatedExitSideOf(RegionGraph graph, GatingPlan gating, Area area)
         => AreaCarver.GateOnExitOf(area, gating) is null ? null : SpineExitSideOf(graph, area);

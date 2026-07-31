@@ -40,6 +40,7 @@ public static class LogicalTilePalette
         LogicalTile.Warp,
         LogicalTile.TrainerPost,
         LogicalTile.ItemBall,
+        LogicalTile.NpcPost,
     ];
 
     public static Color Of(LogicalTile tile) => tile switch
@@ -57,6 +58,7 @@ public static class LogicalTilePalette
         LogicalTile.Warp => Color.Color8(240, 220, 60),
         LogicalTile.TrainerPost => Color.Color8(220, 60, 180),
         LogicalTile.ItemBall => Color.Color8(240, 150, 40),
+        LogicalTile.NpcPost => Color.Color8(80, 220, 220),
         _ => Color.Color8(255, 0, 255),
     };
 
@@ -76,6 +78,7 @@ public static class LogicalTilePalette
         LogicalTile.Warp => "warp — edge opening or door",
         LogicalTile.TrainerPost => "trainer post",
         LogicalTile.ItemBall => "item ball",
+        LogicalTile.NpcPost => "NPC post / sign",
         _ => $"{tile} — no palette entry",
     };
 }

@@ -1,6 +1,7 @@
 using ProcPoke.Generation;
 using ProcPoke.Generation.Carving;
 using ProcPoke.Generation.Debug;
+using ProcPoke.Generation.Npcs;
 using ProcPoke.Generation.Rng;
 using ProcPoke.Generation.Topology;
 using Xunit;
@@ -68,13 +69,15 @@ public class CarvingTests
         // "carve/<areaId>" stream must reproduce every area byte-for-byte (ADR-0005 stream isolation).
         const ulong seed = 2026;
         var region = RegionGenerator.Generate(new GenerationSettings { Seed = seed, BadgeCount = 8 }, TestData.Data);
-        var streams = new RngStreams(seed);
+        var raw = region.Graph.Areas.ToDictionary(area => area.Id, area => AreaCarver.Carve(
+            area, region.Biomes.Of(area.Id), new RngStreams(seed).Stream("carve", area.Id), region.Openings,
+            AreaCarver.GateOnExitOf(area, region.Gating), GateGeometry.SpineExitSideOf(region.Graph, area),
+            GateGeometry.SpineEntrySideOf(region.Graph, area)));
+        var realized = NpcTilePlacer.Place(region.Npcs, raw, new RngStreams(seed));
+
         foreach (var area in region.Graph.Areas)
         {
-            var reCarved = AreaCarver.Carve(area, region.Biomes.Of(area.Id), streams.Stream("carve", area.Id),
-                region.Openings, AreaCarver.GateOnExitOf(area, region.Gating),
-                GateGeometry.SpineExitSideOf(region.Graph, area));
-            Assert.Equal(AsciiRenderer.Render(region.Carved[area.Id]), AsciiRenderer.Render(reCarved));
+            Assert.Equal(AsciiRenderer.Render(region.Carved[area.Id]), AsciiRenderer.Render(realized[area.Id]));
         }
     }
 

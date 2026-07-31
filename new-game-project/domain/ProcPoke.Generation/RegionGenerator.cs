@@ -15,13 +15,14 @@ using ProcPoke.Generation.Trainers;
 namespace ProcPoke.Generation;
 
 /// <summary>A generated region so far: graph, gating, biomes, the edge-aligned opening plan carvers
-/// consume, the carved tile map per area (keyed by area id), names, gym/E4/Champion typing, and the
-/// starter triangle. Grows as later passes (dex, …) land.</summary>
+/// consume, the carved tile map per area (keyed by area id), names, gym/E4/Champion typing, the starter
+/// triangle, realized NPC posts, and the stitched world canvas. Grows as later passes (dex, …) land.</summary>
 public sealed record GeneratedRegion(
     RegionGraph Graph, GatingPlan Gating, BiomeMap Biomes, OpeningPlan Openings,
     IReadOnlyDictionary<int, CarvedArea> Carved, GenerationSettings Settings,
     RegionNames Names, RegionIdentity Identity, StarterPlan Starters, DexPlan Dex, SpecialSpecies Special,
-    EncounterPlan Encounters, TrainerPlan Trainers, BossPlan Bosses, RivalPlan Rivals, NpcPlan Npcs)
+    EncounterPlan Encounters, TrainerPlan Trainers, BossPlan Bosses, RivalPlan Rivals, NpcPlan Npcs,
+    WorldCanvasMap World)
 {
     public RivalPlan Rival => Rivals;
 }
@@ -60,16 +61,19 @@ public static class RegionGenerator
             // Carving is the last pass (ADR-0004: puzzle before terrain) — the region owns its carved maps
             // so later population passes can read TrainerPost/ItemBall tile counts. Each area draws only
             // from its own "carve/<id>" stream (ADR-0005), so output is independent of pass order.
-            var carved = graph.Areas.ToDictionary(a => a.Id, a => AreaCarver.Carve(
+            IReadOnlyDictionary<int, CarvedArea> carved = graph.Areas.ToDictionary(a => a.Id, a => AreaCarver.Carve(
                 a, biomes.Of(a.Id), streams.Stream("carve", a.Id), openings,
-                AreaCarver.GateOnExitOf(a, gating), GateGeometry.SpineExitSideOf(graph, a)));
+                AreaCarver.GateOnExitOf(a, gating), GateGeometry.SpineExitSideOf(graph, a),
+                GateGeometry.SpineEntrySideOf(graph, a)));
             var trainers = TrainerPass.Generate(graph, carved, biomes, identity, dex, data, streams);
             var bosses = BossPass.Generate(graph, identity, dex, starters, settings, data, streams);
             var rivals = RivalPass.Generate(identity, dex, starters, settings, data, streams);
             var npcs = NpcPass.Generate(graph, gating, names, identity, streams);
+            carved = NpcTilePlacer.Place(npcs, carved, streams);
+            var world = WorldCanvas.Compose(graph, biomes, carved, openings);
             return new GeneratedRegion(
                 graph, gating, biomes, openings, carved, settings, names, identity, starters, dex, special,
-                encounters, trainers, bosses, rivals, npcs);
+                encounters, trainers, bosses, rivals, npcs, world);
         }
 
         throw new InvalidOperationException(

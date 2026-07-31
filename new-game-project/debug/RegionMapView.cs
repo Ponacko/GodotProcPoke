@@ -9,15 +9,12 @@ namespace ProcPoke.DebugView;
 
 /// <summary>
 /// Pan/zoom view of one generated region, stitched from the per-area Logical Tile grids the same way
-/// <c>ProcPoke.MapGen</c>'s overview PNG is (ticket 2b): <see cref="OverviewLayout"/> decides the cells, this
-/// only paints them. One texture is built per generated region and scaled at draw time, so zooming costs
+/// <c>ProcPoke.MapGen</c>'s world PNG is (ticket 10): <see cref="WorldCanvas"/> owns the fixed-cell composition,
+/// this only paints it. One texture is built per generated region and scaled at draw time, so zooming costs
 /// nothing. Click an area to select it — <see cref="AreaSelected"/> carries the id to the detail panel.
 /// </summary>
 public partial class RegionMapView : Control
 {
-    /// <summary>Blank tiles left between overview cells so neighbouring areas stay visually separate.</summary>
-    private const int CellGap = 3;
-
     private const float MinZoom = 0.15f;
     private const float MaxZoom = 24f;
 
@@ -129,48 +126,24 @@ public partial class RegionMapView : Control
     // ── layout ──────────────────────────────────────────────────────────────────────────────────────
 
     /// <summary>
-    /// Mirrors <c>MapImage.SaveOverview</c>'s geometry: each column is as wide as its widest area, each row
-    /// as tall as its tallest, and every area is centred in its own cell.
+    /// Uses the domain-composed canvas directly. Area origins are cell origins, not centred footprints, so the
+    /// view and the headless PNG cannot disagree about seams.
     /// </summary>
     private void BuildFootprints(GeneratedRegion region)
     {
         _footprints.Clear();
 
-        var cells = OverviewLayout.Plan(region.Graph).ToDictionary(cell => cell.AreaId);
-        var carved = region.Carved;
-
-        int ColWidth(int col) => cells.Values.Where(c => c.Col == col).Max(c => carved[c.AreaId].Grid.Width);
-        int RowHeight(int row) => cells.Values.Where(c => c.Row == row).Max(c => carved[c.AreaId].Grid.Height);
-
-        var colX = new Dictionary<int, int>();
-        var x = CellGap;
-        foreach (var col in cells.Values.Select(c => c.Col).Distinct().OrderBy(c => c))
-        {
-            colX[col] = x;
-            x += ColWidth(col) + CellGap;
-        }
-
-        var rowY = new Dictionary<int, int>();
-        var y = CellGap;
-        foreach (var row in cells.Values.Select(c => c.Row).Distinct().OrderBy(r => r))
-        {
-            rowY[row] = y;
-            y += RowHeight(row) + CellGap;
-        }
-
-        _mapTiles = new Vector2I(x, y);
+        var world = region.World;
+        _mapTiles = new Vector2I(world.Grid.Width, world.Grid.Height);
 
         foreach (var area in region.Graph.Areas)
         {
-            var cell = cells[area.Id];
-            var grid = carved[area.Id].Grid;
-            var origin = new Vector2I(
-                colX[cell.Col] + (ColWidth(cell.Col) - grid.Width) / 2,
-                rowY[cell.Row] + (RowHeight(cell.Row) - grid.Height) / 2);
+            var grid = region.Carved[area.Id].Grid;
+            var origin = region.World.OriginOf(area.Id);
 
             _footprints.Add(new Footprint(
                 area.Id,
-                new Rect2I(origin, new Vector2I(grid.Width, grid.Height)),
+                new Rect2I(new Vector2I(origin.X, origin.Y), new Vector2I(grid.Width, grid.Height)),
                 area.OnCriticalPath,
                 LabelFor(region, area)));
         }
@@ -184,30 +157,20 @@ public partial class RegionMapView : Control
         return area.OnCriticalPath ? $"{area.PathIndex}. {name}" : name;
     }
 
-    /// <summary>Blits every carved grid into one RGB8 image at one pixel per tile.</summary>
+    /// <summary>Blits the domain-composed world canvas into one RGB8 image at one pixel per tile.</summary>
     private Image Stitch(GeneratedRegion region)
     {
         var pixels = new byte[_mapTiles.X * _mapTiles.Y * 3];
-        for (var i = 0; i < pixels.Length; i += 3)
-        {
-            pixels[i] = (byte)LogicalTilePalette.Background.R8;
-            pixels[i + 1] = (byte)LogicalTilePalette.Background.G8;
-            pixels[i + 2] = (byte)LogicalTilePalette.Background.B8;
-        }
-
-        foreach (var footprint in _footprints)
-        {
-            var grid = region.Carved[footprint.AreaId].Grid;
-            for (var ty = 0; ty < grid.Height; ty++)
-                for (var tx = 0; tx < grid.Width; tx++)
-                {
-                    var colour = LogicalTilePalette.Of(grid[tx, ty]);
-                    var i = ((footprint.Rect.Position.Y + ty) * _mapTiles.X + footprint.Rect.Position.X + tx) * 3;
-                    pixels[i] = (byte)colour.R8;
-                    pixels[i + 1] = (byte)colour.G8;
-                    pixels[i + 2] = (byte)colour.B8;
-                }
-        }
+        var grid = region.World.Grid;
+        for (var y = 0; y < grid.Height; y++)
+            for (var x = 0; x < grid.Width; x++)
+            {
+                var colour = LogicalTilePalette.Of(grid[x, y]);
+                var i = (y * _mapTiles.X + x) * 3;
+                pixels[i] = (byte)colour.R8;
+                pixels[i + 1] = (byte)colour.G8;
+                pixels[i + 2] = (byte)colour.B8;
+            }
 
         return Image.CreateFromData(_mapTiles.X, _mapTiles.Y, false, Image.Format.Rgb8, pixels);
     }
@@ -228,13 +191,6 @@ public partial class RegionMapView : Control
 
         DrawTextureRect(_texture, new Rect2(_pan, (Vector2)_mapTiles * _zoom), false);
 
-        foreach (var connection in _region.Graph.Connections)
-            DrawLine(
-                ConnectorPoint(connection.AreaA, connection.AreaB),
-                ConnectorPoint(connection.AreaB, connection.AreaA),
-                connection.IsLoopBack ? LogicalTilePalette.LoopBackConnector : LogicalTilePalette.Connector,
-                1.5f);
-
         foreach (var footprint in _footprints)
         {
             var rect = ScreenRect(footprint.Rect);
@@ -250,47 +206,6 @@ public partial class RegionMapView : Control
         var selected = _footprints.FirstOrDefault(f => f.AreaId == _selectedAreaId);
         if (selected is not null)
             DrawRect(ScreenRect(selected.Rect).Grow(2f), LogicalTilePalette.Selection, false, 2f);
-    }
-
-    /// <summary>
-    /// Where a connector should touch <paramref name="areaId"/>'s side of its edge to
-    /// <paramref name="neighborId"/>: the planned aligned opening for a Seamless connection, or — for a Warp,
-    /// which has no aligned opening — the point on this area's border facing the neighbour. Border rather
-    /// than centre so a warp line runs through the gap between areas instead of straight across their maps.
-    /// </summary>
-    private Vector2 ConnectorPoint(int areaId, int neighborId)
-    {
-        var footprint = _footprints.First(f => f.AreaId == areaId);
-        var grid = _region!.Carved[areaId].Grid;
-        var opening = _region.Openings.OpeningsOf(areaId).FirstOrDefault(o => o.NeighborAreaId == neighborId);
-
-        if (opening is not null)
-        {
-            var (tileX, tileY) = opening.TileOn(grid.Width, grid.Height);
-            return ToScreen(new Vector2(
-                footprint.Rect.Position.X + tileX + 0.5f,
-                footprint.Rect.Position.Y + tileY + 0.5f));
-        }
-
-        var neighbour = _footprints.First(f => f.AreaId == neighborId);
-        return ToScreen(BorderPointFacing(footprint.Rect, Centre(neighbour.Rect)));
-    }
-
-    private static Vector2 Centre(Rect2I rect)
-        => (Vector2)rect.Position + (Vector2)rect.Size / 2f;
-
-    /// <summary>The point on <paramref name="rect"/>'s border where the ray from its centre toward
-    /// <paramref name="target"/> leaves the rectangle.</summary>
-    private static Vector2 BorderPointFacing(Rect2I rect, Vector2 target)
-    {
-        var centre = Centre(rect);
-        var direction = target - centre;
-        if (direction.IsZeroApprox()) return centre;
-
-        var half = (Vector2)rect.Size / 2f;
-        var scaleX = Mathf.IsZeroApprox(direction.X) ? float.MaxValue : half.X / Mathf.Abs(direction.X);
-        var scaleY = Mathf.IsZeroApprox(direction.Y) ? float.MaxValue : half.Y / Mathf.Abs(direction.Y);
-        return centre + direction * Mathf.Min(scaleX, scaleY);
     }
 
     private Vector2 ToScreen(Vector2 tile) => _pan + tile * _zoom;
