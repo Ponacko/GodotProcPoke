@@ -576,8 +576,9 @@ public partial class RegionViewer : Control
         Phase 4  Battle engine ........................... IN PROGRESS
           P4-1 defines immutable battle snapshots, move actions, injected
           deterministic tie-breaking, ordered turn events, and the explicit
-          EffectNotImplemented fallback. Damage, status, and AI mechanics are
-          the next simulation slices.
+          EffectNotImplemented fallback. P4-2 adds deterministic Gen 5-style
+          physical/special damage, accuracy, STAB, type effectiveness, critical
+          hits, HP mutation, and faint events. Status and AI mechanics remain.
 
         Phase 5  Loop closers → MVP ...................... NOT STARTED
         Phase 6  Shell and polish ........................ NOT STARTED

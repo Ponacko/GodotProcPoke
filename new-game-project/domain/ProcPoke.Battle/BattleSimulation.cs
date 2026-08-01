@@ -9,6 +9,12 @@ public sealed record BattlePokemon
     public required int SpeciesId { get; init; }
     public required int Level { get; init; }
     public required int Speed { get; init; }
+    public int Attack { get; init; } = 1;
+    public int Defense { get; init; } = 1;
+    public int SpecialAttack { get; init; } = 1;
+    public int SpecialDefense { get; init; } = 1;
+    public IReadOnlyList<PokeType> Types { get; init; } = [PokeType.Normal];
+    public int CriticalStage { get; init; }
     public required int MaxHp { get; init; }
     public required int Hp { get; init; }
     public required IReadOnlyList<Move> Moves { get; init; }
@@ -79,7 +85,8 @@ public static class BattleTurnResolver
         BattleState state,
         BattleAction playerAction,
         BattleAction opponentAction,
-        IBattleRandom random)
+        IBattleRandom random,
+        TypeChart? typeChart = null)
     {
         ArgumentNullException.ThrowIfNull(state);
         ArgumentNullException.ThrowIfNull(playerAction);
@@ -90,10 +97,12 @@ public static class BattleTurnResolver
 
         var turn = state.TurnNumber + 1;
         var events = new List<BattleEvent> { new TurnStarted(turn) };
+        typeChart ??= NeutralTypeChart;
         var actions = Order(state, playerAction, opponentAction, random);
+        var workingState = state;
         foreach (var (actor, action) in actions)
         {
-            var pokemon = actor == BattleActor.Player ? state.Player : state.Opponent;
+            var pokemon = actor == BattleActor.Player ? workingState.Player : workingState.Opponent;
             if (pokemon.IsFainted) continue;
 
             if (action is WaitAction)
@@ -104,12 +113,36 @@ public static class BattleTurnResolver
 
             var moveAction = (UseMoveAction)action;
             var move = pokemon.Moves.Single(candidate => candidate.Id == moveAction.MoveId);
+            var targetActor = actor == BattleActor.Player ? BattleActor.Opponent : BattleActor.Player;
+            var target = targetActor == BattleActor.Player ? workingState.Player : workingState.Opponent;
             events.Add(new MoveUsed(turn, actor, move.Id, move.Name));
-            events.Add(new EffectNotImplemented(turn, actor, move.Id, move.Name));
+            if (move.Power is null || move.DamageClass == DamageClass.Status)
+            {
+                events.Add(new EffectNotImplemented(turn, actor, move.Id, move.Name));
+                continue;
+            }
+
+            if (!Hits(move, random))
+            {
+                events.Add(new MoveMissed(turn, actor, targetActor, move.Id));
+                continue;
+            }
+
+            var critical = IsCritical(pokemon, move, random);
+            if (critical) events.Add(new CriticalHit(turn, actor, targetActor));
+            var effectiveness = Effectiveness(typeChart, move.Type, target.Types);
+            var damage = DamageFor(pokemon, target, move, effectiveness, critical, random);
+            events.Add(new DamageDealt(turn, actor, targetActor, damage, effectiveness, critical));
+            var updatedTarget = target with { Hp = Math.Max(0, target.Hp - damage) };
+            workingState = targetActor == BattleActor.Player
+                ? workingState with { Player = updatedTarget }
+                : workingState with { Opponent = updatedTarget };
+            if (updatedTarget.IsFainted)
+                events.Add(new Fainted(turn, targetActor));
         }
 
         events.Add(new TurnEnded(turn));
-        return new BattleTurnResult(state with { TurnNumber = turn }, events);
+        return new BattleTurnResult(workingState with { TurnNumber = turn }, events);
     }
 
     private static IReadOnlyList<(BattleActor Actor, BattleAction Action)> Order(
@@ -139,6 +172,61 @@ public static class BattleTurnResolver
         if (action is UseMoveAction moveAction && pokemon.Moves.All(move => move.Id != moveAction.MoveId))
             throw new ArgumentException($"{pokemon.Id} does not know move {moveAction.MoveId}", nameof(action));
     }
+
+    private static bool Hits(Move move, IBattleRandom random)
+        => move.Accuracy is null || move.Accuracy >= 100 || random.NextInt(100) < move.Accuracy;
+
+    private static bool IsCritical(BattlePokemon pokemon, Move move, IBattleRandom random)
+    {
+        var stage = Math.Clamp(pokemon.CriticalStage + move.Meta.CritRateBonus, 0, 3);
+        var threshold = stage switch
+        {
+            0 => 1,
+            1 => 2,
+            2 => 4,
+            _ => 5,
+        };
+        return random.NextInt(16) < threshold;
+    }
+
+    private static double Effectiveness(
+        TypeChart chart, PokeType attackType, IReadOnlyList<PokeType> defendingTypes)
+        => defendingTypes.Aggregate(1.0, (multiplier, defendingType)
+            => multiplier * chart.Effectiveness(attackType, defendingType));
+
+    private static int DamageFor(
+        BattlePokemon attacker,
+        BattlePokemon defender,
+        Move move,
+        double effectiveness,
+        bool critical,
+        IBattleRandom random)
+    {
+        if (effectiveness == 0) return 0;
+        var attack = move.DamageClass == DamageClass.Special
+            ? attacker.SpecialAttack
+            : attacker.Attack;
+        var defense = move.DamageClass == DamageClass.Special
+            ? defender.SpecialDefense
+            : defender.Defense;
+        attack = Math.Max(1, attack);
+        defense = Math.Max(1, defense);
+        var levelFactor = (2 * attacker.Level / 5) + 2;
+        var baseDamage = levelFactor * move.Power!.Value * attack / defense;
+        baseDamage = baseDamage / 50 + 2;
+        var stab = attacker.Types.Contains(move.Type) ? 1.5 : 1.0;
+        var criticalMultiplier = critical ? 2.0 : 1.0;
+        var randomMultiplier = (217 + random.NextInt(39)) / 255.0;
+        var damage = (int)Math.Floor(baseDamage * stab * effectiveness * criticalMultiplier * randomMultiplier);
+        return Math.Max(1, damage);
+    }
+
+    private static readonly TypeChart NeutralTypeChart = new()
+    {
+        Percents = Enumerable.Range(0, Enum.GetValues<PokeType>().Length)
+            .Select(_ => (IReadOnlyList<int>)Enumerable.Repeat(100, Enum.GetValues<PokeType>().Length).ToArray())
+            .ToArray(),
+    };
 }
 
 public sealed record TurnEnded(int Turn) : BattleEvent(Turn);

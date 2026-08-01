@@ -27,6 +27,12 @@ public sealed record TurnStarted(int Turn) : BattleEvent(Turn);
 public sealed record MoveUsed(
     int Turn, BattleActor Actor, int MoveId, string MoveName) : BattleEvent(Turn);
 
+public sealed record MoveMissed(
+    int Turn, BattleActor Actor, BattleActor Target, int MoveId) : BattleEvent(Turn);
+
+public sealed record CriticalHit(
+    int Turn, BattleActor Actor, BattleActor Target) : BattleEvent(Turn);
+
 public sealed record DamageDealt(
     int Turn,
     BattleActor Actor,
