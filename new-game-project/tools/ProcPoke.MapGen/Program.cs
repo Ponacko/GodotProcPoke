@@ -5,6 +5,7 @@ using ProcPoke.Generation.Debug;
 using ProcPoke.Generation.Rng;
 using ProcPoke.Generation.Topology;
 using ProcPoke.MapGen;
+using ProcPoke.Overworld;
 using System.Collections.Concurrent;
 using System.Text;
 
@@ -13,6 +14,7 @@ using System.Text;
 // seam-collapsed world canvas (ticket 10).
 //
 //   dotnet run --project tools/ProcPoke.MapGen -- [seed] [--badges N] [--count K]
+//   dotnet run --project tools/ProcPoke.MapGen -- --smoke [--smoke-seeds 2,42,777]
 
 var seed = ParseULong(Arg(0), 1);
 var badges = ParseInt(Flag("--badges"), 8);
@@ -21,6 +23,13 @@ var carve = args.Contains("--carve");
 var png = args.Contains("--png");
 
 var data = GameDataLoader.Load(FindDataDir());
+
+if (args.Contains("--smoke"))
+{
+    var smokeSeeds = ParseSeeds(Flag("--smoke-seeds"), [2, 42, 777]);
+    var smokeOutput = Flag("--smoke-out") ?? Path.Combine(".cache", "mapgen", "phase3-exit");
+    return RunSmoke(smokeSeeds, badges, smokeOutput, data);
+}
 
 var packetIndex = Array.IndexOf(args, "--packet");
 if (packetIndex >= 0)
@@ -93,6 +102,110 @@ string? Flag(string name)
 
 static ulong ParseULong(string? s, ulong fallback) => ulong.TryParse(s, out var v) ? v : fallback;
 static int ParseInt(string? s, int fallback) => int.TryParse(s, out var v) ? v : fallback;
+
+static IReadOnlyList<ulong> ParseSeeds(string? value, IReadOnlyList<ulong> fallback)
+{
+    if (string.IsNullOrWhiteSpace(value)) return fallback;
+    var seeds = value.Split(',', StringSplitOptions.RemoveEmptyEntries | StringSplitOptions.TrimEntries)
+        .Select(token => ulong.TryParse(token, out var seed) ? (ulong?)seed : null)
+        .Where(seed => seed is not null)
+        .Select(seed => seed!.Value)
+        .Distinct()
+        .ToArray();
+    return seeds.Length == 0 ? fallback : seeds;
+}
+
+int RunSmoke(IReadOnlyList<ulong> smokeSeeds, int badgeCount, string output, GameData smokeData)
+{
+    Directory.CreateDirectory(output);
+    var results = new List<PlayabilitySmokeResult>();
+
+    foreach (var seed in smokeSeeds)
+    {
+        try
+        {
+            var region = RegionGenerator.Generate(
+                new GenerationSettings { Seed = seed, BadgeCount = badgeCount }, smokeData);
+            var result = PlayabilitySmoke.Run(region);
+            results.Add(result);
+            Console.WriteLine($"smoke: seed {seed} {(result.Passed ? "PASS" : "FAIL")} " +
+                $"areas {result.AreasVisited} seamless {result.SeamlessConnections} " +
+                $"warp {result.WarpConnections} failures {result.Failures.Count}");
+            foreach (var failure in result.Failures) Console.WriteLine($"  {failure}");
+        }
+        catch (Exception exception)
+        {
+            var failure = new SmokeFailure(
+                "generation", -1, default, Facing.South,
+                $"{exception.GetType().Name}: {exception.Message}");
+            results.Add(new PlayabilitySmokeResult(seed, -1, -1, 0, 0, 0, false, false, false, false,
+                [failure]));
+            Console.WriteLine($"smoke: seed {seed} FAIL {failure}");
+        }
+    }
+
+    var hasSeamless = results.Any(result => result.SeamlessConnections > 0);
+    var hasWarp = results.Any(result => result.WarpConnections > 0);
+    var mechanicallyPassed = smokeSeeds.Count >= 3 && results.Count == smokeSeeds.Count
+        && results.All(result => result.Passed)
+        && hasSeamless && hasWarp
+        && results.Any(result => result.ExercisedLedge)
+        && results.Any(result => result.ExercisedNpc)
+        && results.Any(result => result.ExercisedItem)
+        && results.Any(result => result.ExercisedGate);
+
+    var report = new StringBuilder()
+        .AppendLine("# Phase 3 Overworld exit review")
+        .AppendLine()
+        .AppendLine($"Generated: {DateTimeOffset.UtcNow:O}")
+        .AppendLine($"Settings: badges={badgeCount}; seeds={string.Join(", ", smokeSeeds)}")
+        .AppendLine()
+        .AppendLine("## Mechanical smoke")
+        .AppendLine()
+        .AppendLine(mechanicallyPassed
+            ? "PASS — every requested seed reached League and exercised the required overworld seams."
+            : "FAIL — one or more requested seeds or required seams did not pass.")
+        .AppendLine()
+        .AppendLine("| Seed | Areas | Seamless | Warp | Ledge | NPC | Item | Gate | Result |")
+        .AppendLine("|---:|---:|---:|---:|:---:|:---:|:---:|:---:|:---|");
+    foreach (var result in results)
+    {
+        report.AppendLine($"| {result.Seed} | {result.AreasVisited} | {result.SeamlessConnections} | " +
+            $"{result.WarpConnections} | {Mark(result.ExercisedLedge)} | {Mark(result.ExercisedNpc)} | " +
+            $"{Mark(result.ExercisedItem)} | {Mark(result.ExercisedGate)} | " +
+            $"{(result.Passed ? "PASS" : "FAIL")} |");
+    }
+
+    var failures = results.SelectMany(result => result.Failures.Select(failure => (result.Seed, failure)))
+        .ToArray();
+    report.AppendLine().AppendLine("## Diagnostics").AppendLine();
+    if (failures.Length == 0)
+        report.AppendLine("No smoke diagnostics.").AppendLine();
+    else
+    {
+        report.AppendLine("~~~text");
+        foreach (var (seed, failure) in failures) report.AppendLine($"seed {seed}: {failure}");
+        report.AppendLine("~~~").AppendLine();
+    }
+
+    report.AppendLine("## Exit review").AppendLine()
+        .AppendLine($"Mechanical playability: **{(mechanicallyPassed ? "PASS" : "FAIL")}**.")
+        .AppendLine("Human visual review: **PENDING** — inspect the generated region renders for readable " +
+            "trainer sightlines, ledge asymmetry, item nooks, and hand-crafted spatial rhythm.")
+        .AppendLine()
+        .AppendLine("### Remaining gaps").AppendLine()
+        .AppendLine("- The smoke packet validates engine-independent movement, transitions, and interactions; it does " +
+            "not replace a human run in the Godot editor.")
+        .AppendLine("- Final art, battle wiring, and save serialization remain outside Phase 3.")
+        .AppendLine();
+
+    var reportPath = Path.Combine(output, "PHASE-3-EXIT-REVIEW.md");
+    File.WriteAllText(reportPath, report.ToString());
+    Console.WriteLine($"smoke: wrote {reportPath}");
+    return mechanicallyPassed ? 0 : 1;
+}
+
+static string Mark(bool value) => value ? "yes" : "no";
 
 int RunPacket(int sweepSeeds, string output, GameData packetData)
 {

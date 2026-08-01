@@ -11,5 +11,6 @@
   <ItemGroup>
     <ProjectReference Include="../../domain/ProcPoke.Generation/ProcPoke.Generation.csproj" />
     <ProjectReference Include="../../domain/ProcPoke.Data/ProcPoke.Data.csproj" />
+    <ProjectReference Include="../../domain/ProcPoke.Overworld/ProcPoke.Overworld.csproj" />
   </ItemGroup>
 </Project>
