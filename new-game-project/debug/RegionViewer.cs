@@ -495,7 +495,7 @@ public partial class RegionViewer : Control
 
         Lines are connections. A Seamless Map Connection is drawn between the two areas' aligned openings; a Warp has no aligned edge, so it is drawn border-to-border. Blue lines are loop-back shortcuts.
 
-        Colours carry gameplay meaning only, never art. The Tile Realizer that turns these into tileset graphics is Phase 3 work and does not exist yet.
+        Colours carry gameplay meaning only, never art. The Tile Realizer that turns these into tileset graphics is Phase 3 work.
 
         Drag to pan, scroll to zoom, click an area to inspect it.
         """;
@@ -560,7 +560,10 @@ public partial class RegionViewer : Control
           walkable arrivals, and provides the Warp fade adapter. The current
           review map remains a Phase 2 overview. P3-4 adds deterministic Center,
           Mart, Gym, House, Cave, Tower, and Hideout templates, with generated
-          town doors carrying Center/Mart semantics and round-trip exits.
+          town doors carrying Center/Mart semantics and round-trip exits. P3-5
+          adds deterministic NPC/trainer/item/gate interaction registrations,
+          one-time item and session-only gate unlock state, debug unlock, and
+          Flash-aware dark-cave vision with a Godot darkness overlay.
 
         Phase 4  Battle engine ........................... NOT STARTED
           ProcPoke.Battle holds only the canonical-ruleset constant. The

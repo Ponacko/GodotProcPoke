@@ -61,7 +61,11 @@ public sealed record MovementCapabilities(
     bool HasStrength = false,
     bool HasCut = false,
     bool CanBicycle = false,
-    bool DebugUnlock = false);
+    bool DebugUnlock = false)
+{
+    /// <summary>Gate tiles cleared by the session; generation's logical grid is never mutated.</summary>
+    public IReadOnlySet<GridPosition> ClearedGatePositions { get; init; } = new HashSet<GridPosition>();
+}
 
 public sealed record MovementResolution(
     PlayerState State,
@@ -118,7 +122,7 @@ public static class MovementResolver
             return new MovementResolution(facingPlayer, MovementResultKind.Blocked, target);
 
         var tile = grid[target.X, target.Y];
-        if (!CanEnter(tile, facing, player, capabilities))
+        if (!CanEnter(tile, target, facing, player, capabilities))
             return new MovementResolution(facingPlayer, MovementResultKind.Blocked, target, tile);
 
         return new MovementResolution(
@@ -158,9 +162,11 @@ public static class MovementResolver
     }
 
     private static bool CanEnter(
-        LogicalTile tile, Facing direction, PlayerState player, MovementCapabilities capabilities)
+        LogicalTile tile, GridPosition target, Facing direction, PlayerState player,
+        MovementCapabilities capabilities)
     {
         var collision = TileRealizerModel.CollisionFor(tile);
+        if (capabilities.ClearedGatePositions.Contains(target)) return true;
         if (collision.HasFlag(TileCollision.OneWaySouth) && direction != Facing.South)
             return false;
         if (tile == LogicalTile.Water)
