@@ -3,6 +3,7 @@
     <Project Path="domain/ProcPoke.Battle/ProcPoke.Battle.csproj" />
     <Project Path="domain/ProcPoke.Data/ProcPoke.Data.csproj" />
     <Project Path="domain/ProcPoke.Generation/ProcPoke.Generation.csproj" />
+    <Project Path="domain/ProcPoke.Overworld/ProcPoke.Overworld.csproj" />
   </Folder>
   <Folder Name="/tools/">
     <Project Path="tools/ProcPoke.Bake/ProcPoke.Bake.csproj" />

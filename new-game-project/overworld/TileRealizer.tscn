@@ -1,0 +1,14 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://overworld/TileRealizer.cs" id="1_realizer"]
+
+[node name="TileRealizer" type="Node2D"]
+script = ExtResource("1_realizer")
+
+[node name="GroundLayer" type="TileMapLayer" parent="."]
+
+[node name="WaterLayer" type="TileMapLayer" parent="."]
+
+[node name="TerrainLayer" type="TileMapLayer" parent="."]
+
+[node name="MarkerLayer" type="TileMapLayer" parent="."]
