@@ -555,9 +555,11 @@ public partial class RegionViewer : Control
           P3-1 has the biome debug Tile Realizer with separate terrain,
           water, and marker layers. P3-2 has the pure grid movement resolver,
           keyboard/controller action vocabulary, run/Bicycle/Surf permissions,
-          southbound ledges, and bounded camera adapter. The current review
-          map remains a Phase 2 overview; the playable session will consume
-          these seams in the transition and interaction tickets.
+          southbound ledges, and bounded camera adapter. P3-3 resolves paired
+          Seamless/Warp crossings from OpeningPlan and WorldCanvas, validates
+          walkable arrivals, and provides the Warp fade adapter. The current
+          review map remains a Phase 2 overview; the playable session will
+          consume these seams in the interaction ticket.
 
         Phase 4  Battle engine ........................... NOT STARTED
           ProcPoke.Battle holds only the canonical-ruleset constant. The
