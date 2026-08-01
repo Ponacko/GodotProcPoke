@@ -573,10 +573,11 @@ public partial class RegionViewer : Control
           adds visited/Fly session state, time-of-day tint data, validated
           character/name setup, and seed/settings/version debug metadata.
 
-        Phase 4  Battle engine ........................... NOT STARTED
-          ProcPoke.Battle holds only the canonical-ruleset constant. The
-          trainer and boss rosters in the Area tab are generated data with no
-          simulation behind them yet.
+        Phase 4  Battle engine ........................... IN PROGRESS
+          P4-1 defines immutable battle snapshots, move actions, injected
+          deterministic tie-breaking, ordered turn events, and the explicit
+          EffectNotImplemented fallback. Damage, status, and AI mechanics are
+          the next simulation slices.
 
         Phase 5  Loop closers → MVP ...................... NOT STARTED
         Phase 6  Shell and polish ........................ NOT STARTED
