@@ -510,7 +510,7 @@ public partial class RegionViewer : Control
         ProcPoke — what is built so far
 
         Phase 0  Scaffolding ............................. DONE
-          Godot project plus three engine-independent domain libraries
+          Godot project plus four engine-independent domain libraries
           (ADR-0003), three xUnit test projects and two console tools. Domain
           code never references Godot; this scene is the only presentation
           layer that exists.
@@ -551,10 +551,13 @@ public partial class RegionViewer : Control
                     a human verdict on whether these maps read as
                     hand-crafted. That review is what this scene is for.
 
-        Phase 3  Overworld ............................... NOT STARTED
-          No Tile Realizer, no movement, no interiors — which is why the map
-          beside this panel is flat Logical Tile colour rather than tileset
-          art, and why nothing here is walkable.
+        Phase 3  Overworld ............................... IN PROGRESS
+          P3-1 has the biome debug Tile Realizer with separate terrain,
+          water, and marker layers. P3-2 has the pure grid movement resolver,
+          keyboard/controller action vocabulary, run/Bicycle/Surf permissions,
+          southbound ledges, and bounded camera adapter. The current review
+          map remains a Phase 2 overview; the playable session will consume
+          these seams in the transition and interaction tickets.
 
         Phase 4  Battle engine ........................... NOT STARTED
           ProcPoke.Battle holds only the canonical-ruleset constant. The

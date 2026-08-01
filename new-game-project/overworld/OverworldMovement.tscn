@@ -1,0 +1,12 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://overworld/GridMovementController.cs" id="1_controller"]
+[ext_resource type="Script" path="res://overworld/GridCamera.cs" id="2_camera"]
+
+[node name="OverworldMovement" type="Node2D"]
+
+[node name="Player" type="Node2D" parent="."]
+script = ExtResource("1_controller")
+
+[node name="Camera" type="Camera2D" parent="Player"]
+script = ExtResource("2_camera")
