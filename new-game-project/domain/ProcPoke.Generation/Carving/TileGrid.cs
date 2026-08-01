@@ -52,6 +52,9 @@ public sealed record CarvedArea
     /// <summary>Town building-wall coordinates that gate approach straightening must not punch through.</summary>
     public IReadOnlySet<(int X, int Y)> BuildingWallTiles { get; init; } = new HashSet<(int X, int Y)>();
 
+    /// <summary>Semantic town doors. Their interior kind is presentation/session metadata, not random art.</summary>
+    public IReadOnlyList<BuildingEntrance> BuildingEntrances { get; init; } = [];
+
     /// <summary>
     /// Coordinates of the gate obstacle tiles carved into this area (empty when the area holds no gate).
     /// The chokepoint guarantee (ADR-0001) is expressed against these: with them treated as walls the exit
@@ -74,6 +77,23 @@ public sealed record CarvedArea
     /// one room whenever the corridor happens to fall inside both windows.
     /// </summary>
     public IReadOnlyList<TileRect> Rooms { get; init; } = [];
+}
+
+public enum BuildingKind
+{
+    Center,
+    Mart,
+    Gym,
+    House,
+}
+
+/// <summary>A deterministic town building door and the side of the building facing the street.</summary>
+public sealed record BuildingEntrance
+{
+    public required BuildingKind Kind { get; init; }
+    public required int X { get; init; }
+    public required int Y { get; init; }
+    public required EdgeSide StreetEdge { get; init; }
 }
 
 /// <summary>An inclusive rectangle of tiles.</summary>

@@ -1,0 +1,34 @@
+[gd_scene load_steps=6 format=3]
+
+[ext_resource type="Script" path="res://overworld/TileRealizer.cs" id="1_realizer"]
+[ext_resource type="Script" path="res://overworld/GridMovementController.cs" id="2_movement"]
+[ext_resource type="Script" path="res://overworld/GridCamera.cs" id="3_camera"]
+[ext_resource type="Script" path="res://overworld/TransitionController.cs" id="4_transition"]
+
+[node name="InteriorTemplate" type="Node2D"]
+
+[node name="TileRealizer" type="Node2D" parent="."]
+script = ExtResource("1_realizer")
+
+[node name="GroundLayer" type="TileMapLayer" parent="TileRealizer"]
+
+[node name="WaterLayer" type="TileMapLayer" parent="TileRealizer"]
+
+[node name="TerrainLayer" type="TileMapLayer" parent="TileRealizer"]
+
+[node name="MarkerLayer" type="TileMapLayer" parent="TileRealizer"]
+
+[node name="Player" type="Node2D" parent="."]
+script = ExtResource("2_movement")
+
+[node name="Camera" type="Camera2D" parent="Player"]
+script = ExtResource("3_camera")
+
+[node name="TransitionController" type="CanvasLayer" parent="."]
+script = ExtResource("4_transition")
+
+[node name="Fade" type="ColorRect" parent="TransitionController"]
+offset_right = 1152.0
+offset_bottom = 648.0
+mouse_filter = 2
+color = Color(0, 0, 0, 1)

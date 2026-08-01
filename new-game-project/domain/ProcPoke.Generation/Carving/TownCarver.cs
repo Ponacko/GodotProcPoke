@@ -22,6 +22,7 @@ public static class TownCarver
 
         var openings = new List<(int X, int Y)>();
         var buildingWalls = new HashSet<(int X, int Y)>();
+        var buildingEntrances = new List<BuildingEntrance>();
 
         // Spine-first (ADR-0001). Only borders facing a neighbour are opened — a town on a corner of the
         // spine has two of its four sides against nothing, and punching those would open the street onto
@@ -45,16 +46,24 @@ public static class TownCarver
         var topY = 2;
         var bottomY = midY + 2;
         PlaceBand(grid, rng, topY, Math.Max(0, midY - topY - 1), doorOnBottom: true, gymFirst: true,
-            openings: openings, buildingWalls: buildingWalls, guarded: guarded);
+            openings: openings, buildingWalls: buildingWalls, buildingEntrances: buildingEntrances, guarded: guarded);
         PlaceBand(grid, rng, bottomY, Math.Max(0, h - 2 - bottomY + 1), doorOnBottom: false, gymFirst: false,
-            openings: openings, buildingWalls: buildingWalls, guarded: guarded);
+            openings: openings, buildingWalls: buildingWalls, buildingEntrances: buildingEntrances, guarded: guarded);
 
-        return new CarvedArea { AreaId = area.Id, Grid = grid, Openings = openings, BuildingWallTiles = buildingWalls };
+        return new CarvedArea
+        {
+            AreaId = area.Id,
+            Grid = grid,
+            Openings = openings,
+            BuildingWallTiles = buildingWalls,
+            BuildingEntrances = buildingEntrances,
+        };
     }
 
     private static void PlaceBand(
         TileGrid grid, Pcg32 rng, int y0, int availableHeight, bool doorOnBottom, bool gymFirst,
         List<(int X, int Y)> openings, HashSet<(int X, int Y)> buildingWalls,
+        List<BuildingEntrance> buildingEntrances,
         IReadOnlySet<(int X, int Y)> guarded)
     {
         if (availableHeight < 3) return;
@@ -67,8 +76,10 @@ public static class TownCarver
         FitWidths(widths, grid.Width - 4);
 
         var buildings = TryPlace(widths, heights, y0, rng, grid.Width);
-        foreach (var building in buildings)
+        var placedIndex = 0;
+        for (var buildingIndex = 0; buildingIndex < buildings.Count; buildingIndex++)
         {
+            var building = buildings[buildingIndex];
             // The connection outranks the street furniture: a plot straddling an opening's approach column
             // is simply left empty, which reads as the road out of town rather than a sealed warp.
             if (Covers(building, guarded)) continue;
@@ -82,8 +93,68 @@ public static class TownCarver
             grid[doorX, doorY] = LogicalTile.Warp;
             buildingWalls.Remove((doorX, doorY));
             openings.Add((doorX, doorY));
+            buildingEntrances.Add(new BuildingEntrance
+            {
+                Kind = KindFor(gymFirst, placedIndex++),
+                X = doorX,
+                Y = doorY,
+                StreetEdge = doorOnBottom ? EdgeSide.Bottom : EdgeSide.Top,
+            });
+        }
+
+        // A guarded approach can legitimately reject every candidate after the first one. Services are part
+        // of the town contract, so reserve a compact second plot for the Mart rather than silently turning a
+        // StartTown into a town with no shop.
+        if (!gymFirst && !buildingEntrances.Any(entrance => entrance.Kind == BuildingKind.Mart))
+            TryPlaceRequiredMart(grid, y0, availableHeight, openings, buildingWalls, buildingEntrances, guarded);
+    }
+
+    private static void TryPlaceRequiredMart(
+        TileGrid grid, int y0, int availableHeight, List<(int X, int Y)> openings,
+        HashSet<(int X, int Y)> buildingWalls, List<BuildingEntrance> buildingEntrances,
+        IReadOnlySet<(int X, int Y)> guarded)
+    {
+        const int width = 3;
+        const int height = 3;
+        if (availableHeight < height) return;
+
+        for (var x = 2; x <= grid.Width - width - 2; x++)
+        {
+            var covered = Enumerable.Range(x, width)
+                .SelectMany(px => Enumerable.Range(y0, height).Select(py => (X: px, Y: py)));
+            var cells = covered.ToArray();
+            if (cells.Any(cell => guarded.Contains(cell) || buildingWalls.Contains(cell))) continue;
+
+            foreach (var cell in cells)
+            {
+                grid[cell.X, cell.Y] = LogicalTile.Wall;
+                buildingWalls.Add(cell);
+            }
+
+            var doorX = x + width / 2;
+            var doorY = y0;
+            grid[doorX, doorY] = LogicalTile.Warp;
+            buildingWalls.Remove((doorX, doorY));
+            openings.Add((doorX, doorY));
+            buildingEntrances.Add(new BuildingEntrance
+            {
+                Kind = BuildingKind.Mart,
+                X = doorX,
+                Y = doorY,
+                StreetEdge = EdgeSide.Top,
+            });
+            return;
         }
     }
+
+    private static BuildingKind KindFor(bool gymFirst, int index)
+        => gymFirst && index == 0
+            ? BuildingKind.Gym
+            : !gymFirst && index == 0
+                ? BuildingKind.Center
+                : !gymFirst && index == 1
+                    ? BuildingKind.Mart
+                    : BuildingKind.House;
 
     private static bool Covers(Building building, IReadOnlySet<(int X, int Y)> guarded)
     {

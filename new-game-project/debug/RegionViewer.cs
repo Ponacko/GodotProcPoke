@@ -558,8 +558,9 @@ public partial class RegionViewer : Control
           southbound ledges, and bounded camera adapter. P3-3 resolves paired
           Seamless/Warp crossings from OpeningPlan and WorldCanvas, validates
           walkable arrivals, and provides the Warp fade adapter. The current
-          review map remains a Phase 2 overview; the playable session will
-          consume these seams in the interaction ticket.
+          review map remains a Phase 2 overview. P3-4 adds deterministic Center,
+          Mart, Gym, House, Cave, Tower, and Hideout templates, with generated
+          town doors carrying Center/Mart semantics and round-trip exits.
 
         Phase 4  Battle engine ........................... NOT STARTED
           ProcPoke.Battle holds only the canonical-ruleset constant. The
