@@ -13,6 +13,7 @@ using ProcPoke.Generation.Debug;
 using ProcPoke.Generation.Encounters;
 using ProcPoke.Generation.Gating;
 using ProcPoke.Generation.Topology;
+using ProcPoke.Overworld;
 
 namespace ProcPoke.DebugView;
 
@@ -22,8 +23,7 @@ namespace ProcPoke.DebugView;
 /// <see cref="RegionGraphText"/>'s report, a per-area breakdown, and an implementation-status page.
 ///
 /// Presentation only (ADR-0003): every fact on screen is read back from a <see cref="GeneratedRegion"/>,
-/// and nothing here is game logic. It exists because Phase 3's Tile Realizer does not — until it lands
-/// there is no other way to look at a generated region from inside the engine.
+/// and nothing here is game logic. It is the debug-facing map and report surface for the generated region.
 ///
 /// Runs from the editor (or any non-packaged build): baked data is read off disk through
 /// <see cref="ProjectSettings.GlobalizePath"/>, which resolves <c>res://</c> to a real directory only when
@@ -173,7 +173,11 @@ public partial class RegionViewer : Control
 
         _mapView.ShowRegion(_region);
         BuildAreaPicker(_region);
-        _reportText.Text = RegionGraphText.Render(
+        var debugInfo = GenerationDebugInfo.From(_region);
+        _reportText.Text =
+            $"Generator v{debugInfo.GeneratorVersion}   seed {debugInfo.Seed}   " +
+            $"badges {debugInfo.BadgeCount}   dex {debugInfo.DexSize}   cap {debugInfo.RosterCap}\n\n" +
+            RegionGraphText.Render(
             _region.Graph, _region.Gating, _region.Biomes, _region.Names, _region.Identity,
             _region.Starters, _region.Dex, _data, _region.Special, _region.Encounters,
             _region.Trainers, _region.Bosses, _region.Rivals, _region.Npcs);
@@ -182,7 +186,9 @@ public partial class RegionViewer : Control
 
         var graph = _region.Graph;
         _statusLabel.Text =
-            $"seed {_region.Settings.Seed}   {graph.Areas.Count} areas   {graph.Connections.Count} connections   " +
+            $"generator v{debugInfo.GeneratorVersion}   seed {_region.Settings.Seed}   " +
+            $"badges {_region.Settings.BadgeCount}   dex {_region.Settings.DexSize}   cap {_region.Settings.RosterCap}   " +
+            $"{graph.Areas.Count} areas   {graph.Connections.Count} connections   " +
             $"{_region.Gating.Gates.Count} gates   {graph.CriticalPath.Count} on the spine   " +
             $"dex {_region.Dex.Entries.Count}+{_region.Special.Legendaries.Count}   " +
             $"generated in {_pendingElapsed.TotalMilliseconds:F0} ms";
@@ -563,7 +569,9 @@ public partial class RegionViewer : Control
           town doors carrying Center/Mart semantics and round-trip exits. P3-5
           adds deterministic NPC/trainer/item/gate interaction registrations,
           one-time item and session-only gate unlock state, debug unlock, and
-          Flash-aware dark-cave vision with a Godot darkness overlay.
+          Flash-aware dark-cave vision with a Godot darkness overlay. P3-6
+          adds visited/Fly session state, time-of-day tint data, validated
+          character/name setup, and seed/settings/version debug metadata.
 
         Phase 4  Battle engine ........................... NOT STARTED
           ProcPoke.Battle holds only the canonical-ruleset constant. The

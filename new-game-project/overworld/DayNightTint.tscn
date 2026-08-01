@@ -1,0 +1,7 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://overworld/DayNightTint.cs" id="1_tint"]
+
+[node name="DayNightTint" type="CanvasModulate"]
+color = Color(1, 1, 1, 1)
+script = ExtResource("1_tint")

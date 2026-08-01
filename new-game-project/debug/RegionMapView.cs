@@ -1,9 +1,11 @@
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using Godot;
 using ProcPoke.Generation;
 using ProcPoke.Generation.Carving;
 using ProcPoke.Generation.Topology;
+using ProcPoke.Overworld;
 
 namespace ProcPoke.DebugView;
 
@@ -34,6 +36,8 @@ public partial class RegionMapView : Control
     private ImageTexture? _texture;
     private Vector2I _mapTiles;
     private readonly List<Footprint> _footprints = [];
+    private readonly HashSet<int> _visitedAreaIds = [];
+    private readonly HashSet<int> _flyTargetIds = [];
     private int _selectedAreaId = -1;
 
     private float _zoom = 1f;
@@ -58,9 +62,30 @@ public partial class RegionMapView : Control
     {
         _region = region;
         _selectedAreaId = -1;
+        _visitedAreaIds.Clear();
+        _visitedAreaIds.Add(region.Graph.StartAreaId);
+        _flyTargetIds.Clear();
         BuildFootprints(region);
         _texture = ImageTexture.CreateFromImage(Stitch(region));
         ShowStart();
+    }
+
+    /// <summary>Updates session-owned progress without changing the generated region or stitched art.</summary>
+    public void SetProgress(IReadOnlySet<int> visitedAreaIds, IReadOnlySet<int> flyTargetIds)
+    {
+        ArgumentNullException.ThrowIfNull(visitedAreaIds);
+        ArgumentNullException.ThrowIfNull(flyTargetIds);
+        _visitedAreaIds.Clear();
+        _visitedAreaIds.UnionWith(visitedAreaIds);
+        _flyTargetIds.Clear();
+        _flyTargetIds.UnionWith(flyTargetIds);
+        QueueRedraw();
+    }
+
+    public void MarkVisited(int areaId)
+    {
+        _visitedAreaIds.Add(areaId);
+        QueueRedraw();
     }
 
     /// <summary>
@@ -194,13 +219,20 @@ public partial class RegionMapView : Control
         foreach (var footprint in _footprints)
         {
             var rect = ScreenRect(footprint.Rect);
+            var visited = _visitedAreaIds.Contains(footprint.AreaId);
+            if (!visited)
+                DrawRect(rect, new Color(0f, 0f, 0f, 0.48f));
             DrawRect(rect, footprint.OnCriticalPath
                 ? LogicalTilePalette.SpineOutline
                 : LogicalTilePalette.BranchOutline, false, 1f);
 
+            if (_flyTargetIds.Contains(footprint.AreaId))
+                DrawRect(rect.Grow(2f), Colors.LightGreen, false, 2f);
+
             if (rect.Size.X >= LabelMinWidth)
                 DrawString(font, rect.Position + new Vector2(1f, -3f), footprint.Label,
-                    HorizontalAlignment.Left, -1, 11, LogicalTilePalette.AreaLabel);
+                    HorizontalAlignment.Left, -1, 11,
+                    visited ? LogicalTilePalette.AreaLabel : Colors.DarkGray);
         }
 
         var selected = _footprints.FirstOrDefault(f => f.AreaId == _selectedAreaId);
