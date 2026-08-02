@@ -8,8 +8,23 @@ public enum DamageClass
     Special,
 }
 
+/// <summary>
+/// The eight battle stats that can be modified in stages. Accuracy and evasion are battle-only
+/// values, so they deliberately do not belong to the six persistent <see cref="Stat"/> values.
+/// </summary>
+public enum BattleStat
+{
+    Attack,
+    Defense,
+    SpecialAttack,
+    SpecialDefense,
+    Speed,
+    Accuracy,
+    Evasion,
+}
+
 /// <summary>A stat change a move applies, in stages.</summary>
-public readonly record struct MoveStatChange(Stat Stat, int Stages);
+public readonly record struct MoveStatChange(BattleStat Stat, int Stages);
 
 /// <summary>
 /// The structured effect metadata veekun records for a move (hit counts, drain, ailment chance, …).
@@ -31,6 +46,19 @@ public sealed record MoveMeta
     public int FlinchChance { get; init; }
     public int StatChance { get; init; }
     public IReadOnlyList<MoveStatChange> StatChanges { get; init; } = [];
+
+    /// <summary>
+    /// PokeAPI's move target id, retained when this move changes stages. It distinguishes self
+    /// changes such as Shell Smash from opponent changes such as Swagger without encoding move
+    /// names or effect-id lists in the battle simulation.
+    /// </summary>
+    public int? StatChangeTargetId { get; init; }
+
+    /// <summary>
+    /// PokeAPI's move target id, retained when this move can inflict an ailment. The battle
+    /// simulation uses it to keep the status-effect target data-driven.
+    /// </summary>
+    public int? AilmentTargetId { get; init; }
 }
 
 /// <summary>

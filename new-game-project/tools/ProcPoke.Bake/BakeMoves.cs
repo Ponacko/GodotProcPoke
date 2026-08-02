@@ -56,7 +56,7 @@ internal sealed partial class Baker
                 DamageClass = MapDamageClass(moves.Int(row, "damage_class_id")),
                 EffectId = Rewound("effect_id", moves.Int(row, "effect_id"))!.Value,
                 EffectChance = Rewound("effect_chance", moves.IntOrNull(row, "effect_chance")),
-                Meta = BuildMeta(id, meta, metaTable, statChanges, statTable),
+                Meta = BuildMeta(id, moves.Int(row, "target_id"), meta, metaTable, statChanges, statTable),
             });
         }
 
@@ -74,7 +74,7 @@ internal sealed partial class Baker
     };
 
     private static MoveMeta BuildMeta(
-        int moveId,
+        int moveId, int targetId,
         Dictionary<int, List<string[]>> meta, CsvTable metaTable,
         Dictionary<int, List<string[]>> statChanges, CsvTable statTable)
     {
@@ -86,7 +86,13 @@ internal sealed partial class Baker
 
         var rows = meta.GetValueOrDefault(moveId, []);
         if (rows.Count == 0)
-            return new MoveMeta { CategoryId = 0, AilmentId = 0, StatChanges = changes };
+            return new MoveMeta
+            {
+                CategoryId = 0,
+                AilmentId = 0,
+                StatChanges = changes,
+                StatChangeTargetId = changes.Count > 0 ? targetId : null,
+            };
 
         var r0 = rows[0];
         return new MoveMeta
@@ -104,12 +110,25 @@ internal sealed partial class Baker
             FlinchChance = metaTable.Int(r0, "flinch_chance"),
             StatChance = metaTable.Int(r0, "stat_chance"),
             StatChanges = changes,
+            StatChangeTargetId = changes.Count > 0 ? targetId : null,
+            AilmentTargetId = metaTable.Int(r0, "meta_ailment_id") != 0 ? targetId : null,
         };
     }
 
-    // meta stat changes can reference accuracy(7)/evasion(8), which are battle-only and not permanent stats.
-    private static Stat? MapStatFromMeta(int statId)
-        => statId is >= 1 and <= 6 ? MapStat(statId) : null;
+    // move_meta_stat_changes uses the normal six stat ids plus accuracy(7) and evasion(8).
+    // The latter two are battle-only, so MoveStatChange uses BattleStat rather than persistent Stat.
+    private static BattleStat? MapStatFromMeta(int statId) => statId switch
+    {
+        1 => null, // HP cannot be stage-modified.
+        2 => BattleStat.Attack,
+        3 => BattleStat.Defense,
+        4 => BattleStat.SpecialAttack,
+        5 => BattleStat.SpecialDefense,
+        6 => BattleStat.Speed,
+        7 => BattleStat.Accuracy,
+        8 => BattleStat.Evasion,
+        _ => null,
+    };
 
     private List<SpeciesLearnset> BakeLearnsets()
     {

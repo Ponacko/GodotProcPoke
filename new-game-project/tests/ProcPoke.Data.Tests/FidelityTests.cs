@@ -94,6 +94,22 @@ public sealed class FidelityTests(BakedDataFixture fx)
         Assert.Null(sd.Power);
     }
 
+    [Fact]
+    public void StageChangingMovesRetainBattleOnlyStatsAndTheirTargets()
+    {
+        var sandAttack = MoveByName("Sand Attack");
+        Assert.Contains(new MoveStatChange(BattleStat.Accuracy, -1), sandAttack.Meta.StatChanges);
+        Assert.Equal(10, sandAttack.Meta.StatChangeTargetId);
+
+        var shellSmash = MoveByName("Shell Smash");
+        Assert.Equal(7, shellSmash.Meta.StatChangeTargetId);
+        Assert.Contains(new MoveStatChange(BattleStat.SpecialDefense, -1), shellSmash.Meta.StatChanges);
+
+        var thunderWave = MoveByName("Thunder Wave");
+        Assert.Equal(1, thunderWave.Meta.AilmentId);
+        Assert.Equal(10, thunderWave.Meta.AilmentTargetId);
+    }
+
     [Theory]
     [InlineData(PokeType.Electric, PokeType.Ground, 0)]   // immunity
     [InlineData(PokeType.Ghost, PokeType.Steel, 50)]      // Gen 5: Steel resists Ghost (removed Gen 6)
