@@ -1,6 +1,7 @@
 using System;
 using Godot;
 using ProcPoke.Generation.Carving;
+using ProcPoke.Generation.Encounters;
 using ProcPoke.Overworld;
 
 namespace ProcPoke.OverworldView;
@@ -14,8 +15,11 @@ public partial class GridMovementController : Node2D
     public PlayerState State { get; private set; } = new(new GridPosition(0, 0));
     public MovementCapabilities Capabilities { get; private set; } = new();
     public Func<GridPosition, bool>? IsInteractable { get; set; }
+    public Func<MovementResolution, WildEncounter?>? EncounterRoller { get; set; }
 
     public event Action<MovementResolution>? Resolved;
+    public event Action<WildEncounter>? EncounterTriggered;
+    public event Action<WildBattleTransitionRequest>? BattleTransitionRequested;
 
     public override void _Ready() => InputBindings.EnsureDefaults();
 
@@ -38,6 +42,13 @@ public partial class GridMovementController : Node2D
         State = resolution.State;
         SyncPosition();
         Resolved?.Invoke(resolution);
+        if (resolution.Result == MovementResultKind.Moved
+            && EncounterRoller?.Invoke(resolution) is { } encounter)
+        {
+            EncounterTriggered?.Invoke(encounter);
+            BattleTransitionRequested?.Invoke(
+                WildBattleTransitionResolver.Create(encounter, resolution));
+        }
         return resolution;
     }
 

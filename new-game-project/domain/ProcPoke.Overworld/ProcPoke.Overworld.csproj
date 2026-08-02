@@ -5,6 +5,7 @@
     <ImplicitUsings>enable</ImplicitUsings>
   </PropertyGroup>
   <ItemGroup>
+    <ProjectReference Include="../ProcPoke.Battle/ProcPoke.Battle.csproj" />
     <ProjectReference Include="../ProcPoke.Generation/ProcPoke.Generation.csproj" />
   </ItemGroup>
 </Project>

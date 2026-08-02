@@ -11,6 +11,7 @@
     <PackageReference Include="xunit.runner.visualstudio" Version="2.8.2" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="../../domain/ProcPoke.Battle/ProcPoke.Battle.csproj" />
     <ProjectReference Include="../../domain/ProcPoke.Generation/ProcPoke.Generation.csproj" />
     <ProjectReference Include="../../domain/ProcPoke.Overworld/ProcPoke.Overworld.csproj" />
     <ProjectReference Include="../../domain/ProcPoke.Data/ProcPoke.Data.csproj" />
