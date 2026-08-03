@@ -12,4 +12,7 @@
   <ItemGroup>
     <ProjectReference Include="../../domain/ProcPoke.Data/ProcPoke.Data.csproj" />
   </ItemGroup>
+  <ItemGroup>
+    <PackageReference Include="SixLabors.ImageSharp" Version="2.1.13" />
+  </ItemGroup>
 </Project>

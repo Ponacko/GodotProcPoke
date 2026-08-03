@@ -1,11 +1,17 @@
 using ProcPoke.Data;
+using SixLabors.ImageSharp;
+using SixLabors.ImageSharp.Formats.Gif;
+using SixLabors.ImageSharp.PixelFormats;
 
 namespace ProcPoke.Bake;
 
 /// <summary>
-/// The <c>assets</c> subcommand: downloads the Gen 5 animated battle sprites, menu icons, and cries that
-/// share the species id scheme with the baked data (GDD §10). Assets stay out of git — this tool plus the
-/// pinned SHAs below are the reproducibility story. Defaults to a small sample; pass <c>--all</c> for 1–649.
+/// The <c>assets</c> subcommand: downloads the Gen 5 animated battle sprites (front and, where available,
+/// back), menu icons, and cries that share the species id scheme with the baked data (GDD §10). Each
+/// downloaded battle GIF is also split into a numbered PNG-per-frame sequence plus a <c>frames.json</c>
+/// delay manifest, so Godot (which has no native GIF import) only ever has to load PNGs. Assets stay out
+/// of git — this tool plus the pinned SHAs below are the reproducibility story. Defaults to a small
+/// sample; pass <c>--all</c> for 1–649.
 /// </summary>
 internal static class Assets
 {
@@ -38,18 +44,23 @@ internal static class Assets
         for (var id = 1; id <= limit && id <= DataPin.MaxSpeciesId; id++)
         {
             var slug = slugs.GetValueOrDefault(id);
-            var jobs = new (string Url, string Dest)[]
+
+            (ok, missed) = await FetchBattleGif(http,
+                $"https://raw.githubusercontent.com/{SpritesRepo}/{SpritesSha}/sprites/pokemon/versions/generation-v/black-white/animated/{id}.gif",
+                Path.Combine(spritesDir, $"{id}.gif"), Path.Combine(spritesDir, $"{id}"), force, ok, missed);
+            (ok, missed) = await FetchBattleGif(http,
+                $"https://raw.githubusercontent.com/{SpritesRepo}/{SpritesSha}/sprites/pokemon/versions/generation-v/black-white/animated/back/{id}.gif",
+                Path.Combine(spritesDir, $"{id}-back.gif"), Path.Combine(spritesDir, $"{id}-back"), force, ok, missed);
+
+            var plainJobs = new (string Url, string Dest)[]
             {
-                ($"https://raw.githubusercontent.com/{SpritesRepo}/{SpritesSha}/sprites/pokemon/versions/generation-v/black-white/animated/{id}.gif",
-                    Path.Combine(spritesDir, $"{id}.gif")),
                 ($"https://raw.githubusercontent.com/{CriesRepo}/{CriesSha}/cries/pokemon/legacy/{id}.ogg",
                     Path.Combine(criesDir, $"{id}.ogg")),
                 (slug is null ? "" :
                     $"https://raw.githubusercontent.com/{PokeSpriteRepo}/{PokeSpriteSha}/pokemon-gen8/regular/{slug}.png",
                     Path.Combine(iconsDir, $"{id}.png")),
             };
-
-            foreach (var (url, dest) in jobs)
+            foreach (var (url, dest) in plainJobs)
             {
                 if (url.Length == 0) continue;
                 if (!force && File.Exists(dest)) { ok++; continue; }
@@ -61,7 +72,7 @@ internal static class Assets
                 }
                 catch (HttpRequestException)
                 {
-                    missed++; // some species legitimately lack an animated sprite; carry on
+                    missed++; // some species legitimately lack a cry/icon; carry on
                 }
             }
             if (id % 50 == 0) Console.WriteLine($"  …{id}");
@@ -69,6 +80,49 @@ internal static class Assets
 
         Console.WriteLine($"assets: {ok} files, {missed} missing → {paths.Assets} "
             + $"(sprites@{SpritesSha[..7]}, cries@{CriesSha[..7]}, icons@{PokeSpriteSha[..7]})");
+    }
+
+    /// <summary>Downloads one battle GIF (front or back; back legitimately doesn't exist for many species)
+    /// and, on success, splits it into <paramref name="frameDir"/>/frame_NN.png + frames.json so Godot never
+    /// has to decode a GIF itself.</summary>
+    private static async Task<(int ok, int missed)> FetchBattleGif(
+        HttpClient http, string url, string gifDest, string frameDir, bool force, int ok, int missed)
+    {
+        var framesJson = Path.Combine(frameDir, "frames.json");
+        if (!force && File.Exists(gifDest) && File.Exists(framesJson)) return (ok + 1, missed);
+
+        byte[] bytes;
+        try
+        {
+            bytes = await http.GetByteArrayAsync(url);
+        }
+        catch (HttpRequestException)
+        {
+            return (ok, missed + 1); // e.g. no back sprite exists for this species
+        }
+
+        await File.WriteAllBytesAsync(gifDest, bytes);
+        SplitGifFrames(bytes, frameDir);
+        return (ok + 1, missed);
+    }
+
+    private static void SplitGifFrames(byte[] gifBytes, string frameDir)
+    {
+        Directory.CreateDirectory(frameDir);
+        using var image = Image.Load<Rgba32>(gifBytes);
+        var delaysMs = new int[image.Frames.Count];
+        for (var i = 0; i < image.Frames.Count; i++)
+        {
+            using var frame = image.Frames.CloneFrame(i);
+            frame.SaveAsPng(Path.Combine(frameDir, $"frame_{i:00}.png"));
+            var gifMeta = image.Frames[i].Metadata.GetGifMetadata();
+            delaysMs[i] = gifMeta.FrameDelay * 10; // GIF delay units are centiseconds
+        }
+
+        var manifest = $$"""
+            {"frameCount": {{image.Frames.Count}}, "delaysMs": [{{string.Join(", ", delaysMs)}}]}
+            """;
+        File.WriteAllText(Path.Combine(frameDir, "frames.json"), manifest);
     }
 
     private static int? ParseLimit(string[] rest)
