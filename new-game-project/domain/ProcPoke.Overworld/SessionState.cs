@@ -143,6 +143,7 @@ public sealed class OverworldSession
         Region = region;
         Player = player;
         CurrentAreaId = region.Graph.StartAreaId;
+        LastPokemonCenterAreaId = CurrentAreaId;
         Map = new RegionMapState(CurrentAreaId);
         Time = TimeOfDayClock.FromMinutes(12 * 60);
         Interactions = new InteractionSession();
@@ -154,6 +155,7 @@ public sealed class OverworldSession
     public RegionMapState Map { get; }
     public TimeOfDayState Time { get; private set; }
     public int CurrentAreaId { get; private set; }
+    public int LastPokemonCenterAreaId { get; private set; }
     public int Badges { get; private set; }
     public bool HasFly => _hasFly || Interactions.DebugUnlock;
     public bool DebugUnlock => Interactions.DebugUnlock;
@@ -163,6 +165,7 @@ public sealed class OverworldSession
         if (!Region.Graph.Areas.Any(area => area.Id == areaId))
             throw new ArgumentOutOfRangeException(nameof(areaId), areaId, "area is not in this region");
         CurrentAreaId = areaId;
+        if (IsPokemonCenter(areaId)) LastPokemonCenterAreaId = areaId;
         Map.Visit(areaId);
     }
 
@@ -185,7 +188,17 @@ public sealed class OverworldSession
     public bool TryFlyTo(int areaId)
     {
         if (!Map.CanFlyTo(Region, areaId, _hasFly, Badges, DebugUnlock)) return false;
-        CurrentAreaId = areaId;
+        VisitArea(areaId);
         return true;
     }
+
+    public WhiteoutResult ApplyWhiteout()
+    {
+        var result = WhiteoutResolver.Resolve(Region, CurrentAreaId, LastPokemonCenterAreaId);
+        VisitArea(result.DestinationAreaId);
+        return result;
+    }
+
+    private bool IsPokemonCenter(int areaId)
+        => Region.Graph.Areas.Any(area => area.Id == areaId && WhiteoutResolver.IsPokemonCenter(area));
 }

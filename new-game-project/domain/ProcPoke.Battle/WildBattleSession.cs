@@ -14,6 +14,7 @@ public enum WildBattleOutcome
     Ongoing,
     PlayerWon,
     PlayerLost,
+    Captured,
 }
 
 public sealed record WildBattleTurnResult(
@@ -29,17 +30,24 @@ public sealed class WildBattleSession
 {
     private readonly IBattleRandom _random;
     private readonly TypeChart _typeChart;
+    private readonly int _catchRate;
+    private readonly GameData _data;
+    private bool _rewardsApplied;
 
     private WildBattleSession(
         WildBattleDefinition encounter,
         BattleState state,
         IBattleRandom random,
-        TypeChart typeChart)
+        TypeChart typeChart,
+        int catchRate,
+        GameData data)
     {
         Encounter = encounter;
         State = state;
         _random = random;
         _typeChart = typeChart;
+        _catchRate = catchRate;
+        _data = data;
     }
 
     public WildBattleDefinition Encounter { get; }
@@ -71,7 +79,9 @@ public sealed class WildBattleSession
             encounter,
             new BattleState { Player = player, Opponent = opponent },
             new BattleRandom(seed),
-            data.TypeChart);
+            data.TypeChart,
+            species.CatchRate,
+            data);
     }
 
     public WildBattleTurnResult TakeTurn(BattleAction playerAction)
@@ -79,6 +89,9 @@ public sealed class WildBattleSession
         ArgumentNullException.ThrowIfNull(playerAction);
         if (Outcome != WildBattleOutcome.Ongoing)
             throw new InvalidOperationException("This wild battle has already ended.");
+
+        if (playerAction is ThrowBallAction throwBall)
+            return ThrowBall(throwBall);
 
         var wildAction = BattleAi.ChooseAction(
             State, BattleActor.Opponent, BattleAiTier.Wild, _random, _typeChart);
@@ -90,5 +103,77 @@ public sealed class WildBattleSession
                 ? WildBattleOutcome.PlayerLost
                 : WildBattleOutcome.Ongoing;
         return new WildBattleTurnResult(State, turn.Events, Outcome);
+    }
+
+    public BattleRewardResult ApplyVictoryRewards(
+        BattleProgressionState current,
+        EvolutionContext? evolutionContext = null,
+        bool trainerBattle = false,
+        int participants = 1)
+    {
+        if (Outcome != WildBattleOutcome.PlayerWon)
+            throw new InvalidOperationException("Experience rewards require a won wild battle.");
+        if (_rewardsApplied)
+            throw new InvalidOperationException("This battle has already paid its progression reward.");
+        if (current.SpeciesId != State.Player.SpeciesId)
+            throw new ArgumentException("Progression state does not belong to the battle's player Pokémon.", nameof(current));
+
+        var result = BattleRewardResolver.ApplyDefeat(
+            _data,
+            current,
+            State.Opponent.SpeciesId,
+            State.Opponent.Level,
+            evolutionContext,
+            trainerBattle,
+            participants);
+        _rewardsApplied = true;
+        return result;
+    }
+
+    private WildBattleTurnResult ThrowBall(ThrowBallAction action)
+    {
+        if (string.IsNullOrWhiteSpace(action.BallId))
+            throw new ArgumentException("A thrown ball needs an id.", nameof(action));
+        if (action.BallMultiplier <= 0 || double.IsNaN(action.BallMultiplier)
+            || double.IsInfinity(action.BallMultiplier))
+            throw new ArgumentOutOfRangeException(nameof(action), "Ball multiplier must be finite and positive.");
+
+        var turn = State.TurnNumber + 1;
+        var events = new List<BattleEvent>
+        {
+            new TurnStarted(turn),
+            new BallThrown(turn, BattleActor.Player, action.BallId),
+        };
+        var capture = CaptureResolver.Resolve(new CaptureAttempt
+        {
+            CatchRate = _catchRate,
+            MaxHp = State.Opponent.MaxHp,
+            Hp = State.Opponent.Hp,
+            Status = State.Opponent.Status,
+            BallMultiplier = action.BallMultiplier,
+        }, _random);
+        for (var index = 0; index < capture.Shakes.Count; index++)
+            events.Add(new CaptureShake(turn, BattleActor.Player, index + 1, capture.Shakes[index]));
+
+        if (capture.Captured)
+        {
+            events.Add(new PokemonCaptured(turn, BattleActor.Player, State.Opponent.SpeciesId));
+            events.Add(new TurnEnded(turn));
+            State = State with { TurnNumber = turn };
+            Outcome = WildBattleOutcome.Captured;
+            return new WildBattleTurnResult(State, events, Outcome);
+        }
+
+        events.Add(new CaptureFailed(turn, BattleActor.Player, capture.SuccessfulShakes));
+        var wildAction = BattleAi.ChooseAction(
+            State, BattleActor.Opponent, BattleAiTier.Wild, _random, _typeChart);
+        var waitMessage = $"{State.Player.Id} waits.";
+        var wildTurn = BattleTurnResolver.Resolve(
+            State, new WaitAction(), wildAction, _random, _typeChart);
+        State = wildTurn.State;
+        events.AddRange(wildTurn.Events.Skip(1)
+            .Where(battleEvent => battleEvent is not MessageShown shown || shown.Message != waitMessage));
+        Outcome = State.Player.IsFainted ? WildBattleOutcome.PlayerLost : WildBattleOutcome.Ongoing;
+        return new WildBattleTurnResult(State, events, Outcome);
     }
 }

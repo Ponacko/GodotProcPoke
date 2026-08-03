@@ -15,14 +15,15 @@ namespace ProcPoke.BattleView;
 public partial class BattleDemoController : Control
 {
     private GameData _data = null!;
+    private WildBattleSession _session = null!;
     private BattleState _state = null!;
-    private BattleRandom _random = null!;
     private Label _playerLabel = null!;
     private Label _opponentLabel = null!;
     private ProgressBar _playerHp = null!;
     private ProgressBar _opponentHp = null!;
     private RichTextLabel _log = null!;
     private HBoxContainer _moveButtons = null!;
+    private Button _captureButton = null!;
     private Label _status = null!;
 
     public override void _Ready()
@@ -72,6 +73,9 @@ public partial class BattleDemoController : Control
 
         _moveButtons = new HBoxContainer { ThemeOverrideConstants = { ["separation"] = 8 } };
         column.AddChild(_moveButtons);
+        _captureButton = new Button { Text = "Throw Poké Ball" };
+        _captureButton.Pressed += ThrowBall;
+        column.AddChild(_captureButton);
         var reset = new Button { Text = "Reset battle" };
         reset.Pressed += ResetBattle;
         column.AddChild(reset);
@@ -86,12 +90,14 @@ public partial class BattleDemoController : Control
     private void ResetBattle()
     {
         if (_data is null) return;
-        _random = new BattleRandom(0xBA771EUL);
-        _state = new BattleState
-        {
-            Player = DemoPokemon("player", 25, [33, 45, 73, 22], PokeType.Grass, 80),
-            Opponent = DemoPokemon("wild Pidgey", 16, [33, 16, 98], PokeType.Flying, 60),
-        };
+        var player = DemoPokemon("player", 25, [33, 45, 73, 22], PokeType.Grass, 80);
+        _session = WildBattleSession.Start(
+            _data,
+            player,
+            new WildBattleDefinition(0, 16, 8),
+            seed: 0xBA771EUL,
+            wildOptions: new BattlePokemonBuildOptions { MoveIds = [33, 16, 98] });
+        _state = _session.State;
         foreach (var child in _moveButtons.GetChildren()) child.QueueFree();
         foreach (var move in _state.Player.Moves)
         {
@@ -124,16 +130,29 @@ public partial class BattleDemoController : Control
 
     private void Resolve(int moveId)
     {
-        if (_state.Player.IsFainted || _state.Opponent.IsFainted) return;
-        var opponentAction = BattleAi.ChooseAction(_state, BattleActor.Opponent, BattleAiTier.Wild, _random, _data.TypeChart);
-        var result = BattleTurnResolver.Resolve(
-            _state, new UseMoveAction(moveId), opponentAction, _random, _data.TypeChart);
+        ResolveAction(new UseMoveAction(moveId));
+    }
+
+    private void ThrowBall()
+    {
+        ResolveAction(new ThrowBallAction("Poke Ball"));
+    }
+
+    private void ResolveAction(BattleAction action)
+    {
+        if (_session.Outcome != WildBattleOutcome.Ongoing) return;
+        var result = _session.TakeTurn(action);
         _state = result.State;
         foreach (var battleEvent in result.Events)
             _log.AppendText(Describe(battleEvent) + "\n");
         RefreshUi();
-        if (_state.Player.IsFainted || _state.Opponent.IsFainted)
-            _status.Text = _state.Player.IsFainted ? "You lost the demo battle." : "You won the demo battle.";
+        _status.Text = _session.Outcome switch
+        {
+            WildBattleOutcome.PlayerLost => "You lost the demo battle.",
+            WildBattleOutcome.PlayerWon => "You won the demo battle.",
+            WildBattleOutcome.Captured => "Caught the wild Pokémon!",
+            _ => "Battle in progress",
+        };
     }
 
     private void RefreshUi()
@@ -146,6 +165,7 @@ public partial class BattleDemoController : Control
         _playerHp.Value = _state.Player.Hp;
         foreach (var child in _moveButtons.GetChildren())
             if (child is Button button) button.Disabled = _state.Player.IsFainted || _state.Opponent.IsFainted;
+        _captureButton.Disabled = _session.Outcome != WildBattleOutcome.Ongoing;
     }
 
     private static string Describe(BattleEvent battleEvent) => battleEvent switch
@@ -165,6 +185,10 @@ public partial class BattleDemoController : Control
         HpRestored healed => $"  {healed.Target} recovered {healed.Amount} HP.",
         RecoilDamage recoil => $"  {recoil.Target} took {recoil.Amount} recoil.",
         FlinchInflicted flinch => $"  {flinch.Target} flinched.",
+        BallThrown ball => $"{ball.Actor} threw a {ball.BallId}.",
+        CaptureShake shake => $"  Shake {shake.ShakeIndex}: {(shake.Succeeded ? "yes" : "no")}",
+        CaptureFailed failed => $"The Pokémon broke free after {failed.SuccessfulShakes} shakes.",
+        PokemonCaptured => "Gotcha! The wild Pokémon was caught.",
         Fainted fainted => $"{fainted.Actor} fainted.",
         EffectNotImplemented fallback => $"  [fallback] {fallback.MoveName}",
         MessageShown message => $"  {message.Message}",

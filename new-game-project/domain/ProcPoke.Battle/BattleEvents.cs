@@ -11,12 +11,18 @@ public enum BattleActor
 public enum BattleActionKind
 {
     UseMove,
+    ThrowBall,
     Wait,
 }
 
 public abstract record BattleAction(BattleActionKind Kind);
 
 public sealed record UseMoveAction(int MoveId) : BattleAction(BattleActionKind.UseMove);
+
+/// <summary>Wild-battle-only action; the session resolves capture and shake events.</summary>
+public sealed record ThrowBallAction(
+    string BallId,
+    double BallMultiplier = 1.0) : BattleAction(BattleActionKind.ThrowBall);
 
 public sealed record WaitAction() : BattleAction(BattleActionKind.Wait);
 
@@ -70,6 +76,18 @@ public sealed record RecoilDamage(
 
 public sealed record FlinchInflicted(
     int Turn, BattleActor Actor, BattleActor Target) : BattleEvent(Turn);
+
+public sealed record BallThrown(
+    int Turn, BattleActor Actor, string BallId) : BattleEvent(Turn);
+
+public sealed record CaptureShake(
+    int Turn, BattleActor Actor, int ShakeIndex, bool Succeeded) : BattleEvent(Turn);
+
+public sealed record CaptureFailed(
+    int Turn, BattleActor Actor, int SuccessfulShakes) : BattleEvent(Turn);
+
+public sealed record PokemonCaptured(
+    int Turn, BattleActor Actor, int SpeciesId) : BattleEvent(Turn);
 
 public sealed record AbilityTriggered(
     int Turn, BattleActor Actor, string AbilityName) : BattleEvent(Turn);

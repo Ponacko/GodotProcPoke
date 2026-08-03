@@ -84,4 +84,34 @@ public sealed class SessionStateTests
         Assert.Equal(150, info.DexSize);
         Assert.Equal(8, info.BadgeCount);
     }
+
+    [Fact]
+    public void WhiteoutReturnsToTheLastVisitedPokemonCenter()
+    {
+        var region = Generate(31337);
+        var town = region.Graph.Areas.First(area => area.Archetype == AreaArchetype.Town);
+        var route = region.Graph.Areas.First(area => area.Archetype == AreaArchetype.Route);
+        var session = new OverworldSession(
+            region, NewGameIdentity.Create(CharacterChoice.CharacterA, "Player"));
+
+        session.VisitArea(town.Id);
+        session.VisitArea(route.Id);
+        var result = session.ApplyWhiteout();
+
+        Assert.Equal(route.Id, result.FromAreaId);
+        Assert.Equal(town.Id, result.DestinationAreaId);
+        Assert.False(result.WasAlreadyAtCenter);
+        Assert.Equal(town.Id, session.CurrentAreaId);
+        Assert.Equal(town.Id, session.LastPokemonCenterAreaId);
+    }
+
+    [Fact]
+    public void WhiteoutResolverRejectsNonCenterReturnLocations()
+    {
+        var region = Generate(8080);
+        var route = region.Graph.Areas.First(area => area.Archetype == AreaArchetype.Route);
+
+        Assert.Throws<ArgumentException>(() => WhiteoutResolver.Resolve(
+            region, region.Graph.StartAreaId, route.Id));
+    }
 }

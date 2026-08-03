@@ -83,6 +83,100 @@ public sealed class WildBattleSessionTests
         Assert.Throws<InvalidOperationException>(() => session.TakeTurn(new UseMoveAction(33)));
     }
 
+    [Fact]
+    public void SuccessfulBallThrowEmitsAllShakesAndEndsAsCaptured()
+    {
+        var player = BattlePokemonFactory.Create(Data, 1, 20,
+            new BattlePokemonBuildOptions { MoveIds = [33] });
+        var session = WildBattleSession.Start(
+            Data,
+            player,
+            new WildBattleDefinition(7, 16, 4),
+            seed: 1234,
+            wildOptions: new BattlePokemonBuildOptions { MoveIds = [33] });
+
+        var result = session.TakeTurn(new ThrowBallAction("Master Ball", BallMultiplier: 10));
+
+        Assert.Equal(WildBattleOutcome.Captured, result.Outcome);
+        Assert.Equal(1, result.State.TurnNumber);
+        Assert.Equal(4, result.Events.OfType<CaptureShake>().Count());
+        Assert.All(result.Events.OfType<CaptureShake>(), shake => Assert.True(shake.Succeeded));
+        Assert.Contains(result.Events, battleEvent => battleEvent is PokemonCaptured captured
+            && captured.SpeciesId == 16);
+        Assert.Throws<InvalidOperationException>(() => session.TakeTurn(new ThrowBallAction("Poke Ball")));
+    }
+
+    [Fact]
+    public void FailedBallThrowLetsTheWildPokemonTakeItsTurn()
+    {
+        var player = new BattlePokemon
+        {
+            Id = "player",
+            SpeciesId = 1,
+            Level = 100,
+            Speed = 500,
+            Attack = 100,
+            Defense = 500,
+            SpecialAttack = 100,
+            SpecialDefense = 500,
+            Types = [PokeType.Normal],
+            MaxHp = 500,
+            Hp = 500,
+            Moves = [Data.Moves[33]],
+        };
+        var session = WildBattleSession.Start(
+            Data,
+            player,
+            new WildBattleDefinition(7, 16, 20),
+            seed: 1234,
+            wildOptions: new BattlePokemonBuildOptions { MoveIds = [33] });
+
+        var result = session.TakeTurn(new ThrowBallAction("Poke Ball", BallMultiplier: 0.01));
+
+        Assert.Equal(WildBattleOutcome.Ongoing, result.Outcome);
+        Assert.Contains(result.Events, battleEvent => battleEvent is CaptureFailed);
+        Assert.Contains(result.Events, battleEvent => battleEvent is MoveUsed move
+            && move.Actor == BattleActor.Opponent);
+        Assert.Equal(1, result.State.TurnNumber);
+    }
+
+    [Fact]
+    public void FailedBallThrowPreservesStatusNarrationOtherThanTheWaitMessage()
+    {
+        var player = new BattlePokemon
+        {
+            Id = "player",
+            SpeciesId = 1,
+            Level = 100,
+            Speed = 500,
+            Attack = 100,
+            Defense = 500,
+            SpecialAttack = 100,
+            SpecialDefense = 500,
+            Types = [PokeType.Normal],
+            MaxHp = 500,
+            Hp = 500,
+            Status = BattleStatus.Sleep,
+            SleepTurns = 2,
+            Moves = [Data.Moves[33]],
+        };
+        var session = WildBattleSession.Start(
+            Data,
+            player,
+            new WildBattleDefinition(7, 16, 20),
+            seed: 1234,
+            wildOptions: new BattlePokemonBuildOptions { MoveIds = [33] });
+
+        var result = session.TakeTurn(new ThrowBallAction("Poke Ball", BallMultiplier: 0.01));
+
+        Assert.Equal(WildBattleOutcome.Ongoing, result.Outcome);
+        Assert.Contains(result.Events, battleEvent => battleEvent is CaptureFailed);
+        Assert.Contains(result.Events, battleEvent => battleEvent is MessageShown shown
+            && shown.Message == "player is asleep.");
+        Assert.DoesNotContain(result.Events, battleEvent => battleEvent is MessageShown shown
+            && shown.Message == "player waits.");
+    }
+
     private static string FindDataDir()
     {
         var directory = new DirectoryInfo(AppContext.BaseDirectory);
