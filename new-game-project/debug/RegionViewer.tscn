@@ -121,6 +121,12 @@ layout_mode = 2
 tooltip_text = "Fit the whole region in the view"
 text = "Fit"
 
+[node name="PlayButton" type="Button" parent="Frame/TopBar/Pad/Rows/Controls"]
+unique_name_in_owner = true
+layout_mode = 2
+tooltip_text = "Play the generated region in the overworld (dev playtest — starts with debug unlock so every gate is passable)"
+text = "Play"
+
 [node name="AreaNav" type="HBoxContainer" parent="Frame/TopBar/Pad/Rows"]
 layout_mode = 2
 theme_override_constants/separation = 6

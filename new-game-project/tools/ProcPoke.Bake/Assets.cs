@@ -102,7 +102,14 @@ internal static class Assets
         }
 
         await File.WriteAllBytesAsync(gifDest, bytes);
-        SplitGifFrames(bytes, frameDir);
+        try
+        {
+            SplitGifFrames(bytes, frameDir);
+        }
+        catch (Exception exception) when (exception is not OutOfMemoryException)
+        {
+            return (ok, missed + 1); // malformed/unexpected GIF; the raw file is still saved, frames are not
+        }
         return (ok + 1, missed);
     }
 

@@ -24,13 +24,24 @@ public partial class GridMovementController : Node2D
     public override void _Ready() => InputBindings.EnsureDefaults();
 
     public void Configure(TileGrid grid, GridPosition start, MovementCapabilities capabilities)
+        => Configure(grid, new PlayerState(start), capabilities);
+
+    public void Configure(TileGrid grid, PlayerState start, MovementCapabilities capabilities)
     {
         ArgumentNullException.ThrowIfNull(grid);
+        ArgumentNullException.ThrowIfNull(start);
         ArgumentNullException.ThrowIfNull(capabilities);
         Grid = grid;
-        State = new PlayerState(start);
+        State = start;
         Capabilities = capabilities;
         SyncPosition();
+    }
+
+    /// <summary>Refreshes capabilities in place — e.g. after a gate unlock — without moving or reloading.</summary>
+    public void UpdateCapabilities(MovementCapabilities capabilities)
+    {
+        ArgumentNullException.ThrowIfNull(capabilities);
+        Capabilities = capabilities;
     }
 
     public MovementResolution Apply(MovementIntent intent)

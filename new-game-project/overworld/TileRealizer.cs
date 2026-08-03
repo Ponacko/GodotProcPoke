@@ -148,6 +148,10 @@ public partial class TileRealizer : Node2D
         tileSet.AddPhysicsLayer(-1);
         tileSet.SetPhysicsLayerCollisionLayer(0, 1);
         tileSet.SetPhysicsLayerCollisionMask(0, 1);
+        // The atlas must already belong to the tileset before its tile data can see the physics layer
+        // just added above — creating tiles/collision polygons first and calling AddSource() last leaves
+        // every tile's physics-layer array sized to zero (SetCollisionPolygonsCount then throws).
+        tileSet.AddSource(atlas, AtlasSourceId);
 
         foreach (var biome in biomes)
         foreach (var logical in logicalTiles)
@@ -163,7 +167,6 @@ public partial class TileRealizer : Node2D
             data.SetCollisionPolygonOneWay(0, 0, collision.HasFlag(TileCollision.OneWaySouth));
         }
 
-        tileSet.AddSource(atlas, AtlasSourceId);
         return tileSet;
     }
 

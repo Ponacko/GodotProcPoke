@@ -1,0 +1,45 @@
+[gd_scene load_steps=7 format=3]
+
+[ext_resource type="Script" path="res://overworld/OverworldRootController.cs" id="1_root"]
+[ext_resource type="Script" path="res://overworld/TileRealizer.cs" id="2_realizer"]
+[ext_resource type="Script" path="res://overworld/GridMovementController.cs" id="3_movement"]
+[ext_resource type="Script" path="res://overworld/GridCamera.cs" id="4_camera"]
+[ext_resource type="Script" path="res://overworld/TransitionController.cs" id="5_transition"]
+
+[node name="OverworldRoot" type="Node2D"]
+script = ExtResource("1_root")
+
+[node name="TileRealizer" type="Node2D" parent="."]
+script = ExtResource("2_realizer")
+
+[node name="GroundLayer" type="TileMapLayer" parent="TileRealizer"]
+
+[node name="WaterLayer" type="TileMapLayer" parent="TileRealizer"]
+
+[node name="TerrainLayer" type="TileMapLayer" parent="TileRealizer"]
+
+[node name="MarkerLayer" type="TileMapLayer" parent="TileRealizer"]
+
+[node name="Player" type="Node2D" parent="."]
+script = ExtResource("3_movement")
+
+[node name="Camera" type="Camera2D" parent="Player"]
+script = ExtResource("4_camera")
+
+[node name="TransitionController" type="CanvasLayer" parent="."]
+script = ExtResource("5_transition")
+
+[node name="Fade" type="ColorRect" parent="TransitionController"]
+offset_right = 256.0
+offset_bottom = 192.0
+mouse_filter = 2
+color = Color(0, 0, 0, 1)
+
+[node name="Hud" type="CanvasLayer" parent="."]
+
+[node name="MessageLabel" type="Label" parent="Hud"]
+offset_left = 4.0
+offset_top = 4.0
+offset_right = 252.0
+offset_bottom = 40.0
+autowrap_mode = 3

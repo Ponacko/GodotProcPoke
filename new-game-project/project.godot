@@ -24,6 +24,10 @@ window/size/window_height_override=768
 window/stretch/mode="viewport"
 window/stretch/scale_mode="integer"
 
+[autoload]
+
+GameState="*res://GameState.cs"
+
 [dotnet]
 
 project/assembly_name="ProcPoke"

@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Godot;
+using ProcPoke;
 using ProcPoke.Data;
 using ProcPoke.Generation;
 using ProcPoke.Generation.Bosses;
@@ -89,6 +90,7 @@ public partial class RegionViewer : Control
         GetNode<Button>("%PrevSeedButton").Pressed += () => StepSeed(-1);
         GetNode<Button>("%NextSeedButton").Pressed += () => StepSeed(+1);
         GetNode<Button>("%FitButton").Pressed += _mapView.FitToView;
+        GetNode<Button>("%PlayButton").Pressed += Play;
         GetNode<Button>("%StartButton").Pressed += _mapView.ShowStart;
         GetNode<Button>("%PrevAreaButton").Pressed += () => StepArea(-1);
         GetNode<Button>("%NextAreaButton").Pressed += () => StepArea(+1);
@@ -194,6 +196,26 @@ public partial class RegionViewer : Control
             $"generated in {_pendingElapsed.TotalMilliseconds:F0} ms";
         // Echoed so a headless run of this scene is self-checking, and so the summary can be copied out.
         GD.Print(_statusLabel.Text);
+    }
+
+    /// <summary>
+    /// Dev playtest entry point: hands the generated region off to <see cref="GameState"/> and switches to
+    /// the real overworld scene. Starts with debug unlock so every gate is passable — this is a playtest of
+    /// the encounter/battle loop, not the (not-yet-built, Phase 5) new-game/key-item flow.
+    /// </summary>
+    private void Play()
+    {
+        if (_region is null || _data is null) return;
+
+        var identity = NewGameIdentity.Create(CharacterChoice.CharacterA, "Trainer");
+        var session = new OverworldSession(_region, identity);
+        session.Interactions.EnableDebugUnlock();
+
+        GameState.Instance.Data = _data;
+        GameState.Instance.Session = session;
+        GameState.Instance.PlayerProgression = null;
+        GameState.Instance.ResumePlayerState = null;
+        GetTree().ChangeSceneToFile("res://overworld/OverworldRoot.tscn");
     }
 
     // ── area navigation ─────────────────────────────────────────────────────────────────────────────
