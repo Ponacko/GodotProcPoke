@@ -43,21 +43,27 @@ public partial class BattleDemoController : Control
 
     private void BuildUi()
     {
-        var margin = new MarginContainer
-        {
-            ThemeOverrideConstants = { ["margin_left"] = 18, ["margin_top"] = 18, ["margin_right"] = 18, ["margin_bottom"] = 18 },
-        };
+        var margin = new MarginContainer();
+        margin.AddThemeConstantOverride("margin_left", 18);
+        margin.AddThemeConstantOverride("margin_top", 18);
+        margin.AddThemeConstantOverride("margin_right", 18);
+        margin.AddThemeConstantOverride("margin_bottom", 18);
         margin.SetAnchorsAndOffsetsPreset(LayoutPreset.FullRect);
         AddChild(margin);
 
-        var column = new VBoxContainer { ThemeOverrideConstants = { ["separation"] = 10 } };
+        var column = new VBoxContainer();
+        column.AddThemeConstantOverride("separation", 10);
         margin.AddChild(column);
-        column.AddChild(new Label { Text = "ProcPoke — Battle Event Stream Demo", ThemeOverrideFontSizes = { ["font_size"] = 22 } });
+        var title = new Label { Text = "ProcPoke — Battle Event Stream Demo" };
+        title.AddThemeFontSizeOverride("font_size", 22);
+        column.AddChild(title);
 
         _status = new Label { Text = "Loading baked battle data…" };
         column.AddChild(_status);
 
-        var field = new GridContainer { Columns = 2, ThemeOverrideConstants = { ["h_separation"] = 24, ["v_separation"] = 8 } };
+        var field = new GridContainer { Columns = 2 };
+        field.AddThemeConstantOverride("h_separation", 24);
+        field.AddThemeConstantOverride("v_separation", 8);
         column.AddChild(field);
         _opponentLabel = new Label();
         _opponentHp = HpBar();
@@ -71,7 +77,8 @@ public partial class BattleDemoController : Control
         _log = new RichTextLabel { BbcodeEnabled = false, FitContent = false, CustomMinimumSize = new Vector2(0, 220) };
         column.AddChild(_log);
 
-        _moveButtons = new HBoxContainer { ThemeOverrideConstants = { ["separation"] = 8 } };
+        _moveButtons = new HBoxContainer();
+        _moveButtons.AddThemeConstantOverride("separation", 8);
         column.AddChild(_moveButtons);
         _captureButton = new Button { Text = "Throw Poké Ball" };
         _captureButton.Pressed += ThrowBall;
