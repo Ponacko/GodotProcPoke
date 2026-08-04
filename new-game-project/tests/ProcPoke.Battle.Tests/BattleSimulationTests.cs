@@ -83,10 +83,10 @@ public sealed class BattleSimulationTests
             Chart((PokeType.Fire, PokeType.Grass, 200)));
 
         var damage = Assert.Single(result.Events.OfType<DamageDealt>());
-        Assert.Equal(57, damage.Amount);
+        Assert.Equal(51, damage.Amount);
         Assert.Equal(2.0, damage.Effectiveness);
         Assert.False(damage.Critical);
-        Assert.Equal(43, result.State.Opponent.Hp);
+        Assert.Equal(49, result.State.Opponent.Hp);
     }
 
     [Fact]
@@ -102,7 +102,7 @@ public sealed class BattleSimulationTests
             state, new UseMoveAction(1), new WaitAction(), new ScriptedRandom(0, 38));
 
         var damage = Assert.Single(result.Events.OfType<DamageDealt>());
-        Assert.Equal(38, damage.Amount);
+        Assert.Equal(34, damage.Amount);
         Assert.True(damage.Critical);
         Assert.Contains(result.Events, item => item is CriticalHit);
         Assert.Contains(result.Events, item => item is Fainted { Actor: BattleActor.Opponent });
@@ -261,8 +261,8 @@ public sealed class BattleSimulationTests
         var boostedResult = BattleTurnResolver.Resolve(
             boosted, new UseMoveAction(1), new WaitAction(), new ScriptedRandom(15, 38));
 
-        Assert.Equal(9, Assert.Single(baselineResult.Events.OfType<DamageDealt>()).Amount);
-        Assert.Equal(16, Assert.Single(boostedResult.Events.OfType<DamageDealt>()).Amount);
+        Assert.Equal(8, Assert.Single(baselineResult.Events.OfType<DamageDealt>()).Amount);
+        Assert.Equal(15, Assert.Single(boostedResult.Events.OfType<DamageDealt>()).Amount);
     }
 
     [Fact]
@@ -347,7 +347,7 @@ public sealed class BattleSimulationTests
         var result = BattleTurnResolver.Resolve(
             state, new UseMoveAction(1), new WaitAction(), new ScriptedRandom(15, 38));
 
-        Assert.Equal(6, Assert.Single(result.Events.OfType<DamageDealt>()).Amount);
+        Assert.Equal(5, Assert.Single(result.Events.OfType<DamageDealt>()).Amount);
         Assert.Equal(31, result.State.Player.Hp);
         Assert.Contains(result.Events, item => item is ResidualDamage
         {
@@ -429,7 +429,7 @@ public sealed class BattleSimulationTests
         var water = BattleTurnResolver.Resolve(
             waterState, new UseMoveAction(55), new WaitAction(), new ScriptedRandom(15, 38));
 
-        Assert.Equal(13, Assert.Single(water.Events.OfType<DamageDealt>()).Amount);
+        Assert.Equal(12, Assert.Single(water.Events.OfType<DamageDealt>()).Amount);
     }
 
     [Fact]

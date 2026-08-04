@@ -296,7 +296,10 @@ public static class BattleTurnResolver
         baseDamage = baseDamage / 50 + 2;
         var stab = attacker.Types.Contains(move.Type) ? 1.5 : 1.0;
         var criticalMultiplier = critical ? 2.0 : 1.0;
-        var randomMultiplier = (217 + random.NextInt(39)) / 255.0;
+        // Gen 5's damage roll is a random integer in [85, 100] divided by 100 (16 possible values) — the
+        // 217–255/255 scheme (39 values) is Generation I's; Gen III onward uses 85–100/100 per Bulbapedia's
+        // "Damage" article and its "User:FIQ/Damage_calculation" technical page (both confirm Gen V uses it).
+        var randomMultiplier = (85 + random.NextInt(16)) / 100.0;
         var weatherMultiplier = WeatherDamageMultiplier(move.Type, weather);
         var damage = (int)Math.Floor(baseDamage * stab * effectiveness * criticalMultiplier * weatherMultiplier * randomMultiplier);
         return Math.Max(1, damage);
