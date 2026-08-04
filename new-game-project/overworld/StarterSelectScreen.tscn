@@ -1,0 +1,48 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://overworld/StarterSelectScreen.cs" id="1_starter"]
+
+[node name="StarterSelectScreen" type="Control"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_starter")
+
+[node name="Column" type="VBoxContainer" parent="."]
+unique_name_in_owner = true
+offset_left = 8.0
+offset_top = 8.0
+offset_right = 248.0
+offset_bottom = 184.0
+theme_override_constants/separation = 8
+
+[node name="TitleLabel" type="Label" parent="Column"]
+layout_mode = 2
+text = "Pick your partner!"
+
+[node name="Corners" type="HBoxContainer" parent="Column"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="Corner0Button" type="Button" parent="Column/Corners"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Corner1Button" type="Button" parent="Column/Corners"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="Corner2Button" type="Button" parent="Column/Corners"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="StatusLabel" type="Label" parent="Column"]
+unique_name_in_owner = true
+layout_mode = 2
+autowrap_mode = 3

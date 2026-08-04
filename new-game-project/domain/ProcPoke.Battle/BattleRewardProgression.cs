@@ -1,3 +1,4 @@
+using System.Linq;
 using ProcPoke.Data;
 
 namespace ProcPoke.Battle;
@@ -17,6 +18,26 @@ public sealed record BattleRewardResult(
     MoveLearningResult Moves,
     EvolutionResult? Evolution,
     BattleProgressionState Progression);
+
+/// <summary>Builds a fresh <see cref="BattleProgressionState"/> for a species starting at a given level —
+/// e.g. a starter Pokémon at level 5 — with no EVs and its auto-derived level-up moveset.</summary>
+public static class BattleProgressionFactory
+{
+    public static BattleProgressionState AtLevel(GameData data, int speciesId, int level)
+    {
+        ArgumentNullException.ThrowIfNull(data);
+        var pokemon = BattlePokemonFactory.Create(data, speciesId, level);
+        var growth = data.GrowthRates[data.Species[speciesId].GrowthRate];
+        return new BattleProgressionState
+        {
+            SpeciesId = speciesId,
+            Level = level,
+            TotalExperience = growth.CumulativeExperience[level],
+            EffortValues = new StatBlock(0, 0, 0, 0, 0, 0),
+            MoveIds = pokemon.Moves.Select(move => move.Id).ToArray(),
+        };
+    }
+}
 
 /// <summary>Composes XP/EV, level-up move learning, and level-up evolution into one reward boundary.</summary>
 public static class BattleRewardResolver

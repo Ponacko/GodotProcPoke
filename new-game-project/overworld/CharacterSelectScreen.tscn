@@ -1,0 +1,61 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://overworld/CharacterSelectScreen.cs" id="1_select"]
+
+[node name="CharacterSelectScreen" type="Control"]
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_select")
+
+[node name="Column" type="VBoxContainer" parent="."]
+unique_name_in_owner = true
+offset_left = 8.0
+offset_top = 8.0
+offset_right = 248.0
+offset_bottom = 184.0
+theme_override_constants/separation = 8
+
+[node name="TitleLabel" type="Label" parent="Column"]
+layout_mode = 2
+text = "Choose your character"
+
+[node name="Characters" type="HBoxContainer" parent="Column"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="CharacterAButton" type="Button" parent="Column/Characters"]
+unique_name_in_owner = true
+layout_mode = 2
+toggle_mode = true
+button_pressed = true
+text = "Character A"
+
+[node name="CharacterBButton" type="Button" parent="Column/Characters"]
+unique_name_in_owner = true
+layout_mode = 2
+toggle_mode = true
+text = "Character B"
+
+[node name="NameLabel" type="Label" parent="Column"]
+layout_mode = 2
+text = "Your name"
+
+[node name="NameEdit" type="LineEdit" parent="Column"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Trainer"
+max_length = 12
+
+[node name="ErrorLabel" type="Label" parent="Column"]
+unique_name_in_owner = true
+layout_mode = 2
+autowrap_mode = 3
+
+[node name="ConfirmButton" type="Button" parent="Column"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Confirm"

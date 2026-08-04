@@ -53,8 +53,11 @@ public partial class BattleScreen : Control
             ?? throw new InvalidOperationException("BattleScreen entered with no pending battle request.");
         GameState.Instance.PendingBattleRequest = null;
 
-        _progression = GameState.Instance.PlayerProgression ?? DefaultProgression(_data);
-        GameState.Instance.PlayerProgression = _progression;
+        var party = GameState.Instance.Session?.Party
+            ?? throw new InvalidOperationException("BattleScreen entered with no active session/party.");
+        if (party.Members.Count == 0)
+            throw new InvalidOperationException("BattleScreen entered with an empty party — no Pokémon to send out.");
+        _progression = party.Members[0];
 
         var player = BattlePokemonFactory.Create(_data, _progression.SpeciesId, _progression.Level,
             new BattlePokemonBuildOptions { MoveIds = _progression.MoveIds, EffortValues = _progression.EffortValues });
@@ -173,7 +176,7 @@ public partial class BattleScreen : Control
     {
         var reward = _session.ApplyVictoryRewards(_progression);
         _progression = reward.Progression;
-        GameState.Instance.PlayerProgression = _progression;
+        GameState.Instance.Session!.Party.Replace(0, _progression);
 
         _log.AppendText($"\n{_state.Player.Id} gained {reward.Experience.ExperienceGained} EXP!\n");
         if (reward.Experience.NewLevel > reward.Experience.PreviousLevel)
@@ -416,20 +419,4 @@ public partial class BattleScreen : Control
 
     private static ulong RandomSeed()
         => unchecked((ulong)DateTime.UtcNow.Ticks ^ (ulong)System.Environment.TickCount64);
-
-    private static BattleProgressionState DefaultProgression(GameData data)
-    {
-        const int speciesId = 1; // arbitrary starter stand-in until Phase 5's real starter/party flow exists
-        const int level = 5;
-        var player = BattlePokemonFactory.Create(data, speciesId, level);
-        var growth = data.GrowthRates[data.Species[speciesId].GrowthRate];
-        return new BattleProgressionState
-        {
-            SpeciesId = speciesId,
-            Level = level,
-            TotalExperience = growth.CumulativeExperience[level],
-            EffortValues = new StatBlock(0, 0, 0, 0, 0, 0),
-            MoveIds = player.Moves.Select(move => move.Id).ToArray(),
-        };
-    }
 }

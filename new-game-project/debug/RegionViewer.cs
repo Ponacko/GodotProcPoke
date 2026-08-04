@@ -6,6 +6,7 @@ using System.Text;
 using System.Threading.Tasks;
 using Godot;
 using ProcPoke;
+using ProcPoke.Battle;
 using ProcPoke.Data;
 using ProcPoke.Generation;
 using ProcPoke.Generation.Bosses;
@@ -91,6 +92,7 @@ public partial class RegionViewer : Control
         GetNode<Button>("%NextSeedButton").Pressed += () => StepSeed(+1);
         GetNode<Button>("%FitButton").Pressed += _mapView.FitToView;
         GetNode<Button>("%PlayButton").Pressed += Play;
+        GetNode<Button>("%NewGameButton").Pressed += NewGame;
         GetNode<Button>("%StartButton").Pressed += _mapView.ShowStart;
         GetNode<Button>("%PrevAreaButton").Pressed += () => StepArea(-1);
         GetNode<Button>("%NextAreaButton").Pressed += () => StepArea(+1);
@@ -200,8 +202,9 @@ public partial class RegionViewer : Control
 
     /// <summary>
     /// Dev playtest entry point: hands the generated region off to <see cref="GameState"/> and switches to
-    /// the real overworld scene. Starts with debug unlock so every gate is passable — this is a playtest of
-    /// the encounter/battle loop, not the (not-yet-built, Phase 5) new-game/key-item flow.
+    /// the real overworld scene. Starts with debug unlock so every gate is passable, and a throwaway
+    /// one-member party (skipping the real new-game flow's starter pick) — this is a fast path for
+    /// testing the encounter/battle loop, not a real playthrough. See <see cref="NewGame"/> for that.
     /// </summary>
     private void Play()
     {
@@ -210,12 +213,26 @@ public partial class RegionViewer : Control
         var identity = NewGameIdentity.Create(CharacterChoice.CharacterA, "Trainer");
         var session = new OverworldSession(_region, identity);
         session.Interactions.EnableDebugUnlock();
+        session.Party.Add(BattleProgressionFactory.AtLevel(_data, speciesId: 1, level: 5));
 
         GameState.Instance.Data = _data;
         GameState.Instance.Session = session;
-        GameState.Instance.PlayerProgression = null;
         GameState.Instance.ResumePlayerState = null;
         GetTree().ChangeSceneToFile("res://overworld/OverworldRoot.tscn");
+    }
+
+    /// <summary>
+    /// The real entry point: hands the region to <see cref="GameState.PendingNewGameRegion"/> and starts
+    /// the character-select → professor intro → starter-select flow, ending with debug unlock <b>off</b>
+    /// and a party of exactly the player's chosen starter.
+    /// </summary>
+    private void NewGame()
+    {
+        if (_region is null || _data is null) return;
+
+        GameState.Instance.Data = _data;
+        GameState.Instance.PendingNewGameRegion = _region;
+        GetTree().ChangeSceneToFile("res://overworld/CharacterSelectScreen.tscn");
     }
 
     // ── area navigation ─────────────────────────────────────────────────────────────────────────────

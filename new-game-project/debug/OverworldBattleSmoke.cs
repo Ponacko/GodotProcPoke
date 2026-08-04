@@ -4,6 +4,7 @@ using System.Linq;
 using System.Threading.Tasks;
 using Godot;
 using ProcPoke;
+using ProcPoke.Battle;
 using ProcPoke.BattleView;
 using ProcPoke.Data;
 using ProcPoke.Generation;
@@ -50,6 +51,7 @@ public partial class OverworldBattleSmoke : SceneTree
         var identity = NewGameIdentity.Create(CharacterChoice.CharacterA, "Smoke");
         var session = new OverworldSession(region, identity);
         session.Interactions.EnableDebugUnlock();
+        session.Party.Add(BattleProgressionFactory.AtLevel(data, speciesId: 1, level: 5));
 
         // Jump straight to some area with TallGrass — towns/League/hideouts carry no wild tables by
         // design (only Route/Forest/cave-family/Tower do), so the start town never has grass to test with.
@@ -64,7 +66,6 @@ public partial class OverworldBattleSmoke : SceneTree
 
         GameState.Instance.Data = data;
         GameState.Instance.Session = session;
-        GameState.Instance.PlayerProgression = null;
         GameState.Instance.ResumePlayerState = null; // let OverworldRoot fall back to its normal first-walkable spawn
 
         ChangeSceneToFile("res://overworld/OverworldRoot.tscn");

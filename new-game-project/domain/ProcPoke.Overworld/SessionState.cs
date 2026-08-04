@@ -147,10 +147,12 @@ public sealed class OverworldSession
         Map = new RegionMapState(CurrentAreaId);
         Time = TimeOfDayClock.FromMinutes(12 * 60);
         Interactions = new InteractionSession();
+        Party = new Party();
     }
 
     public GeneratedRegion Region { get; }
     public PlayerIdentity Player { get; }
+    public Party Party { get; }
     public InteractionSession Interactions { get; }
     public RegionMapState Map { get; }
     public TimeOfDayState Time { get; private set; }
