@@ -13,7 +13,8 @@ namespace ProcPoke.OverworldView;
 /// RegionViewer's Play button, or resumed after a battle), wires <see cref="GridMovementController"/>,
 /// <see cref="TileRealizer"/>, <see cref="GridCamera"/>, and <see cref="TransitionController"/> together,
 /// rolls wild encounters on tall grass / surfed water, and hands battle transitions off to
-/// <c>battle/BattleScreen.tscn</c> via <c>GameState</c>.
+/// <c>battle/BattleScreen.tscn</c> (wild) or <c>battle/TrainerBattleScreen.tscn</c> (scripted rival
+/// beats, checked on every <see cref="LoadArea"/>) via <c>GameState</c>.
 /// </summary>
 public partial class OverworldRootController : Node2D
 {
@@ -57,13 +58,20 @@ public partial class OverworldRootController : Node2D
 
     private void LoadArea(int areaId, PlayerState start)
     {
+        _session.VisitArea(areaId);
+        if (_session.TryTriggerRivalBattle(areaId, start) is { } rivalRequest)
+        {
+            GameState.Instance.PendingRivalBattleRequest = rivalRequest;
+            GetTree().ChangeSceneToFile("res://battle/TrainerBattleScreen.tscn");
+            return;
+        }
+
         var carved = _session.Region.Carved[areaId];
         _realizer.Realize(carved, _session.Region.Biomes.Of(areaId));
         var capabilities = _session.Interactions.ForMovement(areaId, new MovementCapabilities(), _registry);
         _movement.Configure(carved.Grid, start, capabilities);
         _camera.Configure(carved.Grid);
         _camera.Follow(start.Position);
-        _session.VisitArea(areaId);
     }
 
     private async void OnResolved(MovementResolution resolution)

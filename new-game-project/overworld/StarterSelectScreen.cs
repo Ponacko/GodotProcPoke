@@ -69,6 +69,7 @@ public partial class StarterSelectScreen : Control
 
         var session = new OverworldSession(region, identity);
         session.Party.Add(progression);
+        session.SetStarterCorner(cornerIndex);
 
         GameState.Instance.Session = session;
         GameState.Instance.PendingNewGameRegion = null;

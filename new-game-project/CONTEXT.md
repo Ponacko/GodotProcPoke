@@ -70,6 +70,9 @@ The per-seed framing NPC: a generated identity (tree-derived name minus canon na
 ### Champion Roll
 The per-seed casting of the League Champion: by default a generated NPC, but ~25% of seeds instead make the **Rival** the Champion (foreshadowed at the pre-League beat). Rival-Champion seeds weight the Underdog rival archetype higher. Reuses existing rival-team and difficulty machinery — a casting decision, not a mechanic.
 
+### Rival Beat
+One of the four scripted rival encounters (post-starter, early route, midpoint city, pre-League), each with a bigger team than the last. `RivalPlan` (generation) only ever states *what* team fights at each beat, per player starter corner — never *where*. The overworld derives the trigger location from the region's own gym-city/League structure (the area just past the first gym, the midpoint gym city itself, the area right before the League), since no generation pass ever anchors a beat to a map position directly. Losing a beat does not consume it — the player retries by re-entering the same trigger area.
+
 ### Services Pass
 The generation pass that assigns one-off city services (Move Deleter, Name Rater, fossil revival, Link Cable vendor, move tutors) to generated cities, 0–2 per city, under per-service placement constraints (fossil revival near the fossil cave, Move Deleter by mid-game, etc.). Every service is guaranteed present somewhere per seed.
 

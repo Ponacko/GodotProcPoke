@@ -1,4 +1,6 @@
+using ProcPoke.Battle;
 using ProcPoke.Generation;
+using ProcPoke.Generation.Rivals;
 using ProcPoke.Generation.Topology;
 
 namespace ProcPoke.Overworld;
@@ -135,6 +137,8 @@ public sealed record GenerationDebugInfo(
 public sealed class OverworldSession
 {
     private bool _hasFly;
+    private int? _starterCornerIndex;
+    private readonly HashSet<RivalBeat> _defeatedRivalBeats = [];
 
     public OverworldSession(GeneratedRegion region, PlayerIdentity player)
     {
@@ -181,6 +185,42 @@ public sealed class OverworldSession
     }
 
     public void GrantFly() => _hasFly = true;
+
+    /// <summary>Records which <see cref="Generation.Roster.StarterPlan"/> corner the player picked — needed
+    /// to look up the matching <see cref="RivalVariant"/> for every later scripted rival beat.</summary>
+    public void SetStarterCorner(int cornerIndex)
+    {
+        if (cornerIndex < 0 || cornerIndex >= Region.Starters.Corners.Count)
+            throw new ArgumentOutOfRangeException(nameof(cornerIndex));
+        _starterCornerIndex = cornerIndex;
+    }
+
+    public bool HasDefeatedRivalBeat(RivalBeat beat) => _defeatedRivalBeats.Contains(beat);
+
+    public void MarkRivalBeatDefeated(RivalBeat beat) => _defeatedRivalBeats.Add(beat);
+
+    /// <summary>
+    /// Checks whether entering <paramref name="areaId"/> should start a scripted rival battle: the starter
+    /// corner must be known (debug sessions that never ran the real new-game flow skip rival beats
+    /// entirely) and the first undefeated <see cref="RivalBeatTriggers.MapTriggeredBeats"/> whose trigger
+    /// area matches wins — losing a beat does not mark it defeated, so re-entering the same area retries it.
+    /// </summary>
+    public RivalBattleTransitionRequest? TryTriggerRivalBattle(int areaId, PlayerState returnState)
+    {
+        if (_starterCornerIndex is not int cornerIndex) return null;
+
+        foreach (var beat in RivalBeatTriggers.MapTriggeredBeats)
+        {
+            if (HasDefeatedRivalBeat(beat)) continue;
+            if (RivalBeatTriggers.AreaFor(beat, Region.Graph, Region.Identity) != areaId) continue;
+
+            var roster = Region.Rivals.ForPlayerCorner(cornerIndex).TeamAt(beat).Members
+                .Select(member => new TrainerRosterMember(member.SpeciesId, member.Level))
+                .ToArray();
+            return new RivalBattleTransitionRequest(beat, cornerIndex, returnState, roster);
+        }
+        return null;
+    }
 
     public void EnableDebugUnlock() => Interactions.EnableDebugUnlock();
 

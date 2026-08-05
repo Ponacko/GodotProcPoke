@@ -1,6 +1,4 @@
 using System;
-using System.IO;
-using System.Linq;
 using System.Threading.Tasks;
 using Godot;
 using ProcPoke;
@@ -12,40 +10,28 @@ namespace ProcPoke.BattleView;
 
 /// <summary>
 /// The real Gen 5-style wild battle presentation (ADR-0006: the sim resolves a turn, this replays the
-/// returned event stream as animation + log text, strictly in order). Entered only via a scene swap from
-/// <c>OverworldRootController</c>, which stashes the pending <see cref="WildBattleTransitionRequest"/> on
-/// <see cref="GameState"/> before switching here.
+/// returned event stream as animation + log text, strictly in order) via <see cref="BattleScreenBase"/>.
+/// Entered only via a scene swap from <c>OverworldRootController</c>, which stashes the pending
+/// <see cref="WildBattleTransitionRequest"/> on <see cref="GameState"/> before switching here.
 /// </summary>
-public partial class BattleScreen : Control
+public partial class BattleScreen : BattleScreenBase
 {
-    private ColorRect _backdrop = null!;
-    private AnimatedSprite2D _opponentSprite = null!;
-    private AnimatedSprite2D _playerSprite = null!;
     private Sprite2D _ball = null!;
-    private Label _opponentLabel = null!;
-    private ProgressBar _opponentHp = null!;
-    private Label _opponentStatus = null!;
-    private Label _playerLabel = null!;
-    private ProgressBar _playerHp = null!;
-    private Label _playerStatus = null!;
-    private RichTextLabel _log = null!;
-    private HBoxContainer _actions = null!;
-    private HBoxContainer _moveButtons = null!;
-    private Button _fightButton = null!;
     private Button _ballButton = null!;
     private Button _runButton = null!;
-    private AudioStreamPlayer _cry = null!;
 
     private GameData _data = null!;
     private WildBattleTransitionRequest _request = null!;
     private BattleProgressionState _progression = null!;
     private WildBattleSession _session = null!;
-    private BattleState _state = null!;
     private bool _busy;
 
     public override void _Ready()
     {
-        BindNodes();
+        BindCommonNodes();
+        _ball = GetNode<Sprite2D>("%Ball");
+        _ballButton = GetNode<Button>("%BallButton");
+        _runButton = GetNode<Button>("%RunButton");
 
         _data = GameState.Instance.Data
             ?? throw new InvalidOperationException("BattleScreen entered with no GameData — launch via RegionViewer's Play button.");
@@ -62,69 +48,33 @@ public partial class BattleScreen : Control
         var player = BattlePokemonFactory.Create(_data, _progression.SpeciesId, _progression.Level,
             new BattlePokemonBuildOptions { MoveIds = _progression.MoveIds, EffortValues = _progression.EffortValues });
         _session = WildBattleSession.Start(_data, player, _request.Battle, RandomSeed());
-        _state = _session.State;
+        State = _session.State;
 
         var biome = GameState.Instance.Session!.Region.Biomes.Of(_request.Encounter.AreaId);
-        _backdrop.Color = BattleBackdropPalette.Of(biome);
+        Backdrop.Color = BattleBackdropPalette.Of(biome);
 
-        var opponentSprite = BattleSpriteLoader.Load(_state.Opponent.SpeciesId, preferBack: false);
-        _opponentSprite.SpriteFrames = opponentSprite.Frames;
-        _opponentSprite.Play("idle");
-        var playerSprite = BattleSpriteLoader.Load(_state.Player.SpeciesId, preferBack: true);
-        _playerSprite.SpriteFrames = playerSprite.Frames;
-        _playerSprite.FlipH = !playerSprite.IsBackArt; // mirror the front sprite only when no real back art exists
-        _playerSprite.Play("idle");
-        PlayCry(_state.Opponent.SpeciesId);
+        var opponentSprite = BattleSpriteLoader.Load(State.Opponent.SpeciesId, preferBack: false);
+        OpponentSprite.SpriteFrames = opponentSprite.Frames;
+        OpponentSprite.Play("idle");
+        var playerSprite = BattleSpriteLoader.Load(State.Player.SpeciesId, preferBack: true);
+        PlayerSprite.SpriteFrames = playerSprite.Frames;
+        PlayerSprite.FlipH = !playerSprite.IsBackArt; // mirror the front sprite only when no real back art exists
+        PlayerSprite.Play("idle");
+        PlayCry(State.Opponent.SpeciesId);
 
-        _fightButton.Pressed += () => { _actions.Visible = false; _moveButtons.Visible = true; };
+        FightButton.Pressed += () => { Actions.Visible = false; MoveButtons.Visible = true; };
         _ballButton.Pressed += () => ResolveAction(new ThrowBallAction("Poké Ball"));
         _runButton.Pressed += Flee;
 
-        BuildMoveButtons();
+        BuildMoveButtons(moveId => ResolveAction(new UseMoveAction(moveId)));
         RefreshLabels();
-        _log.Text = $"A wild {_data.Species[_state.Opponent.SpeciesId].Name} appeared!\n";
-    }
-
-    private void BindNodes()
-    {
-        _backdrop = GetNode<ColorRect>("%Backdrop");
-        _opponentSprite = GetNode<AnimatedSprite2D>("%OpponentSprite");
-        _playerSprite = GetNode<AnimatedSprite2D>("%PlayerSprite");
-        _ball = GetNode<Sprite2D>("%Ball");
-        _opponentLabel = GetNode<Label>("%OpponentLabel");
-        _opponentHp = GetNode<ProgressBar>("%OpponentHp");
-        _opponentStatus = GetNode<Label>("%OpponentStatus");
-        _playerLabel = GetNode<Label>("%PlayerLabel");
-        _playerHp = GetNode<ProgressBar>("%PlayerHp");
-        _playerStatus = GetNode<Label>("%PlayerStatus");
-        _log = GetNode<RichTextLabel>("%Log");
-        _actions = GetNode<HBoxContainer>("%Actions");
-        _moveButtons = GetNode<HBoxContainer>("%MoveButtons");
-        _fightButton = GetNode<Button>("%FightButton");
-        _ballButton = GetNode<Button>("%BallButton");
-        _runButton = GetNode<Button>("%RunButton");
-        _cry = GetNode<AudioStreamPlayer>("%Cry");
-    }
-
-    private void BuildMoveButtons()
-    {
-        foreach (var child in _moveButtons.GetChildren()) child.QueueFree();
-        foreach (var move in _state.Player.Moves)
-        {
-            var button = new Button { Text = $"{move.Name} ({move.Type})" };
-            var moveId = move.Id;
-            button.Pressed += () => ResolveAction(new UseMoveAction(moveId));
-            _moveButtons.AddChild(button);
-        }
-        var back = new Button { Text = "Back" };
-        back.Pressed += () => { _moveButtons.Visible = false; _actions.Visible = true; };
-        _moveButtons.AddChild(back);
+        Log.Text = $"A wild {_data.Species[State.Opponent.SpeciesId].Name} appeared!\n";
     }
 
     private async void Flee()
     {
         if (_busy || _session.Outcome != WildBattleOutcome.Ongoing) return;
-        _log.AppendText("\nGot away safely!\n");
+        Log.AppendText("\nGot away safely!\n");
         await ReturnToOverworld(_request.ReturnState);
     }
 
@@ -133,10 +83,10 @@ public partial class BattleScreen : Control
         if (_busy || _session.Outcome != WildBattleOutcome.Ongoing) return;
         _busy = true;
         SetActionsEnabled(false);
-        _moveButtons.Visible = false;
+        MoveButtons.Visible = false;
 
         var result = _session.TakeTurn(action);
-        _state = result.State;
+        State = result.State;
         foreach (var battleEvent in result.Events)
             await Animate(battleEvent);
         RefreshLabels();
@@ -156,20 +106,10 @@ public partial class BattleScreen : Control
                 await ReturnToOverworld(_request.ReturnState);
                 break;
             default:
-                _actions.Visible = true;
+                Actions.Visible = true;
                 SetActionsEnabled(true);
                 break;
         }
-    }
-
-    /// <summary>Ends the battle scene and hands control back to the overworld. <paramref name="resumeAt"/>
-    /// is null after a whiteout — <see cref="OverworldSession.ApplyWhiteout"/> already moved the session to
-    /// the Pokémon Center, and OverworldRoot falls back to that area's first walkable tile.</summary>
-    private async Task ReturnToOverworld(PlayerState? resumeAt)
-    {
-        GameState.Instance.ResumePlayerState = resumeAt;
-        await Pause();
-        GetTree().ChangeSceneToFile("res://overworld/OverworldRoot.tscn");
     }
 
     private void ApplyVictory()
@@ -178,161 +118,65 @@ public partial class BattleScreen : Control
         _progression = reward.Progression;
         GameState.Instance.Session!.Party.Replace(0, _progression);
 
-        _log.AppendText($"\n{_state.Player.Id} gained {reward.Experience.ExperienceGained} EXP!\n");
+        Log.AppendText($"\n{State.Player.Id} gained {reward.Experience.ExperienceGained} EXP!\n");
         if (reward.Experience.NewLevel > reward.Experience.PreviousLevel)
-            _log.AppendText($"{_data.Species[_progression.SpeciesId].Name} grew to Lv{reward.Experience.NewLevel}!\n");
+            Log.AppendText($"{_data.Species[_progression.SpeciesId].Name} grew to Lv{reward.Experience.NewLevel}!\n");
         foreach (var moveId in reward.Moves.LearnedMoveIds)
-            _log.AppendText($"Learned {_data.Moves[moveId].Name}!\n");
+            Log.AppendText($"Learned {_data.Moves[moveId].Name}!\n");
         if (reward.Evolution is { } evolution)
-            _log.AppendText(
+            Log.AppendText(
                 $"{_data.Species[evolution.FromSpeciesId].Name} evolved into {_data.Species[evolution.ToSpeciesId].Name}!\n");
     }
 
-    private async Task Pause() => await ToSignal(GetTree().CreateTimer(0.8), Timer.SignalName.Timeout);
-
     private void SetActionsEnabled(bool enabled)
     {
-        _fightButton.Disabled = !enabled;
+        FightButton.Disabled = !enabled;
         _ballButton.Disabled = !enabled;
         _runButton.Disabled = !enabled;
-        foreach (var child in _moveButtons.GetChildren())
+        foreach (var child in MoveButtons.GetChildren())
             if (child is Button button) button.Disabled = !enabled;
     }
 
     private void RefreshLabels()
     {
-        _opponentLabel.Text = $"{_state.Opponent.Id}  Lv{_state.Opponent.Level}";
-        _opponentHp.MaxValue = _state.Opponent.MaxHp;
-        _opponentHp.Value = _state.Opponent.Hp;
-        _opponentHp.SelfModulate = HpColor((double)_state.Opponent.Hp / _state.Opponent.MaxHp);
-        _opponentStatus.Text = Abbreviate(_state.Opponent.Status);
+        OpponentLabel.Text = $"{State.Opponent.Id}  Lv{State.Opponent.Level}";
+        OpponentHp.MaxValue = State.Opponent.MaxHp;
+        OpponentHp.Value = State.Opponent.Hp;
+        OpponentHp.SelfModulate = HpColor((double)State.Opponent.Hp / State.Opponent.MaxHp);
+        OpponentStatus.Text = Abbreviate(State.Opponent.Status);
 
-        _playerLabel.Text = $"{_state.Player.Id}  Lv{_state.Player.Level}";
-        _playerHp.MaxValue = _state.Player.MaxHp;
-        _playerHp.Value = _state.Player.Hp;
-        _playerHp.SelfModulate = HpColor((double)_state.Player.Hp / _state.Player.MaxHp);
-        _playerStatus.Text = Abbreviate(_state.Player.Status);
+        PlayerLabel.Text = $"{State.Player.Id}  Lv{State.Player.Level}";
+        PlayerHp.MaxValue = State.Player.MaxHp;
+        PlayerHp.Value = State.Player.Hp;
+        PlayerHp.SelfModulate = HpColor((double)State.Player.Hp / State.Player.MaxHp);
+        PlayerStatus.Text = Abbreviate(State.Player.Status);
     }
 
-    // ── event replay: ADR-0006 — the sim narrates, this only animates + logs in strict order ──────────
+    // ── wild-only events: catching. Everything else replays through BattleScreenBase.Animate ──────────
 
-    private async Task Animate(BattleEvent battleEvent)
+    protected override async Task<bool> TryAnimateExtra(BattleEvent battleEvent)
     {
         switch (battleEvent)
         {
-            case TurnStarted:
-            case TurnEnded:
-                break;
-            case MoveUsed move:
-                _log.AppendText($"\n{NameOf(move.Actor)} used {move.MoveName}!\n");
-                await Lunge(SpriteFor(move.Actor));
-                break;
-            case MoveMissed missed:
-                _log.AppendText($"{NameOf(missed.Actor)}'s attack missed!\n");
-                break;
-            case CriticalHit:
-                _log.AppendText("A critical hit!\n");
-                break;
-            case DamageDealt damage:
-                await DrainHp(damage.Target, damage.Amount);
-                if (damage.Effectiveness > 1) _log.AppendText("It's super effective!\n");
-                else if (damage.Effectiveness is > 0 and < 1) _log.AppendText("It's not very effective...\n");
-                else if (damage.Effectiveness == 0) _log.AppendText("It had no effect...\n");
-                break;
-            case StatStageChanged stage:
-                _log.AppendText($"{NameOf(stage.Target)}'s {stage.Stat} {(stage.Stages > 0 ? "rose" : "fell")}!\n");
-                break;
-            case StatusInflicted status:
-                _log.AppendText($"{NameOf(status.Target)} became {status.Status}!\n");
-                break;
-            case StatusCured cured:
-                _log.AppendText($"{NameOf(cured.Target)} recovered from {cured.Status}.\n");
-                break;
-            case ResidualDamage residual:
-                await DrainHp(residual.Target, residual.Amount);
-                _log.AppendText($"{NameOf(residual.Target)} was hurt by {residual.Status}.\n");
-                break;
-            case WeatherStarted weather:
-                _log.AppendText($"{weather.Weather} started!\n");
-                break;
-            case WeatherEnded weather:
-                _log.AppendText($"{weather.Weather} ended.\n");
-                break;
-            case WeatherDamage weather:
-                await DrainHp(weather.Target, weather.Amount);
-                _log.AppendText($"{NameOf(weather.Target)} was buffeted by {weather.Weather}.\n");
-                break;
-            case HpRestored healed:
-                await RestoreHp(healed.Target, healed.Amount);
-                _log.AppendText($"{NameOf(healed.Target)} recovered {healed.Amount} HP.\n");
-                break;
-            case RecoilDamage recoil:
-                await DrainHp(recoil.Target, recoil.Amount);
-                _log.AppendText($"{NameOf(recoil.Target)} was hurt by recoil.\n");
-                break;
-            case FlinchInflicted flinch:
-                _log.AppendText($"{NameOf(flinch.Target)} flinched!\n");
-                break;
             case BallThrown ball:
-                _log.AppendText($"{NameOf(ball.Actor)} threw a {ball.BallId}!\n");
+                Log.AppendText($"{NameOf(ball.Actor)} threw a {ball.BallId}!\n");
                 await ThrowBallAnimation();
-                break;
+                return true;
             case CaptureShake shake:
                 await ShakeBall(shake.Succeeded);
-                break;
+                return true;
             case CaptureFailed failed:
-                _log.AppendText($"Oh no! The Pokémon broke free after {failed.SuccessfulShakes} shake(s)!\n");
+                Log.AppendText($"Oh no! The Pokémon broke free after {failed.SuccessfulShakes} shake(s)!\n");
                 await PopOutOfBall();
-                break;
+                return true;
             case PokemonCaptured:
-                _log.AppendText("Gotcha! The wild Pokémon was caught!\n");
-                PlayCry(_state.Opponent.SpeciesId);
+                Log.AppendText("Gotcha! The wild Pokémon was caught!\n");
+                PlayCry(State.Opponent.SpeciesId);
                 await CaptureFlash();
-                break;
-            case AbilityTriggered ability:
-                _log.AppendText($"{NameOf(ability.Actor)}'s {ability.AbilityName} activated!\n");
-                break;
-            case Fainted fainted:
-                await FaintDrop(fainted.Actor);
-                _log.AppendText($"{NameOf(fainted.Actor)} fainted!\n");
-                break;
-            case EffectNotImplemented fallback:
-                // ADR-0006: dev-flagged, visible in logs, invisible in release UI — never shown to the player.
-                GD.PushWarning($"EffectNotImplemented: {fallback.MoveName} (move {fallback.MoveId})");
-                break;
-            case MessageShown message:
-                _log.AppendText($"{message.Message}\n");
-                break;
+                return true;
             default:
-                _log.AppendText($"{battleEvent.GetType().Name}\n");
-                break;
+                return false;
         }
-    }
-
-    private async Task Lunge(Node2D sprite)
-    {
-        var start = sprite.Position;
-        var toward = sprite == _opponentSprite ? -14 : 14;
-        var tween = CreateTween();
-        tween.TweenProperty(sprite, "position", start + new Vector2(toward, 0), 0.12);
-        tween.TweenProperty(sprite, "position", start, 0.12);
-        await ToSignal(tween, Tween.SignalName.Finished);
-    }
-
-    private async Task DrainHp(BattleActor target, int amount)
-    {
-        var bar = HpBarFor(target);
-        var tween = CreateTween();
-        tween.TweenProperty(bar, "value", Math.Max(0, bar.Value - amount), 0.4);
-        await ToSignal(tween, Tween.SignalName.Finished);
-    }
-
-    private async Task RestoreHp(BattleActor target, int amount)
-    {
-        var bar = HpBarFor(target);
-        var tween = CreateTween();
-        tween.TweenProperty(bar, "value", Math.Min(bar.MaxValue, bar.Value + amount), 0.4);
-        await ToSignal(tween, Tween.SignalName.Finished);
     }
 
     private async Task ThrowBallAnimation()
@@ -341,9 +185,9 @@ public partial class BattleScreen : Control
         _ball.Modulate = Colors.White;
         _ball.Scale = Vector2.One;
         _ball.Rotation = 0;
-        _ball.Position = _playerSprite.Position;
+        _ball.Position = PlayerSprite.Position;
         var tween = CreateTween();
-        tween.TweenProperty(_ball, "position", _opponentSprite.Position, 0.5)
+        tween.TweenProperty(_ball, "position", OpponentSprite.Position, 0.5)
             .SetTrans(Tween.TransitionType.Sine).SetEase(Tween.EaseType.Out);
         await ToSignal(tween, Tween.SignalName.Finished);
     }
@@ -361,62 +205,17 @@ public partial class BattleScreen : Control
     private Task PopOutOfBall()
     {
         _ball.Visible = false;
-        _opponentSprite.Modulate = Colors.White;
-        _opponentSprite.Scale = Vector2.One;
+        OpponentSprite.Modulate = Colors.White;
+        OpponentSprite.Scale = Vector2.One;
         return Task.CompletedTask;
     }
 
     private async Task CaptureFlash()
     {
         var tween = CreateTween();
-        tween.TweenProperty(_opponentSprite, "scale", Vector2.Zero, 0.3);
+        tween.TweenProperty(OpponentSprite, "scale", Vector2.Zero, 0.3);
         tween.Parallel().TweenProperty(_ball, "modulate:a", 0f, 0.2);
         await ToSignal(tween, Tween.SignalName.Finished);
         _ball.Visible = false;
     }
-
-    private async Task FaintDrop(BattleActor actor)
-    {
-        var sprite = SpriteFor(actor);
-        var tween = CreateTween();
-        tween.TweenProperty(sprite, "modulate:a", 0f, 0.4);
-        tween.Parallel().TweenProperty(sprite, "position:y", sprite.Position.Y + 12, 0.4);
-        await ToSignal(tween, Tween.SignalName.Finished);
-    }
-
-    private void PlayCry(int speciesId)
-    {
-        var path = ProjectSettings.GlobalizePath($"res://.cache/assets/cries/{speciesId}.ogg");
-        if (!File.Exists(path)) return;
-        var stream = AudioStreamOggVorbis.LoadFromFile(path);
-        if (stream is null) return;
-        _cry.Stream = stream;
-        _cry.Play();
-    }
-
-    private AnimatedSprite2D SpriteFor(BattleActor actor) => actor == BattleActor.Player ? _playerSprite : _opponentSprite;
-
-    private ProgressBar HpBarFor(BattleActor actor) => actor == BattleActor.Player ? _playerHp : _opponentHp;
-
-    private string NameOf(BattleActor actor) => actor == BattleActor.Player ? _state.Player.Id : _state.Opponent.Id;
-
-    private static Color HpColor(double fraction) => fraction switch
-    {
-        > 0.5 => Colors.LimeGreen,
-        > 0.2 => Colors.Gold,
-        _ => Colors.Red,
-    };
-
-    private static string Abbreviate(BattleStatus status) => status switch
-    {
-        BattleStatus.Sleep => "SLP",
-        BattleStatus.Poison or BattleStatus.BadPoison => "PSN",
-        BattleStatus.Burn => "BRN",
-        BattleStatus.Freeze => "FRZ",
-        BattleStatus.Paralysis => "PAR",
-        _ => "",
-    };
-
-    private static ulong RandomSeed()
-        => unchecked((ulong)DateTime.UtcNow.Ticks ^ (ulong)System.Environment.TickCount64);
 }
