@@ -29,6 +29,7 @@ public sealed record InteractionRegistration
     public string? KeyName { get; init; }
     public ObstacleClass? Obstacle { get; init; }
     public string? TrainerClass { get; init; }
+    public TrainerEncounter? Trainer { get; init; }
 }
 
 public enum InteractionOutcomeKind
@@ -128,6 +129,7 @@ public sealed class InteractionRegistry
                     Kind = InteractionKind.Trainer,
                     Text = $"{trainer.DisplayClass} challenges you.",
                     TrainerClass = trainer.DisplayClass,
+                    Trainer = trainer,
                 });
             }
 

@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Threading.Tasks;
 using Godot;
 using ProcPoke;
@@ -9,24 +10,24 @@ using ProcPoke.Overworld;
 namespace ProcPoke.BattleView;
 
 /// <summary>
-/// The scripted rival-battle presentation (GDD §7.2): a multi-mon trainer battle, replaying
+/// Multi-mon trainer battle presentation for generated map trainers and scripted rivals, replaying
 /// <see cref="TrainerBattleSession"/>'s event stream through <see cref="BattleScreenBase"/> exactly like
-/// <see cref="BattleScreen"/> replays a wild one. Entered only via a scene swap from
-/// <c>OverworldRootController.LoadArea</c>, which stashes the pending
-/// <see cref="RivalBattleTransitionRequest"/> on <see cref="GameState"/> before switching here. No Ball or
-/// Run buttons — trainer battles never allow catching or fleeing.
+/// <see cref="BattleScreen"/> replays a wild one. No Ball or Run buttons — trainer battles never allow
+/// catching or fleeing.
 /// </summary>
 public partial class TrainerBattleScreen : BattleScreenBase
 {
     private Vector2 _opponentSpriteHome;
 
     private GameData _data = null!;
-    private RivalBattleTransitionRequest _request = null!;
+    private RivalBattleTransitionRequest? _rivalRequest;
+    private GeneratedTrainerBattleTransitionRequest? _generatedRequest;
+    private PlayerState _returnState = null!;
+    private IReadOnlyList<TrainerRosterMember> _roster = null!;
+    private string _trainerName = null!;
     private BattleProgressionState _progression = null!;
     private TrainerBattleSession _session = null!;
     private bool _busy;
-
-    private const string OpponentIdPrefix = "Rival's";
 
     public override void _Ready()
     {
@@ -35,9 +36,26 @@ public partial class TrainerBattleScreen : BattleScreenBase
 
         _data = GameState.Instance.Data
             ?? throw new InvalidOperationException("TrainerBattleScreen entered with no GameData.");
-        _request = GameState.Instance.PendingRivalBattleRequest
-            ?? throw new InvalidOperationException("TrainerBattleScreen entered with no pending rival battle request.");
+        _rivalRequest = GameState.Instance.PendingRivalBattleRequest;
+        _generatedRequest = GameState.Instance.PendingTrainerBattleRequest;
+        if ((_rivalRequest is null) == (_generatedRequest is null))
+            throw new InvalidOperationException(
+                "TrainerBattleScreen requires exactly one pending rival or generated trainer request.");
         GameState.Instance.PendingRivalBattleRequest = null;
+        GameState.Instance.PendingTrainerBattleRequest = null;
+
+        if (_rivalRequest is { } rival)
+        {
+            _returnState = rival.ReturnState;
+            _roster = rival.Roster;
+            _trainerName = "Rival";
+        }
+        else
+        {
+            _returnState = _generatedRequest!.ReturnState;
+            _roster = _generatedRequest.Roster;
+            _trainerName = _generatedRequest.TrainerName;
+        }
 
         var session = GameState.Instance.Session
             ?? throw new InvalidOperationException("TrainerBattleScreen entered with no active session.");
@@ -47,7 +65,8 @@ public partial class TrainerBattleScreen : BattleScreenBase
 
         var player = BattlePokemonFactory.Create(_data, _progression.SpeciesId, _progression.Level,
             new BattlePokemonBuildOptions { MoveIds = _progression.MoveIds, EffortValues = _progression.EffortValues });
-        _session = TrainerBattleSession.Start(_data, player, _request.Roster, RandomSeed(), OpponentIdPrefix);
+        _session = TrainerBattleSession.Start(
+            _data, player, _roster, RandomSeed(), $"{_trainerName}'s");
         State = _session.State;
 
         var biome = session.Region.Biomes.Of(session.CurrentAreaId);
@@ -64,8 +83,11 @@ public partial class TrainerBattleScreen : BattleScreenBase
 
         BuildMoveButtons(moveId => ResolveAction(new UseMoveAction(moveId)));
         RefreshLabels();
-        Log.Text = $"{RivalDialogue.Greeting(session.Region.Identity.Rival)}\n"
-            + $"Rival sent out {_data.Species[State.Opponent.SpeciesId].Name}!\n";
+        var greeting = _rivalRequest is not null
+            ? RivalDialogue.Greeting(session.Region.Identity.Rival)
+            : $"{_trainerName} wants to battle!";
+        Log.Text = $"{greeting}\n"
+            + $"{_trainerName} sent out {_data.Species[State.Opponent.SpeciesId].Name}!\n";
     }
 
     private async void ResolveAction(BattleAction action)
@@ -93,7 +115,7 @@ public partial class TrainerBattleScreen : BattleScreenBase
         {
             case TrainerBattleOutcome.PlayerWon:
                 ApplyVictory();
-                await ReturnToOverworld(_request.ReturnState);
+                await ReturnToOverworld(_returnState);
                 break;
             case TrainerBattleOutcome.PlayerLost:
                 GameState.Instance.Session!.ApplyWhiteout();
@@ -125,8 +147,17 @@ public partial class TrainerBattleScreen : BattleScreenBase
 
         var session = GameState.Instance.Session!;
         session.Party.Replace(0, _progression);
-        session.MarkRivalBeatDefeated(_request.Beat);
-        Log.AppendText($"\n{RivalDialogue.Victory(session.Region.Identity.Rival)}\n");
+        if (_rivalRequest is { } rival)
+        {
+            session.MarkRivalBeatDefeated(rival.Beat);
+            Log.AppendText($"\n{RivalDialogue.Victory(session.Region.Identity.Rival)}\n");
+        }
+        else
+        {
+            session.CompleteTrainerBattle(_generatedRequest!);
+            Log.AppendText($"\nDefeated {_trainerName}!\n"
+                + $"Received ₽{_generatedRequest!.PrizeMoney}.\n");
+        }
     }
 
     private void SetActionsEnabled(bool enabled)

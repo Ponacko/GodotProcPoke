@@ -21,6 +21,7 @@ public partial class GameState : Node
     public OverworldSession? Session { get; set; }
     public WildBattleTransitionRequest? PendingBattleRequest { get; set; }
     public RivalBattleTransitionRequest? PendingRivalBattleRequest { get; set; }
+    public GeneratedTrainerBattleTransitionRequest? PendingTrainerBattleRequest { get; set; }
 
     /// <summary>Set by RegionViewer's "New Game" button; consumed by StarterSelectScreen once identity and
     /// starter are both chosen and a real <see cref="OverworldSession"/> can be constructed.</summary>

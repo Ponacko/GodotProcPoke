@@ -139,6 +139,7 @@ public sealed class OverworldSession
     private bool _hasFly;
     private int? _starterCornerIndex;
     private readonly HashSet<RivalBeat> _defeatedRivalBeats = [];
+    private readonly HashSet<string> _defeatedTrainerIds = new(StringComparer.Ordinal);
 
     public OverworldSession(GeneratedRegion region, PlayerIdentity player)
     {
@@ -163,6 +164,7 @@ public sealed class OverworldSession
     public int CurrentAreaId { get; private set; }
     public int LastPokemonCenterAreaId { get; private set; }
     public int Badges { get; private set; }
+    public int Money { get; private set; }
     public bool HasFly => _hasFly || Interactions.DebugUnlock;
     public bool DebugUnlock => Interactions.DebugUnlock;
 
@@ -198,6 +200,47 @@ public sealed class OverworldSession
     public bool HasDefeatedRivalBeat(RivalBeat beat) => _defeatedRivalBeats.Contains(beat);
 
     public void MarkRivalBeatDefeated(RivalBeat beat) => _defeatedRivalBeats.Add(beat);
+
+    public bool HasDefeatedTrainer(string trainerId)
+    {
+        ArgumentException.ThrowIfNullOrWhiteSpace(trainerId);
+        return _defeatedTrainerIds.Contains(trainerId);
+    }
+
+    public IReadOnlySet<string> DefeatedTrainerIds => _defeatedTrainerIds;
+
+    /// <summary>Builds a battle hand-off directly from the immutable trainer plan attached to a map marker.</summary>
+    public GeneratedTrainerBattleTransitionRequest? TryStartTrainerBattle(
+        InteractionRegistration interaction, PlayerState returnState)
+    {
+        ArgumentNullException.ThrowIfNull(interaction);
+        ArgumentNullException.ThrowIfNull(returnState);
+        if (interaction.Kind != InteractionKind.Trainer)
+            throw new ArgumentException("interaction is not a trainer", nameof(interaction));
+        if (HasDefeatedTrainer(interaction.Id)) return null;
+
+        var trainer = interaction.Trainer
+            ?? throw new InvalidOperationException($"trainer interaction {interaction.Id} has no generated encounter");
+        var roster = trainer.Roster
+            .Select(member => new TrainerRosterMember(member.SpeciesId, member.Level))
+            .ToArray();
+        var prize = checked(TrainerPayout.BaseRateFor(trainer.ClassName) * trainer.AceLevel);
+        return new GeneratedTrainerBattleTransitionRequest(
+            interaction.Id, trainer.DisplayClass, returnState, roster, prize);
+    }
+
+    /// <summary>Commits the one-time victory flag and prize atomically; duplicate completion is a no-op.</summary>
+    public bool CompleteTrainerBattle(GeneratedTrainerBattleTransitionRequest request)
+    {
+        ArgumentNullException.ThrowIfNull(request);
+        if (request.PrizeMoney < 0)
+            throw new ArgumentOutOfRangeException(nameof(request), "trainer prize money cannot be negative");
+        if (_defeatedTrainerIds.Contains(request.TrainerId)) return false;
+        var updatedMoney = checked(Money + request.PrizeMoney);
+        _defeatedTrainerIds.Add(request.TrainerId);
+        Money = updatedMoney;
+        return true;
+    }
 
     /// <summary>
     /// Checks whether entering <paramref name="areaId"/> should start a scripted rival battle: the starter
