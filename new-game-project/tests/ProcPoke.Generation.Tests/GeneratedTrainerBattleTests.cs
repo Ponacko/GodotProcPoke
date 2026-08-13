@@ -19,6 +19,7 @@ public sealed class GeneratedTrainerBattleTests
     [InlineData("Hiker", 32)]
     [InlineData("Grunt", 40)]
     [InlineData("Ace Trainer", 60)]
+    [InlineData("Gym Leader", 100)]
     [InlineData("Veteran", 100)]
     [InlineData("Gentleman", 200)]
     public void PayoutTablePinsClassBaseRates(string trainerClass, int expectedRate)

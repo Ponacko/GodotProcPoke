@@ -40,6 +40,12 @@ public sealed record InteriorTransition(
     Facing ArrivalFacing,
     InteriorTemplate Template);
 
+/// <summary>Session-owned location inside one town building; retained across battle scene swaps.</summary>
+public sealed record ActiveInterior(
+    int OverworldAreaId,
+    BuildingEntrance Entrance,
+    InteriorTemplate Template);
+
 /// <summary>Fixed templates for services and reusable generated-location interiors.</summary>
 public static class InteriorTemplateCatalog
 {

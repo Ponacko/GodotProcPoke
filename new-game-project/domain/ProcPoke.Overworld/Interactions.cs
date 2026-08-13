@@ -1,4 +1,5 @@
 using ProcPoke.Generation;
+using ProcPoke.Generation.Bosses;
 using ProcPoke.Generation.Carving;
 using ProcPoke.Generation.Gating;
 using ProcPoke.Generation.Npcs;
@@ -30,6 +31,8 @@ public sealed record InteractionRegistration
     public ObstacleClass? Obstacle { get; init; }
     public string? TrainerClass { get; init; }
     public TrainerEncounter? Trainer { get; init; }
+    public BossTeam? GymLeader { get; init; }
+    public bool StartsOnSight { get; init; } = true;
 }
 
 public enum InteractionOutcomeKind

@@ -140,6 +140,7 @@ public sealed class OverworldSession
     private int? _starterCornerIndex;
     private readonly HashSet<RivalBeat> _defeatedRivalBeats = [];
     private readonly HashSet<string> _defeatedTrainerIds = new(StringComparer.Ordinal);
+    private readonly HashSet<int> _defeatedGymAreaIds = [];
 
     public OverworldSession(GeneratedRegion region, PlayerIdentity player)
     {
@@ -165,6 +166,7 @@ public sealed class OverworldSession
     public int LastPokemonCenterAreaId { get; private set; }
     public int Badges { get; private set; }
     public int Money { get; private set; }
+    public ActiveInterior? ActiveInterior { get; private set; }
     public bool HasFly => _hasFly || Interactions.DebugUnlock;
     public bool DebugUnlock => Interactions.DebugUnlock;
 
@@ -173,6 +175,7 @@ public sealed class OverworldSession
         if (!Region.Graph.Areas.Any(area => area.Id == areaId))
             throw new ArgumentOutOfRangeException(nameof(areaId), areaId, "area is not in this region");
         CurrentAreaId = areaId;
+        ActiveInterior = null;
         if (IsPokemonCenter(areaId)) LastPokemonCenterAreaId = areaId;
         Map.Visit(areaId);
     }
@@ -209,6 +212,26 @@ public sealed class OverworldSession
 
     public IReadOnlySet<string> DefeatedTrainerIds => _defeatedTrainerIds;
 
+    public bool HasDefeatedGymLeader(int areaId) => _defeatedGymAreaIds.Contains(areaId);
+
+    public void EnterInterior(InteriorTransition transition)
+    {
+        ArgumentNullException.ThrowIfNull(transition);
+        if (transition.Kind != InteriorTransitionKind.Enter)
+            throw new ArgumentException("transition does not enter an interior", nameof(transition));
+        if (transition.OverworldAreaId != CurrentAreaId)
+            throw new ArgumentException("interior belongs to a different overworld area", nameof(transition));
+
+        var entrance = Region.Carved[CurrentAreaId].BuildingEntrances.FirstOrDefault(candidate =>
+            candidate.X == transition.OverworldPosition.X
+            && candidate.Y == transition.OverworldPosition.Y
+            && InteriorTemplateCatalog.For(candidate.Kind).Kind == transition.InteriorKind)
+            ?? throw new ArgumentException("transition does not match a generated building entrance", nameof(transition));
+        ActiveInterior = new ActiveInterior(CurrentAreaId, entrance, transition.Template);
+    }
+
+    public void ExitInterior() => ActiveInterior = null;
+
     /// <summary>Builds a battle hand-off directly from the immutable trainer plan attached to a map marker.</summary>
     public GeneratedTrainerBattleTransitionRequest? TryStartTrainerBattle(
         InteractionRegistration interaction, PlayerState returnState)
@@ -219,14 +242,35 @@ public sealed class OverworldSession
             throw new ArgumentException("interaction is not a trainer", nameof(interaction));
         if (HasDefeatedTrainer(interaction.Id)) return null;
 
-        var trainer = interaction.Trainer
-            ?? throw new InvalidOperationException($"trainer interaction {interaction.Id} has no generated encounter");
-        var roster = trainer.Roster
-            .Select(member => new TrainerRosterMember(member.SpeciesId, member.Level))
-            .ToArray();
-        var prize = checked(TrainerPayout.BaseRateFor(trainer.ClassName) * trainer.AceLevel);
-        return new GeneratedTrainerBattleTransitionRequest(
-            interaction.Id, trainer.DisplayClass, returnState, roster, prize);
+        if (interaction.Trainer is { } trainer)
+        {
+            var roster = trainer.Roster
+                .Select(member => new TrainerRosterMember(member.SpeciesId, member.Level))
+                .ToArray();
+            var prize = checked(TrainerPayout.BaseRateFor(trainer.ClassName) * trainer.AceLevel);
+            return new GeneratedTrainerBattleTransitionRequest(
+                interaction.Id, trainer.DisplayClass, returnState, roster, prize);
+        }
+
+        if (interaction.GymLeader is { } leader)
+        {
+            var areaId = interaction.AreaId;
+            if (HasDefeatedGymLeader(areaId)) return null;
+            var roster = leader.Members
+                .Select(member => new TrainerRosterMember(member.SpeciesId, member.Level))
+                .ToArray();
+            var aceLevel = leader.Members.Max(member => member.Level);
+            var badgeNumber = Region.Identity.GymTypes.Keys
+                .OrderBy(id => Region.Graph[id].PathIndex)
+                .Select((id, index) => (id, Badge: index + 1))
+                .Single(pair => pair.id == areaId).Badge;
+            return new GeneratedTrainerBattleTransitionRequest(
+                interaction.Id, leader.Name, returnState, roster,
+                checked(TrainerPayout.BaseRateFor("Gym Leader") * aceLevel),
+                new GymVictoryReward(areaId, badgeNumber));
+        }
+
+        throw new InvalidOperationException($"trainer interaction {interaction.Id} has no generated encounter");
     }
 
     /// <summary>Commits the one-time victory flag and prize atomically; duplicate completion is a no-op.</summary>
@@ -236,8 +280,22 @@ public sealed class OverworldSession
         if (request.PrizeMoney < 0)
             throw new ArgumentOutOfRangeException(nameof(request), "trainer prize money cannot be negative");
         if (_defeatedTrainerIds.Contains(request.TrainerId)) return false;
+        if (request.GymReward is { } gymReward)
+        {
+            var expectedBadge = Region.Identity.GymTypes.Keys
+                .OrderBy(id => Region.Graph[id].PathIndex)
+                .Select((id, index) => (id, Badge: index + 1))
+                .SingleOrDefault(pair => pair.id == gymReward.AreaId);
+            if (expectedBadge == default || expectedBadge.Badge != gymReward.BadgeNumber)
+                throw new ArgumentException("gym reward does not match this region", nameof(request));
+        }
         var updatedMoney = checked(Money + request.PrizeMoney);
         _defeatedTrainerIds.Add(request.TrainerId);
+        if (request.GymReward is { } reward)
+        {
+            _defeatedGymAreaIds.Add(reward.AreaId);
+            Badges = Math.Max(Badges, _defeatedGymAreaIds.Count);
+        }
         Money = updatedMoney;
         return true;
     }

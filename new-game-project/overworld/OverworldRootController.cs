@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
 using Godot;
 using ProcPoke;
@@ -29,7 +30,9 @@ public partial class OverworldRootController : Node2D
     private TransitionController _transition = null!;
     private Label _message = null!;
     private InteractionRegistry _registry = null!;
+    private IReadOnlyList<InteractionRegistration> _interiorInteractions = [];
     private OverworldSession _session = null!;
+    private bool _suppressNextEncounterRoll;
 
     public override void _Ready()
     {
@@ -45,20 +48,26 @@ public partial class OverworldRootController : Node2D
         _transition = GetNode<TransitionController>("TransitionController");
         _message = GetNode<Label>("Hud/MessageLabel");
 
-        _movement.IsInteractable = position => _registry.At(_session.CurrentAreaId, position) is not null;
+        _movement.IsInteractable = position => InteractionAt(position) is not null;
         _movement.EncounterRoller = TryRollEncounter;
         _movement.BattleTransitionRequested += OnBattleTransitionRequested;
         _movement.Resolved += OnResolved;
 
         var start = GameState.Instance.ResumePlayerState
-            ?? new PlayerState(FirstWalkable(_session.Region.Carved[_session.CurrentAreaId].Grid));
+            ?? (_session.ActiveInterior is { } active
+                ? new PlayerState(active.Template.Arrival)
+                : new PlayerState(FirstWalkable(_session.Region.Carved[_session.CurrentAreaId].Grid)));
         GameState.Instance.ResumePlayerState = null;
-        LoadArea(_session.CurrentAreaId, start);
+        if (_session.ActiveInterior is { } interior)
+            LoadInterior(interior, start);
+        else
+            LoadArea(_session.CurrentAreaId, start);
     }
 
     private void LoadArea(int areaId, PlayerState start)
     {
         _session.VisitArea(areaId);
+        _interiorInteractions = [];
         if (_session.TryTriggerRivalBattle(areaId, start) is { } rivalRequest)
         {
             GameState.Instance.PendingRivalBattleRequest = rivalRequest;
@@ -71,6 +80,20 @@ public partial class OverworldRootController : Node2D
         var capabilities = _session.Interactions.ForMovement(areaId, new MovementCapabilities(), _registry);
         _movement.Configure(carved.Grid, start, capabilities);
         _camera.Configure(carved.Grid);
+        _camera.Follow(start.Position);
+    }
+
+    private void LoadInterior(ActiveInterior interior, PlayerState start)
+    {
+        _interiorInteractions = interior.Template.Kind == InteriorKind.Gym
+            ? GymInteriorBattles.Build(_session.Region, interior.OverworldAreaId, interior.Template)
+            : [];
+        _realizer.Realize(interior.Template.Grid, interior.Template.Biome);
+        _movement.Configure(interior.Template.Grid, start, new MovementCapabilities
+        {
+            DebugUnlock = _session.DebugUnlock,
+        });
+        _camera.Configure(interior.Template.Grid);
         _camera.Follow(start.Position);
     }
 
@@ -87,27 +110,60 @@ public partial class OverworldRootController : Node2D
         if (resolution.Result != MovementResultKind.Moved || resolution.Target is not { } target) return;
 
         var sightlineTrainer = TrainerSightlines.FindEngaging(
-            _registry.Of(_session.CurrentAreaId),
-            _session.Region.Carved[_session.CurrentAreaId].Grid,
+            CurrentInteractions(),
+            CurrentGrid(),
             target,
             _session.DefeatedTrainerIds);
         if (sightlineTrainer is not null && StartTrainerBattle(sightlineTrainer)) return;
 
+        if (_session.ActiveInterior is { } interior)
+        {
+            if (target == interior.Template.Door
+                && _movement.State.Facing == InteriorTransitionResolver.FacingFor(interior.Entrance.StreetEdge))
+            {
+                var returnState = new PlayerState(
+                    new GridPosition(interior.Entrance.X, interior.Entrance.Y),
+                    InteriorTransitionResolver.FacingFor(interior.Entrance.StreetEdge));
+                var overworldAreaId = interior.OverworldAreaId;
+                _suppressNextEncounterRoll = true;
+                _session.ExitInterior();
+                LoadArea(overworldAreaId, returnState);
+            }
+            return;
+        }
+
         var region = _session.Region;
         var areaId = _session.CurrentAreaId;
         var grid = region.Carved[areaId].Grid;
+        var building = region.Carved[areaId].BuildingEntrances.FirstOrDefault(entrance =>
+            entrance.X == target.X && entrance.Y == target.Y);
+        if (building is not null)
+        {
+            var enter = InteriorTransitionResolver.Enter(
+                region.Carved[areaId], building, target, _movement.State.Facing);
+            if (enter is not null)
+            {
+                _suppressNextEncounterRoll = true;
+                _session.EnterInterior(enter);
+                LoadInterior(_session.ActiveInterior!,
+                    new PlayerState(enter.InteriorPosition, enter.ArrivalFacing));
+            }
+            return;
+        }
+
         var crossing = region.Openings.EdgesOf(areaId).FirstOrDefault(opening =>
             opening.TileOn(grid.Width, grid.Height) == (target.X, target.Y)
             && TransitionResolver.OutwardFacing(opening.Edge) == _movement.State.Facing);
         if (crossing is null) return;
 
+        _suppressNextEncounterRoll = true;
         await _transition.TransitionAsync(region, areaId, target, _movement.State.Facing,
             arrival => LoadArea(arrival.AreaId, new PlayerState(arrival.Position, arrival.Facing)));
     }
 
     private void HandleInteraction(GridPosition position)
     {
-        var interaction = _registry.At(_session.CurrentAreaId, position);
+        var interaction = InteractionAt(position);
         if (interaction is null) return;
 
         var outcome = _session.Interactions.Interact(interaction);
@@ -126,9 +182,15 @@ public partial class OverworldRootController : Node2D
 
     private WildEncounter? TryRollEncounter(MovementResolution resolution)
     {
+        if (_suppressNextEncounterRoll)
+        {
+            _suppressNextEncounterRoll = false;
+            return null;
+        }
         // Resolved handlers run before the controller rolls a wild encounter. A trainer who spotted the
         // same step takes precedence, exactly as a forced trainer engagement should.
         if (GameState.Instance.PendingTrainerBattleRequest is not null) return null;
+        if (_session.ActiveInterior is not null) return null;
         if (resolution.Target is not { } target) return null;
         var grid = _session.Region.Carved[_session.CurrentAreaId].Grid;
         if (!grid.InBounds(target.X, target.Y)) return null;
@@ -169,6 +231,20 @@ public partial class OverworldRootController : Node2D
         GetTree().ChangeSceneToFile("res://battle/TrainerBattleScreen.tscn");
         return true;
     }
+
+    private IReadOnlyList<InteractionRegistration> CurrentInteractions()
+        => _session.ActiveInterior is null
+            ? _registry.Of(_session.CurrentAreaId)
+            : _interiorInteractions;
+
+    private InteractionRegistration? InteractionAt(GridPosition position)
+        => _session.ActiveInterior is null
+            ? _registry.At(_session.CurrentAreaId, position)
+            : _interiorInteractions.FirstOrDefault(interaction => interaction.Position == position);
+
+    private TileGrid CurrentGrid()
+        => _session.ActiveInterior?.Template.Grid
+            ?? _session.Region.Carved[_session.CurrentAreaId].Grid;
 
     private static GridPosition FirstWalkable(TileGrid grid)
         => Enumerable.Range(0, grid.Height)

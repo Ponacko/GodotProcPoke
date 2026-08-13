@@ -157,6 +157,8 @@ public partial class TrainerBattleScreen : BattleScreenBase
             session.CompleteTrainerBattle(_generatedRequest!);
             Log.AppendText($"\nDefeated {_trainerName}!\n"
                 + $"Received ₽{_generatedRequest!.PrizeMoney}.\n");
+            if (_generatedRequest.GymReward is { } gym)
+                Log.AppendText($"Received Badge {gym.BadgeNumber}!\n");
         }
     }
 

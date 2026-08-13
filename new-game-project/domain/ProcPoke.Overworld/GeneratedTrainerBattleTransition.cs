@@ -13,7 +13,10 @@ public sealed record GeneratedTrainerBattleTransitionRequest(
     string TrainerName,
     PlayerState ReturnState,
     IReadOnlyList<TrainerRosterMember> Roster,
-    int PrizeMoney);
+    int PrizeMoney,
+    GymVictoryReward? GymReward = null);
+
+public sealed record GymVictoryReward(int AreaId, int BadgeNumber);
 
 /// <summary>Gen-5-style prize money: trainer-class base rate multiplied by the trainer's ace level.</summary>
 public static class TrainerPayout
@@ -25,6 +28,7 @@ public static class TrainerPayout
         "Hiker" or "Fisherman" or "Psychic" => 32,
         "Grunt" => 40,
         "Ace Trainer" => 60,
+        "Gym Leader" => 100,
         "Veteran" => 100,
         "Gentleman" or "Lady" => 200,
         _ => 32,
@@ -47,7 +51,8 @@ public static class TrainerSightlines
         return interactions
             .Where(interaction => interaction.Kind == InteractionKind.Trainer
                 && !defeatedTrainerIds.Contains(interaction.Id)
-                && HasClearSightline(grid, interaction.Position, player))
+                && (interaction.Position == player
+                    || (interaction.StartsOnSight && HasClearSightline(grid, interaction.Position, player))))
             .OrderBy(interaction => Distance(interaction.Position, player))
             .ThenBy(interaction => interaction.Id, StringComparer.Ordinal)
             .FirstOrDefault();
