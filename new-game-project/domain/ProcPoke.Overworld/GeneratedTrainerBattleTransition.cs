@@ -14,9 +14,12 @@ public sealed record GeneratedTrainerBattleTransitionRequest(
     PlayerState ReturnState,
     IReadOnlyList<TrainerRosterMember> Roster,
     int PrizeMoney,
-    GymVictoryReward? GymReward = null);
+    GymVictoryReward? GymReward = null,
+    LeagueVictoryReward? LeagueReward = null);
 
 public sealed record GymVictoryReward(int AreaId, int BadgeNumber);
+
+public sealed record LeagueVictoryReward(int AreaId, int Stage);
 
 /// <summary>Gen-5-style prize money: trainer-class base rate multiplied by the trainer's ace level.</summary>
 public static class TrainerPayout
@@ -29,6 +32,8 @@ public static class TrainerPayout
         "Grunt" => 40,
         "Ace Trainer" => 60,
         "Gym Leader" => 100,
+        "Elite Four" => 120,
+        "Champion" => 150,
         "Veteran" => 100,
         "Gentleman" or "Lady" => 200,
         _ => 32,

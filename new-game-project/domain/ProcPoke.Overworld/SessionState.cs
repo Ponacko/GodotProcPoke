@@ -1,5 +1,6 @@
 using ProcPoke.Battle;
 using ProcPoke.Generation;
+using ProcPoke.Generation.Bosses;
 using ProcPoke.Generation.Rivals;
 using ProcPoke.Generation.Topology;
 
@@ -141,6 +142,8 @@ public sealed class OverworldSession
     private readonly HashSet<RivalBeat> _defeatedRivalBeats = [];
     private readonly HashSet<string> _defeatedTrainerIds = new(StringComparer.Ordinal);
     private readonly HashSet<int> _defeatedGymAreaIds = [];
+    private readonly HashSet<int> _defeatedLeagueStages = [];
+    private bool _creditsReached;
 
     public OverworldSession(GeneratedRegion region, PlayerIdentity player)
     {
@@ -213,6 +216,9 @@ public sealed class OverworldSession
     public IReadOnlySet<string> DefeatedTrainerIds => _defeatedTrainerIds;
 
     public bool HasDefeatedGymLeader(int areaId) => _defeatedGymAreaIds.Contains(areaId);
+    public bool HasDefeatedLeagueStage(int stage) => _defeatedLeagueStages.Contains(stage);
+    public IReadOnlySet<int> DefeatedLeagueStages => _defeatedLeagueStages;
+    public bool CreditsReached => _creditsReached;
 
     public void EnterInterior(InteriorTransition transition)
     {
@@ -252,6 +258,21 @@ public sealed class OverworldSession
                 interaction.Id, trainer.DisplayClass, returnState, roster, prize);
         }
 
+        if (interaction.Boss is { } interactionBoss && interaction.LeagueStage is int stage)
+        {
+            if (!CanStartLeagueStage(interaction.AreaId, stage)) return null;
+            var boss = ChampionTeamForPlayer(stage, interactionBoss);
+            var roster = boss.Members
+                .Select(member => new TrainerRosterMember(member.SpeciesId, member.Level))
+                .ToArray();
+            var aceLevel = boss.Members.Max(member => member.Level);
+            var rate = stage == Region.Bosses.EliteFour.Count ? "Champion" : "Elite Four";
+            return new GeneratedTrainerBattleTransitionRequest(
+                interaction.Id, boss.Name, returnState, roster,
+                checked(TrainerPayout.BaseRateFor(rate) * aceLevel),
+                LeagueReward: new LeagueVictoryReward(interaction.AreaId, stage));
+        }
+
         if (interaction.GymLeader is { } leader)
         {
             var areaId = interaction.AreaId;
@@ -289,6 +310,14 @@ public sealed class OverworldSession
             if (expectedBadge == default || expectedBadge.Badge != gymReward.BadgeNumber)
                 throw new ArgumentException("gym reward does not match this region", nameof(request));
         }
+        if (request.LeagueReward is { } leagueReward)
+        {
+            if (leagueReward.AreaId != Region.Graph.LeagueAreaId
+                || leagueReward.Stage < 0 || leagueReward.Stage > Region.Bosses.EliteFour.Count)
+                throw new ArgumentException("League reward does not match this region", nameof(request));
+            if (!CanStartLeagueStage(leagueReward.AreaId, leagueReward.Stage))
+                throw new ArgumentException("League reward is out of order", nameof(request));
+        }
         var updatedMoney = checked(Money + request.PrizeMoney);
         _defeatedTrainerIds.Add(request.TrainerId);
         if (request.GymReward is { } reward)
@@ -296,8 +325,31 @@ public sealed class OverworldSession
             _defeatedGymAreaIds.Add(reward.AreaId);
             Badges = Math.Max(Badges, _defeatedGymAreaIds.Count);
         }
+        if (request.LeagueReward is { } league)
+        {
+            _defeatedLeagueStages.Add(league.Stage);
+            if (league.Stage == Region.Bosses.EliteFour.Count) _creditsReached = true;
+        }
         Money = updatedMoney;
         return true;
+    }
+
+    private bool CanStartLeagueStage(int areaId, int stage)
+    {
+        if (areaId != Region.Graph.LeagueAreaId || stage < 0 || stage > Region.Bosses.EliteFour.Count)
+            return false;
+        if (!DebugUnlock && Badges < Region.Identity.GymTypes.Count) return false;
+        if (_defeatedLeagueStages.Contains(stage)) return false;
+        return stage == 0 || _defeatedLeagueStages.Contains(stage - 1);
+    }
+
+    private BossTeam ChampionTeamForPlayer(int stage, BossTeam generatedChampion)
+    {
+        if (stage != Region.Bosses.EliteFour.Count
+            || !Region.Identity.ChampionIsRival
+            || _starterCornerIndex is not int corner)
+            return generatedChampion;
+        return Region.Rivals.ForPlayerCorner(corner).ChampionTeam ?? generatedChampion;
     }
 
     /// <summary>

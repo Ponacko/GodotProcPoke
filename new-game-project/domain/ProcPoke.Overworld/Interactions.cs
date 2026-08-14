@@ -31,6 +31,11 @@ public sealed record InteractionRegistration
     public ObstacleClass? Obstacle { get; init; }
     public string? TrainerClass { get; init; }
     public TrainerEncounter? Trainer { get; init; }
+    /// <summary>A generated gym, Elite Four, or Champion roster attached to this post.</summary>
+    public BossTeam? Boss { get; init; }
+    /// <summary>Zero-based League stage; four Elite Four stages followed by the Champion.</summary>
+    public int? LeagueStage { get; init; }
+    /// <summary>Gym leaders retain this named field for compatibility with gym interior bindings.</summary>
     public BossTeam? GymLeader { get; init; }
     public bool StartsOnSight { get; init; } = true;
 }
@@ -119,7 +124,9 @@ public sealed class InteractionRegistry
                 });
             }
 
-            foreach (var trainer in region.Trainers.TrainersOf(area.Id))
+            // League posts are reserved for the generated Elite Four and Champion below; ordinary
+            // population must not claim those same tiles as generic trainers.
+            foreach (var trainer in region.Trainers.TrainersOf(area.Id).Where(_ => area.Archetype != AreaArchetype.League))
             {
                 if (trainer.Position is not { } position) continue;
                 var gridPosition = new GridPosition(position.X, position.Y);
@@ -134,6 +141,33 @@ public sealed class InteractionRegistry
                     TrainerClass = trainer.DisplayClass,
                     Trainer = trainer,
                 });
+            }
+
+            if (area.Archetype == AreaArchetype.League)
+            {
+                var posts = PositionsOf(carved.Grid, LogicalTile.TrainerPost);
+                var bosses = region.Bosses.EliteFour.Append(region.Bosses.Champion).ToArray();
+                if (posts.Count != bosses.Length)
+                    throw new InvalidOperationException(
+                        $"League area {area.Id} has {posts.Count} trainer posts but {bosses.Length} boss teams");
+
+                for (var i = 0; i < bosses.Length; i++)
+                {
+                    var isChampion = i == region.Bosses.EliteFour.Count;
+                    var boss = bosses[i];
+                    Add(interactions, all, new InteractionRegistration
+                    {
+                        Id = $"league:{area.Id}:{(isChampion ? "champion" : $"elite-four:{i}")}",
+                        AreaId = area.Id,
+                        Position = posts[i],
+                        Kind = InteractionKind.Trainer,
+                        Text = isChampion ? "The Champion awaits your challenge." : $"{boss.Name} challenges you.",
+                        TrainerClass = isChampion ? "Champion" : "Elite Four",
+                        Boss = boss,
+                        LeagueStage = i,
+                        StartsOnSight = !isChampion,
+                    });
+                }
             }
 
             foreach (var item in region.Trainers.ItemsOf(area.Id))

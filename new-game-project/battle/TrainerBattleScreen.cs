@@ -159,6 +159,13 @@ public partial class TrainerBattleScreen : BattleScreenBase
                 + $"Received ₽{_generatedRequest!.PrizeMoney}.\n");
             if (_generatedRequest.GymReward is { } gym)
                 Log.AppendText($"Received Badge {gym.BadgeNumber}!\n");
+            if (_generatedRequest.LeagueReward is { } league)
+            {
+                if (league.Stage < session.Region.Bosses.EliteFour.Count)
+                    Log.AppendText($"Elite Four {league.Stage + 1} defeated!\n");
+                else
+                    Log.AppendText("Champion defeated! The credits roll.\n");
+            }
         }
     }
 
