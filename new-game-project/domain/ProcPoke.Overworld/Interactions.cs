@@ -28,6 +28,8 @@ public sealed record InteractionRegistration
     public int? ItemId { get; init; }
     public int? GateId { get; init; }
     public string? KeyName { get; init; }
+    /// <summary>Badge required for this gate's HM field use; null for item-keys and non-gate interactions.</summary>
+    public int? BadgePrerequisite { get; init; }
     public ObstacleClass? Obstacle { get; init; }
     public string? TrainerClass { get; init; }
     public TrainerEncounter? Trainer { get; init; }
@@ -211,6 +213,7 @@ public sealed class InteractionRegistry
                     GateId = gate.Id,
                     KeyName = gate.KeyName,
                     Obstacle = gate.Obstacle,
+                    BadgePrerequisite = gate.BadgePrerequisite,
                 };
                 var areaInteractions = byArea[area.Id].ToList();
                 Add(areaInteractions, all, registration);
@@ -254,6 +257,7 @@ public sealed class InteractionSession
     private readonly HashSet<int> _unlockedGates = [];
     private readonly HashSet<string> _keys = new(StringComparer.OrdinalIgnoreCase);
 
+    public Bag Bag { get; } = new();
     public bool DebugUnlock { get; private set; }
     public bool HasFlash => _keys.Contains("Flash") || DebugUnlock;
 
@@ -273,20 +277,36 @@ public sealed class InteractionSession
         => DarkCaveVision.For(darkArea, HasFlash, DebugUnlock, radius);
 
     public MovementCapabilities ForMovement(
-        int areaId, MovementCapabilities capabilities, InteractionRegistry registry)
+        int areaId, MovementCapabilities capabilities, InteractionRegistry registry, GatingPlan gating, int badges)
     {
         ArgumentNullException.ThrowIfNull(capabilities);
         ArgumentNullException.ThrowIfNull(registry);
+        ArgumentNullException.ThrowIfNull(gating);
         var cleared = capabilities.ClearedGatePositions.ToHashSet();
         cleared.UnionWith(registry.ClearedGatePositions(areaId, _unlockedGates));
         return capabilities with
         {
             DebugUnlock = capabilities.DebugUnlock || DebugUnlock,
             ClearedGatePositions = cleared,
+            HasSurf = capabilities.HasSurf || FieldMoveReady(gating, "Surf", badges),
+            HasStrength = capabilities.HasStrength || FieldMoveReady(gating, "Strength", badges),
+            HasCut = capabilities.HasCut || FieldMoveReady(gating, "Cut", badges),
+            CanBicycle = capabilities.CanBicycle || HasKey("Bicycle"),
         };
     }
 
-    public InteractionOutcome Interact(InteractionRegistration interaction)
+    /// <summary>An HM's field use additionally needs its gate's badge prerequisite (§4.3); item-keys never
+    /// gate this way, so a missing gate (or one with no prerequisite) requires only the key itself.</summary>
+    private bool FieldMoveReady(GatingPlan gating, string keyName, int badges)
+    {
+        if (!HasKey(keyName)) return false;
+        var required = gating.Gates.FirstOrDefault(gate => gate.KeyName == keyName)?.BadgePrerequisite;
+        return BadgeRequirementMet(required, badges);
+    }
+
+    private bool BadgeRequirementMet(int? required, int badges) => DebugUnlock || badges >= (required ?? 0);
+
+    public InteractionOutcome Interact(InteractionRegistration interaction, int badges = 0)
     {
         ArgumentNullException.ThrowIfNull(interaction);
 
@@ -297,7 +317,7 @@ public sealed class InteractionSession
             InteractionKind.Trainer => new(
                 InteractionOutcomeKind.TrainerPrompt, interaction, interaction.Text),
             InteractionKind.Item => CollectItem(interaction),
-            InteractionKind.Gate => ResolveGate(interaction),
+            InteractionKind.Gate => ResolveGate(interaction, badges),
             _ => throw new ArgumentOutOfRangeException(),
         };
     }
@@ -307,14 +327,17 @@ public sealed class InteractionSession
         if (!_collectedItems.Add(interaction.Id))
             return new(InteractionOutcomeKind.AlreadyCollected, interaction, "You already collected this item.",
                 interaction.ItemId);
+        if (interaction.ItemId is int itemId) Bag.Add(itemId);
         return new(InteractionOutcomeKind.ItemCollected, interaction, interaction.Text, interaction.ItemId);
     }
 
-    private InteractionOutcome ResolveGate(InteractionRegistration interaction)
+    private InteractionOutcome ResolveGate(InteractionRegistration interaction, int badges)
     {
         var gateId = interaction.GateId
             ?? throw new InvalidOperationException($"gate interaction {interaction.Id} has no gate id");
-        if (!HasKey(interaction.KeyName ?? string.Empty))
+        var hasKey = HasKey(interaction.KeyName ?? string.Empty);
+        var badgeMet = BadgeRequirementMet(interaction.BadgePrerequisite, badges);
+        if (!hasKey || !badgeMet)
             return new(InteractionOutcomeKind.GateBlocked, interaction, interaction.Text, GateId: gateId);
 
         _unlockedGates.Add(gateId);

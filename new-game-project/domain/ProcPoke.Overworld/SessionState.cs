@@ -181,6 +181,12 @@ public sealed class OverworldSession
         ActiveInterior = null;
         if (IsPokemonCenter(areaId)) LastPokemonCenterAreaId = areaId;
         Map.Visit(areaId);
+
+        // Matches GatingValidator's own solvability model: a key (HM or key-item) counts as obtained once
+        // its area is reachable — there is no separate in-world pickup tile for it.
+        foreach (var gate in Region.Gating.Gates)
+            if (gate.KeyAreaId == areaId) Interactions.GrantKey(gate.KeyName);
+        if (Region.Gating.Fly.AreaId == areaId) GrantFly();
     }
 
     public void SetTime(int minutesSinceMidnight)

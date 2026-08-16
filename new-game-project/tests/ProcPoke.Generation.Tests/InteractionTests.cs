@@ -53,7 +53,7 @@ public sealed class InteractionTests
     }
 
     [Fact]
-    public void ItemCollectionIsOneTimePerSession()
+    public void ItemCollectionIsOneTimePerSessionAndAddsToTheBag()
     {
         var region = Generate();
         var registry = InteractionRegistry.Build(region);
@@ -63,7 +63,10 @@ public sealed class InteractionTests
         var session = new InteractionSession();
 
         Assert.Equal(InteractionOutcomeKind.ItemCollected, session.Interact(item).Kind);
+        Assert.True(session.Bag.Has(item.ItemId!.Value));
+        Assert.Equal(1, session.Bag.Count(item.ItemId!.Value));
         Assert.Equal(InteractionOutcomeKind.AlreadyCollected, session.Interact(item).Kind);
+        Assert.Equal(1, session.Bag.Count(item.ItemId!.Value));
     }
 
     [Fact]
@@ -77,13 +80,59 @@ public sealed class InteractionTests
         var grid = region.Carved[gate.AreaId].Grid;
         var before = grid[gate.Position.X, gate.Position.Y];
         var session = new InteractionSession();
+        var badges = gate.BadgePrerequisite ?? 0;
 
-        Assert.Equal(InteractionOutcomeKind.GateBlocked, session.Interact(gate).Kind);
+        Assert.Equal(InteractionOutcomeKind.GateBlocked, session.Interact(gate, badges).Kind);
         session.GrantKey(gate.KeyName!);
-        Assert.Equal(InteractionOutcomeKind.GateUnlocked, session.Interact(gate).Kind);
-        Assert.True(session.ForMovement(gate.AreaId, new MovementCapabilities(), registry)
+        Assert.Equal(InteractionOutcomeKind.GateUnlocked, session.Interact(gate, badges).Kind);
+        Assert.True(session.ForMovement(gate.AreaId, new MovementCapabilities(), registry, region.Gating, badges)
             .ClearedGatePositions.Contains(gate.Position));
         Assert.Equal(before, grid[gate.Position.X, gate.Position.Y]);
+    }
+
+    [Fact]
+    public void HmGateAlsoRequiresItsBadgePrerequisite()
+    {
+        var region = Generate();
+        var registry = InteractionRegistry.Build(region);
+        var hmGate = region.Gating.Gates.First(gate => gate.BadgePrerequisite is > 0);
+        var interaction = region.Graph.Areas
+            .SelectMany(area => registry.GatesOf(area.Id))
+            .First(candidate => candidate.GateId == hmGate.Id);
+        var session = new InteractionSession();
+        session.GrantKey(hmGate.KeyName);
+
+        Assert.Equal(InteractionOutcomeKind.GateBlocked,
+            session.Interact(interaction, hmGate.BadgePrerequisite!.Value - 1).Kind);
+        Assert.Equal(InteractionOutcomeKind.GateUnlocked,
+            session.Interact(interaction, hmGate.BadgePrerequisite!.Value).Kind);
+    }
+
+    [Fact]
+    public void ForMovementDerivesFieldMoveCapabilitiesFromKeysAndBadges()
+    {
+        var region = Generate();
+        var registry = InteractionRegistry.Build(region);
+        var cutGate = region.Gating.Gates.Single(gate => gate.KeyName == "Cut");
+        var session = new InteractionSession();
+
+        Assert.False(session.ForMovement(
+            region.Graph.StartAreaId, new MovementCapabilities(), registry, region.Gating,
+            cutGate.BadgePrerequisite!.Value).HasCut);
+
+        session.GrantKey("Cut");
+        Assert.False(session.ForMovement(
+            region.Graph.StartAreaId, new MovementCapabilities(), registry, region.Gating,
+            cutGate.BadgePrerequisite!.Value - 1).HasCut);
+        Assert.True(session.ForMovement(
+            region.Graph.StartAreaId, new MovementCapabilities(), registry, region.Gating,
+            cutGate.BadgePrerequisite!.Value).HasCut);
+
+        Assert.False(session.ForMovement(
+            region.Graph.StartAreaId, new MovementCapabilities(), registry, region.Gating, 0).CanBicycle);
+        session.GrantKey("Bicycle");
+        Assert.True(session.ForMovement(
+            region.Graph.StartAreaId, new MovementCapabilities(), registry, region.Gating, 0).CanBicycle);
     }
 
     [Fact]
@@ -99,7 +148,8 @@ public sealed class InteractionTests
         session.EnableDebugUnlock();
 
         Assert.Equal(InteractionOutcomeKind.GateUnlocked, session.Interact(gate).Kind);
-        Assert.True(session.ForMovement(gate.AreaId, new MovementCapabilities(), registry).DebugUnlock);
+        Assert.True(session.ForMovement(gate.AreaId, new MovementCapabilities(), registry, region.Gating, 0)
+            .DebugUnlock);
         Assert.Equal(before, region.Carved[gate.AreaId].Grid[gate.Position.X, gate.Position.Y]);
 
         var dark = DarkCaveVision.For(darkArea: true, hasFlash: false, debugUnlock: false, radius: 2);

@@ -77,7 +77,8 @@ public partial class OverworldRootController : Node2D
 
         var carved = _session.Region.Carved[areaId];
         _realizer.Realize(carved, _session.Region.Biomes.Of(areaId));
-        var capabilities = _session.Interactions.ForMovement(areaId, new MovementCapabilities(), _registry);
+        var capabilities = _session.Interactions.ForMovement(
+            areaId, new MovementCapabilities(), _registry, _session.Region.Gating, _session.Badges);
         _movement.Configure(carved.Grid, start, capabilities);
         _camera.Configure(carved.Grid);
         _camera.Follow(start.Position);
@@ -166,7 +167,7 @@ public partial class OverworldRootController : Node2D
         var interaction = InteractionAt(position);
         if (interaction is null) return;
 
-        var outcome = _session.Interactions.Interact(interaction);
+        var outcome = _session.Interactions.Interact(interaction, _session.Badges);
         _message.Text = outcome.Message;
 
         if (outcome.Kind == InteractionOutcomeKind.TrainerPrompt)
@@ -176,8 +177,8 @@ public partial class OverworldRootController : Node2D
         }
 
         if (outcome.Kind == InteractionOutcomeKind.GateUnlocked)
-            _movement.UpdateCapabilities(
-                _session.Interactions.ForMovement(_session.CurrentAreaId, new MovementCapabilities(), _registry));
+            _movement.UpdateCapabilities(_session.Interactions.ForMovement(
+                _session.CurrentAreaId, new MovementCapabilities(), _registry, _session.Region.Gating, _session.Badges));
     }
 
     private WildEncounter? TryRollEncounter(MovementResolution resolution)

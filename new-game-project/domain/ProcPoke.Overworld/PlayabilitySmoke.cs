@@ -95,7 +95,8 @@ public static class PlayabilitySmoke
                 break;
             }
 
-            var capabilities = session.ForMovement(current.Id, new MovementCapabilities(), registry);
+            var capabilities = session.ForMovement(
+                current.Id, new MovementCapabilities(), registry, region.Gating, region.Settings.BadgeCount);
             var search = Search(
                 region.Carved[current.Id].Grid,
                 currentState,
@@ -213,7 +214,8 @@ public static class PlayabilitySmoke
         foreach (var (areaId, start) in areaStarts)
         {
             var grid = region.Carved[areaId].Grid;
-            var capabilities = session.ForMovement(areaId, new MovementCapabilities(), registry);
+            var capabilities = session.ForMovement(
+                areaId, new MovementCapabilities(), registry, region.Gating, region.Settings.BadgeCount);
             var search = Search(grid, start, capabilities,
                 state => grid[state.Position.X, state.Position.Y] == LogicalTile.Ledge);
             if (search.State is not null) return true;

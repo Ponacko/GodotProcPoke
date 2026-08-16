@@ -64,6 +64,23 @@ public sealed class SessionStateTests
     }
 
     [Fact]
+    public void VisitingAGatesKeyAreaGrantsItsKeyAndVisitingFlysAreaGrantsFly()
+    {
+        var region = Generate(31337);
+        var session = new OverworldSession(
+            region, NewGameIdentity.Create(CharacterChoice.CharacterA, "Player"));
+        var gate = region.Gating.Gates.First(g => g.KeyAreaId != region.Graph.StartAreaId);
+
+        Assert.False(session.Interactions.HasKey(gate.KeyName));
+        session.VisitArea(gate.KeyAreaId);
+        Assert.True(session.Interactions.HasKey(gate.KeyName));
+
+        Assert.False(session.HasFly);
+        session.VisitArea(region.Gating.Fly.AreaId);
+        Assert.True(session.HasFly);
+    }
+
+    [Fact]
     public void TimeOfDayHasStablePresentationBandsAndDebugFacts()
     {
         var dawn = TimeOfDayClock.FromMinutes(6 * 60);
