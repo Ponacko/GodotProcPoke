@@ -1,6 +1,7 @@
 using ProcPoke.Battle;
 using ProcPoke.Generation;
 using ProcPoke.Generation.Bosses;
+using ProcPoke.Generation.Encounters;
 using ProcPoke.Generation.Rivals;
 using ProcPoke.Generation.Topology;
 
@@ -143,6 +144,7 @@ public sealed class OverworldSession
     private readonly HashSet<string> _defeatedTrainerIds = new(StringComparer.Ordinal);
     private readonly HashSet<int> _defeatedGymAreaIds = [];
     private readonly HashSet<int> _defeatedLeagueStages = [];
+    private readonly HashSet<int> _resolvedLegendaries = [];
     private bool _creditsReached;
 
     public OverworldSession(GeneratedRegion region, PlayerIdentity player)
@@ -379,6 +381,27 @@ public sealed class OverworldSession
             return new RivalBattleTransitionRequest(beat, cornerIndex, returnState, roster);
         }
         return null;
+    }
+
+    public bool HasResolvedLegendary(int speciesId) => _resolvedLegendaries.Contains(speciesId);
+
+    /// <summary>Won or captured; never called on a flee or loss (§5.5: legendaries never gate progress).</summary>
+    public void MarkLegendaryResolved(int speciesId) => _resolvedLegendaries.Add(speciesId);
+
+    /// <summary>Checks whether entering <paramref name="areaId"/> should start a legendary static encounter:
+    /// the first unresolved <see cref="Generation.Roster.LegendaryPlacement"/> at this area wins. There is no
+    /// dedicated tile marker for a legendary (unlike a trainer post) — first reaching its dungeon triggers it,
+    /// the same reachable-area convention used for key/HM acquisition.</summary>
+    public WildBattleTransitionRequest? TryTriggerLegendaryEncounter(int areaId, PlayerState returnState)
+    {
+        var placement = Region.Special.Legendaries.FirstOrDefault(
+            legendary => legendary.AreaId == areaId && !HasResolvedLegendary(legendary.SpeciesId));
+        if (placement is null) return null;
+
+        var encounter = new WildEncounter(
+            placement.AreaId, EncounterMethod.Land, placement.SpeciesId, placement.Level,
+            UsedOverlay: false, HiddenAbility: false);
+        return WildBattleTransitionResolver.CreateStatic(encounter, returnState, placement);
     }
 
     public void EnableDebugUnlock() => Interactions.EnableDebugUnlock();

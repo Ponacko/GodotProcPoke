@@ -96,6 +96,7 @@ public partial class BattleScreen : BattleScreenBase
         {
             case WildBattleOutcome.PlayerWon:
                 ApplyVictory();
+                ResolveLegendaryIfPresent();
                 await ReturnToOverworld(_request.ReturnState);
                 break;
             case WildBattleOutcome.PlayerLost:
@@ -103,6 +104,7 @@ public partial class BattleScreen : BattleScreenBase
                 await ReturnToOverworld(resumeAt: null);
                 break;
             case WildBattleOutcome.Captured:
+                ResolveLegendaryIfPresent();
                 await ReturnToOverworld(_request.ReturnState);
                 break;
             default:
@@ -110,6 +112,12 @@ public partial class BattleScreen : BattleScreenBase
                 SetActionsEnabled(true);
                 break;
         }
+    }
+
+    private void ResolveLegendaryIfPresent()
+    {
+        if (_request.Legendary is { } legendary)
+            GameState.Instance.Session!.MarkLegendaryResolved(legendary.SpeciesId);
     }
 
     private void ApplyVictory()

@@ -81,6 +81,40 @@ public sealed class SessionStateTests
     }
 
     [Fact]
+    public void LegendaryEncounterAdvancesThroughRoundRobinPlacementsUntilAllResolved()
+    {
+        var region = Generate(31337);
+        var session = new OverworldSession(
+            region, NewGameIdentity.Create(CharacterChoice.CharacterA, "Player"));
+        var returnState = new PlayerState(new GridPosition(1, 1));
+        // Round-robin placement (4c) can seat more than one legendary in the same dungeon; walk every
+        // legendary sharing this area in order and confirm the trigger advances to the next unresolved
+        // one rather than stopping or re-firing an already-resolved placement.
+        var sharedArea = region.Special.Legendaries
+            .Where(legendary => legendary.AreaId == region.Special.Legendaries[0].AreaId)
+            .ToArray();
+
+        foreach (var expected in sharedArea)
+        {
+            // Unresolved legendaries keep triggering on repeated visits — the read is stateless.
+            Assert.NotNull(session.TryTriggerLegendaryEncounter(expected.AreaId, returnState));
+
+            var request = session.TryTriggerLegendaryEncounter(expected.AreaId, returnState);
+            Assert.NotNull(request);
+            Assert.Same(expected, request!.Legendary);
+            Assert.Equal(expected.SpeciesId, request.Battle.SpeciesId);
+            Assert.Equal(expected.Level, request.Battle.Level);
+            Assert.Equal(returnState, request.ReturnState);
+
+            Assert.False(session.HasResolvedLegendary(expected.SpeciesId));
+            session.MarkLegendaryResolved(expected.SpeciesId);
+            Assert.True(session.HasResolvedLegendary(expected.SpeciesId));
+        }
+
+        Assert.Null(session.TryTriggerLegendaryEncounter(sharedArea[0].AreaId, returnState));
+    }
+
+    [Fact]
     public void TimeOfDayHasStablePresentationBandsAndDebugFacts()
     {
         var dawn = TimeOfDayClock.FromMinutes(6 * 60);

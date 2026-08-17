@@ -75,6 +75,13 @@ public partial class OverworldRootController : Node2D
             return;
         }
 
+        if (_session.TryTriggerLegendaryEncounter(areaId, start) is { } legendaryRequest)
+        {
+            GameState.Instance.PendingBattleRequest = legendaryRequest;
+            GetTree().ChangeSceneToFile("res://battle/BattleScreen.tscn");
+            return;
+        }
+
         var carved = _session.Region.Carved[areaId];
         _realizer.Realize(carved, _session.Region.Biomes.Of(areaId));
         var capabilities = _session.Interactions.ForMovement(
