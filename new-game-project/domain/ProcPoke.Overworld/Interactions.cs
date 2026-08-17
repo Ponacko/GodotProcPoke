@@ -15,6 +15,7 @@ public enum InteractionKind
     Trainer,
     Item,
     Gate,
+    Shop,
 }
 
 /// <summary>A stable, map-local interaction assembled from generation output.</summary>
@@ -106,7 +107,7 @@ public sealed class InteractionRegistry
         {
             var interactions = new List<InteractionRegistration>();
             var carved = region.Carved[area.Id];
-            var npcPositions = PositionsOf(carved.Grid, LogicalTile.NpcPost);
+            var npcPositions = TileGridQuery.PositionsOf(carved.Grid, LogicalTile.NpcPost);
             var npcPosts = region.Npcs.Of(area.Id);
             if (npcPositions.Count != npcPosts.Count)
                 throw new InvalidOperationException(
@@ -147,7 +148,7 @@ public sealed class InteractionRegistry
 
             if (area.Archetype == AreaArchetype.League)
             {
-                var posts = PositionsOf(carved.Grid, LogicalTile.TrainerPost);
+                var posts = TileGridQuery.PositionsOf(carved.Grid, LogicalTile.TrainerPost);
                 var bosses = region.Bosses.EliteFour.Append(region.Bosses.Champion).ToArray();
                 if (posts.Count != bosses.Length)
                     throw new InvalidOperationException(
@@ -223,13 +224,6 @@ public sealed class InteractionRegistry
 
         return new InteractionRegistry(byArea, all);
     }
-
-    private static IReadOnlyList<GridPosition> PositionsOf(TileGrid grid, LogicalTile tile)
-        => Enumerable.Range(0, grid.Height)
-            .SelectMany(y => Enumerable.Range(0, grid.Width)
-                .Where(x => grid[x, y] == tile)
-                .Select(x => new GridPosition(x, y)))
-            .ToArray();
 
     private static void RequireTile(CarvedArea area, GridPosition position, LogicalTile expected, string label)
     {
@@ -312,7 +306,7 @@ public sealed class InteractionSession
 
         return interaction.Kind switch
         {
-            InteractionKind.Npc or InteractionKind.Sign => new(
+            InteractionKind.Npc or InteractionKind.Sign or InteractionKind.Shop => new(
                 InteractionOutcomeKind.Dialogue, interaction, interaction.Text),
             InteractionKind.Trainer => new(
                 InteractionOutcomeKind.TrainerPrompt, interaction, interaction.Text),

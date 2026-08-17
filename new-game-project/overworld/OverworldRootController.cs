@@ -4,6 +4,7 @@ using System.Linq;
 using Godot;
 using ProcPoke;
 using ProcPoke.Battle;
+using ProcPoke.Data;
 using ProcPoke.Generation.Carving;
 using ProcPoke.Generation.Encounters;
 using ProcPoke.Overworld;
@@ -34,6 +35,9 @@ public partial class OverworldRootController : Node2D
     private IReadOnlyList<InteractionRegistration> _interiorInteractions = [];
     private OverworldSession _session = null!;
     private bool _suppressNextEncounterRoll;
+
+    private static GameData Data => GameState.Instance.Data
+        ?? throw new InvalidOperationException("OverworldRootController entered with no GameData.");
 
     public override void _Ready()
     {
@@ -83,14 +87,8 @@ public partial class OverworldRootController : Node2D
             return;
         }
 
-        var fossilPickups = _session.TryCollectFossils(areaId);
-        if (fossilPickups.Count > 0)
-        {
-            var data = GameState.Instance.Data
-                ?? throw new InvalidOperationException("OverworldRootController entered with no GameData.");
-            foreach (var fossil in fossilPickups)
-                _session.Party.Add(BattleProgressionFactory.AtLevel(data, fossil.SpeciesId, fossil.Level));
-        }
+        foreach (var fossil in _session.TryCollectFossils(areaId))
+            _session.Party.Add(BattleProgressionFactory.AtLevel(Data, fossil.SpeciesId, fossil.Level));
 
         var carved = _session.Region.Carved[areaId];
         _realizer.Realize(carved, _session.Region.Biomes.Of(areaId));
@@ -103,9 +101,12 @@ public partial class OverworldRootController : Node2D
 
     private void LoadInterior(ActiveInterior interior, PlayerState start)
     {
-        _interiorInteractions = interior.Template.Kind == InteriorKind.Gym
-            ? GymInteriorBattles.Build(_session.Region, interior.OverworldAreaId, interior.Template)
-            : [];
+        _interiorInteractions = interior.Template.Kind switch
+        {
+            InteriorKind.Gym => GymInteriorBattles.Build(_session.Region, interior.OverworldAreaId, interior.Template),
+            InteriorKind.Mart => MartInteractions.Build(interior.OverworldAreaId, interior.Template),
+            _ => [],
+        };
         _realizer.Realize(interior.Template.Grid, interior.Template.Biome);
         _movement.Configure(interior.Template.Grid, start, new MovementCapabilities
         {
@@ -192,6 +193,9 @@ public partial class OverworldRootController : Node2D
             StartTrainerBattle(interaction);
             return;
         }
+
+        if (interaction.Kind == InteractionKind.Shop)
+            _message.Text += "\n" + _session.BuyFromMart(Data, interaction.AreaId).Message;
 
         if (outcome.Kind == InteractionOutcomeKind.GateUnlocked)
             _movement.UpdateCapabilities(_session.Interactions.ForMovement(

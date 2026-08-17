@@ -1,4 +1,5 @@
 using ProcPoke.Battle;
+using ProcPoke.Data;
 using ProcPoke.Generation;
 using ProcPoke.Generation.Bosses;
 using ProcPoke.Generation.Encounters;
@@ -436,6 +437,31 @@ public sealed class OverworldSession
             collected.Add(new FossilPickup(fossil.SpeciesId, baseLevel));
         }
         return collected;
+    }
+
+    /// <summary>Talking to a town's Mart clerk (see <see cref="MartInteractions"/>): buys the single most
+    /// expensive item currently affordable from that town's stock. Spends <see cref="Money"/> and adds to
+    /// <see cref="InteractionSession.Bag"/> — both session-owned, so this must live here rather than on
+    /// <see cref="Interactions"/>, which owns neither.</summary>
+    public MartPurchaseResult BuyFromMart(GameData data, int areaId)
+    {
+        ArgumentNullException.ThrowIfNull(data);
+        var fraction = MartAvailability.FractionOf(Region.Graph, areaId);
+        var stock = MartCatalog.For(data, fraction);
+        if (stock.Count == 0)
+            return new MartPurchaseResult(MartPurchaseKind.StockEmpty, "There's nothing in stock yet.");
+
+        var affordable = stock.Where(itemId => data.Items[itemId].Cost <= Money).ToArray();
+        if (affordable.Length == 0)
+            return new MartPurchaseResult(
+                MartPurchaseKind.NothingAffordable, "You can't afford anything here right now.");
+
+        var itemId = affordable.OrderByDescending(id => data.Items[id].Cost).First();
+        var cost = data.Items[itemId].Cost;
+        Money -= cost;
+        Interactions.Bag.Add(itemId);
+        return new MartPurchaseResult(
+            MartPurchaseKind.Bought, $"Bought {data.Items[itemId].Name} for ${cost}.", itemId, cost);
     }
 
     public void EnableDebugUnlock() => Interactions.EnableDebugUnlock();

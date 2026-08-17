@@ -21,6 +21,18 @@ public enum InteriorTransitionKind
     Exit,
 }
 
+/// <summary>Shared grid scan used by every interaction binder (NPC posts, trainer/gym posts, the Mart
+/// clerk) to find where a marker tile landed, in stable row-major order.</summary>
+internal static class TileGridQuery
+{
+    public static IReadOnlyList<GridPosition> PositionsOf(TileGrid grid, LogicalTile tile)
+        => Enumerable.Range(0, grid.Height)
+            .SelectMany(y => Enumerable.Range(0, grid.Width)
+                .Where(x => grid[x, y] == tile)
+                .Select(x => new GridPosition(x, y)))
+            .ToArray();
+}
+
 /// <summary>A fixed, reusable interior view. It is a TileGrid so the normal realizer and movement seams apply.</summary>
 public sealed record InteriorTemplate
 {

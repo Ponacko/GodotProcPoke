@@ -15,7 +15,7 @@ public static class GymInteriorBattles
             throw new ArgumentException("template is not a gym", nameof(template));
         if (!region.Bosses.GymLeaders.TryGetValue(areaId, out var leader)) return [];
 
-        var positions = PositionsOf(template.Grid, LogicalTile.TrainerPost);
+        var positions = TileGridQuery.PositionsOf(template.Grid, LogicalTile.TrainerPost);
         var trainers = region.Trainers.TrainersOf(areaId)
             .Where(trainer => trainer.IsGymTrainer)
             .ToArray();
@@ -58,11 +58,4 @@ public static class GymInteriorBattles
 
         return interactions;
     }
-
-    private static IReadOnlyList<GridPosition> PositionsOf(TileGrid grid, LogicalTile tile)
-        => Enumerable.Range(0, grid.Height)
-            .SelectMany(y => Enumerable.Range(0, grid.Width)
-                .Where(x => grid[x, y] == tile)
-                .Select(x => new GridPosition(x, y)))
-            .ToArray();
 }
