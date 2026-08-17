@@ -135,6 +135,10 @@ public sealed record GenerationDebugInfo(
     }
 }
 
+/// <summary>A freshly revived fossil, ready for the caller (which owns <c>GameData</c>) to build into a
+/// party member at <see cref="Level"/>.</summary>
+public sealed record FossilPickup(int SpeciesId, int Level);
+
 /// <summary>Small in-memory Phase 3 session tying identity, map state, Fly, and presentation time together.</summary>
 public sealed class OverworldSession
 {
@@ -145,6 +149,7 @@ public sealed class OverworldSession
     private readonly HashSet<int> _defeatedGymAreaIds = [];
     private readonly HashSet<int> _defeatedLeagueStages = [];
     private readonly HashSet<int> _resolvedLegendaries = [];
+    private readonly HashSet<int> _collectedFossils = [];
     private bool _creditsReached;
 
     public OverworldSession(GeneratedRegion region, PlayerIdentity player)
@@ -402,6 +407,35 @@ public sealed class OverworldSession
             placement.AreaId, EncounterMethod.Land, placement.SpeciesId, placement.Level,
             UsedOverlay: false, HiddenAbility: false);
         return WildBattleTransitionResolver.CreateStatic(encounter, returnState, placement);
+    }
+
+    public bool HasCollectedFossil(int speciesId) => _collectedFossils.Contains(speciesId);
+
+    /// <summary>
+    /// Reviving a fossil is normally its own service (still unbuilt — see the Phase 5 services pass); as
+    /// an explicit MVP simplification, first reaching <see cref="Generation.Roster.DexPlan.FossilAreaId"/>
+    /// revives every not-yet-collected fossil straight into the party, one per call at most while the
+    /// party has room. A fossil is never dropped if the party is full — it just stays uncollected for a
+    /// later visit. The caller (which owns <c>GameData</c>) turns each pickup into a party member.
+    /// Unlike <see cref="TryTriggerLegendaryEncounter"/> — a query the caller must separately confirm via
+    /// <see cref="MarkLegendaryResolved"/> once a battle outcome is known — this marks each species
+    /// collected immediately: a pickup has no failure path to wait on.
+    /// </summary>
+    public IReadOnlyList<FossilPickup> TryCollectFossils(int areaId)
+    {
+        if (areaId != Region.Dex.FossilAreaId) return [];
+        var baseLevel = Region.Encounters.Of(areaId)?.BaseLevel
+            ?? throw new InvalidOperationException($"fossil area {areaId} has no encounter base level");
+
+        var collected = new List<FossilPickup>();
+        foreach (var fossil in Region.Special.Fossils)
+        {
+            if (HasCollectedFossil(fossil.SpeciesId)) continue;
+            if (!Party.HasRoomFor(collected.Count)) break;
+            _collectedFossils.Add(fossil.SpeciesId);
+            collected.Add(new FossilPickup(fossil.SpeciesId, baseLevel));
+        }
+        return collected;
     }
 
     public void EnableDebugUnlock() => Interactions.EnableDebugUnlock();

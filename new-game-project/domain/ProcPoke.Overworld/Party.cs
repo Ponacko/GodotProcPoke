@@ -17,6 +17,10 @@ public sealed class Party
 
     public IReadOnlyList<BattleProgressionState> Members => _members;
 
+    /// <summary>Whether <paramref name="additional"/> more members would still fit without overflowing
+    /// <see cref="MaxSize"/> — the same room-check <see cref="Add"/> itself enforces, kept in one place.</summary>
+    public bool HasRoomFor(int additional) => _members.Count + additional < MaxSize;
+
     public void Add(BattleProgressionState member)
     {
         ArgumentNullException.ThrowIfNull(member);

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using Godot;
 using ProcPoke;
+using ProcPoke.Battle;
 using ProcPoke.Generation.Carving;
 using ProcPoke.Generation.Encounters;
 using ProcPoke.Overworld;
@@ -80,6 +81,15 @@ public partial class OverworldRootController : Node2D
             GameState.Instance.PendingBattleRequest = legendaryRequest;
             GetTree().ChangeSceneToFile("res://battle/BattleScreen.tscn");
             return;
+        }
+
+        var fossilPickups = _session.TryCollectFossils(areaId);
+        if (fossilPickups.Count > 0)
+        {
+            var data = GameState.Instance.Data
+                ?? throw new InvalidOperationException("OverworldRootController entered with no GameData.");
+            foreach (var fossil in fossilPickups)
+                _session.Party.Add(BattleProgressionFactory.AtLevel(data, fossil.SpeciesId, fossil.Level));
         }
 
         var carved = _session.Region.Carved[areaId];

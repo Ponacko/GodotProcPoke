@@ -1,3 +1,4 @@
+using ProcPoke.Battle;
 using ProcPoke.Generation;
 using ProcPoke.Generation.Topology;
 using ProcPoke.Overworld;
@@ -112,6 +113,44 @@ public sealed class SessionStateTests
         }
 
         Assert.Null(session.TryTriggerLegendaryEncounter(sharedArea[0].AreaId, returnState));
+    }
+
+    [Fact]
+    public void FossilsAreCollectedOnceIntoTheParty()
+    {
+        var region = Generate(31337);
+        var session = new OverworldSession(
+            region, NewGameIdentity.Create(CharacterChoice.CharacterA, "Player"));
+        var fossilAreaId = region.Dex.FossilAreaId;
+        var otherAreaId = region.Graph.Areas.First(area => area.Id != fossilAreaId).Id;
+        var expectedLevel = region.Encounters.Of(fossilAreaId)!.BaseLevel;
+
+        Assert.Empty(session.TryCollectFossils(otherAreaId));
+
+        var firstVisit = session.TryCollectFossils(fossilAreaId);
+        Assert.Equal(region.Special.Fossils.Count, firstVisit.Count);
+        Assert.Equal(
+            region.Special.Fossils.Select(fossil => fossil.SpeciesId).OrderBy(id => id),
+            firstVisit.Select(pickup => pickup.SpeciesId).OrderBy(id => id));
+        Assert.All(firstVisit, pickup => Assert.Equal(expectedLevel, pickup.Level));
+        Assert.All(firstVisit, pickup => Assert.True(session.HasCollectedFossil(pickup.SpeciesId)));
+
+        Assert.Empty(session.TryCollectFossils(fossilAreaId));
+    }
+
+    [Fact]
+    public void FossilsAreSkippedRatherThanOverflowingAFullParty()
+    {
+        var region = Generate(31337);
+        var session = new OverworldSession(
+            region, NewGameIdentity.Create(CharacterChoice.CharacterA, "Player"));
+        for (var i = 0; i < Party.MaxSize; i++)
+            session.Party.Add(BattleProgressionFactory.AtLevel(TestData.Data, 1, 5));
+
+        var pickups = session.TryCollectFossils(region.Dex.FossilAreaId);
+
+        Assert.Empty(pickups);
+        Assert.All(region.Special.Fossils, fossil => Assert.False(session.HasCollectedFossil(fossil.SpeciesId)));
     }
 
     [Fact]
