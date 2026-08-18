@@ -68,7 +68,7 @@ public class TrainerPassTests
                     if (area.Archetype == AreaArchetype.Forest || region.Biomes.Of(area.Id) == Biome.Forest)
                         Assert.Equal("Bug Catcher", trainer.ClassName);
                     if (area.Archetype == AreaArchetype.VillainHideout)
-                        Assert.EndsWith(" Grunt", trainer.DisplayClass);
+                        Assert.EndsWith(trainer.IsHideoutBoss ? " Boss" : " Grunt", trainer.DisplayClass);
                 }
 
                 Assert.All(region.Trainers.TrainersOf(area.Id).Where(t => t.IsGymTrainer),
@@ -99,6 +99,42 @@ public class TrainerPassTests
         }
     }
 
+    [Theory]
+    [InlineData(4)]
+    [InlineData(8)]
+    [InlineData(12)]
+    public void EveryHideoutHasExactlyOneStrongerBossAtTheCarvedBossPost(int badges)
+    {
+        var checkedCount = 0;
+        for (ulong seed = 1; seed <= 100; seed++)
+        {
+            var region = Generate(seed, badges);
+            foreach (var area in region.Graph.Areas.Where(a => a.Archetype == AreaArchetype.VillainHideout))
+            {
+                checkedCount++;
+                var carved = region.Carved[area.Id];
+                var trainers = region.Trainers.TrainersOf(area.Id);
+                var bosses = trainers.Where(t => t.IsHideoutBoss).ToList();
+                var grunts = trainers.Where(t => !t.IsHideoutBoss).ToList();
+
+                Assert.Single(bosses);
+                Assert.NotEmpty(grunts);
+                Assert.Equal(carved.HideoutBossPost, bosses[0].Position);
+                Assert.All(grunts, grunt => Assert.NotEqual(carved.HideoutBossPost, grunt.Position));
+                Assert.EndsWith(" Boss", bosses[0].DisplayClass);
+                Assert.True(bosses[0].AceLevel > grunts.Max(g => g.AceLevel),
+                    $"seed {seed}/{badges}: hideout {area.Id} boss ace {bosses[0].AceLevel} " +
+                    $"did not exceed the strongest grunt {grunts.Max(g => g.AceLevel)}");
+                Assert.True(bosses[0].Roster.Count > grunts.Max(g => g.Roster.Count),
+                    $"seed {seed}/{badges}: hideout {area.Id} boss roster {bosses[0].Roster.Count} " +
+                    $"did not exceed the largest grunt roster {grunts.Max(g => g.Roster.Count)}");
+                // The boss keeps the hideout's own villain team, same as every grunt guarding it.
+                Assert.Equal(grunts[0].TeamName, bosses[0].TeamName);
+            }
+        }
+        Assert.True(checkedCount > 0, "corpus produced no villain hideouts to check");
+    }
+
     [Fact]
     public void TrainersAreDeterministic()
     {
@@ -119,6 +155,7 @@ public class TrainerPassTests
                     Assert.Equal(left[i].ClassName, right[i].ClassName);
                     Assert.Equal(left[i].TeamName, right[i].TeamName);
                     Assert.Equal(left[i].IsGymTrainer, right[i].IsGymTrainer);
+                    Assert.Equal(left[i].IsHideoutBoss, right[i].IsHideoutBoss);
                     Assert.Equal(left[i].Roster.Select(m => (m.SpeciesId, m.Level)),
                         right[i].Roster.Select(m => (m.SpeciesId, m.Level)));
                 }

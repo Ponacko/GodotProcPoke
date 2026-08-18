@@ -95,6 +95,12 @@ public sealed class InteractionRegistry
             .Select(interaction => interaction.Position)
             .ToHashSet();
 
+    /// <summary>The stable id a generated trainer's post gets, wherever it's carved. Shared with
+    /// <see cref="OverworldSession"/> so it can look up a specific trainer (e.g. a hideout boss) without
+    /// re-deriving this format.</summary>
+    public static string TrainerId(int areaId, (int X, int Y) position)
+        => $"trainer:{areaId}:{position.X}:{position.Y}";
+
     public static InteractionRegistry Build(GeneratedRegion region)
     {
         ArgumentNullException.ThrowIfNull(region);
@@ -136,7 +142,7 @@ public sealed class InteractionRegistry
                 RequireTile(carved, gridPosition, LogicalTile.TrainerPost, "trainer");
                 Add(interactions, all, new InteractionRegistration
                 {
-                    Id = $"trainer:{area.Id}:{position.X}:{position.Y}",
+                    Id = TrainerId(area.Id, position),
                     AreaId = area.Id,
                     Position = gridPosition,
                     Kind = InteractionKind.Trainer,

@@ -154,6 +154,46 @@ public sealed class SessionStateTests
     }
 
     [Fact]
+    public void AHideoutsKeyWaitsForItsBossButOtherKeysDoNot()
+    {
+        GeneratedRegion? found = null;
+        Generation.Gating.Gate? hideoutGate = null;
+        for (ulong seed = 1; seed <= 300 && found is null; seed++)
+        {
+            var region = Generate(seed);
+            var gate = region.Gating.Gates.FirstOrDefault(g =>
+                region.Graph[g.KeyAreaId].Archetype == AreaArchetype.VillainHideout
+                && region.Trainers.TrainersOf(g.KeyAreaId).Any(t => t.IsHideoutBoss));
+            if (gate is not null) { found = region; hideoutGate = gate; }
+        }
+        Assert.NotNull(found);
+        var region2 = found!;
+        var gate2 = hideoutGate!;
+        var boss = region2.Trainers.TrainersOf(gate2.KeyAreaId).Single(t => t.IsHideoutBoss);
+        var bossId = InteractionRegistry.TrainerId(gate2.KeyAreaId, boss.Position!.Value);
+
+        var session = new OverworldSession(
+            region2, NewGameIdentity.Create(CharacterChoice.CharacterA, "Player"));
+        session.VisitArea(gate2.KeyAreaId);
+        Assert.False(session.Interactions.HasKey(gate2.KeyName));
+
+        session.CompleteTrainerBattle(new GeneratedTrainerBattleTransitionRequest(
+            bossId, "Boss", new PlayerState(new GridPosition(0, 0)), [], 500));
+        session.VisitArea(gate2.KeyAreaId);
+        Assert.True(session.Interactions.HasKey(gate2.KeyName));
+
+        // A non-hideout key area (or a hideout with no boss guarding that key) still grants on first visit.
+        var plainGate = region2.Gating.Gates.FirstOrDefault(g =>
+            region2.Graph[g.KeyAreaId].Archetype != AreaArchetype.VillainHideout);
+        Assert.NotNull(plainGate);
+        var gate3 = plainGate!;
+        var plainSession = new OverworldSession(
+            region2, NewGameIdentity.Create(CharacterChoice.CharacterA, "Player"));
+        plainSession.VisitArea(gate3.KeyAreaId);
+        Assert.True(plainSession.Interactions.HasKey(gate3.KeyName));
+    }
+
+    [Fact]
     public void TimeOfDayHasStablePresentationBandsAndDebugFacts()
     {
         var dawn = TimeOfDayClock.FromMinutes(6 * 60);

@@ -10,7 +10,8 @@ public sealed record TrainerEncounter(
     string ClassName,
     string? TeamName,
     IReadOnlyList<TrainerMember> Roster,
-    bool IsGymTrainer = false)
+    bool IsGymTrainer = false,
+    bool IsHideoutBoss = false)
 {
     public string DisplayClass => TeamName is null ? ClassName : $"{TeamName} {ClassName}";
     public int AceLevel => Roster.Count == 0 ? 0 : Roster.Max(m => m.Level);

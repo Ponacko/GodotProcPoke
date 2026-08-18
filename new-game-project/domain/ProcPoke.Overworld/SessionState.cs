@@ -191,10 +191,23 @@ public sealed class OverworldSession
         Map.Visit(areaId);
 
         // Matches GatingValidator's own solvability model: a key (HM or key-item) counts as obtained once
-        // its area is reachable — there is no separate in-world pickup tile for it.
+        // its area is reachable — there is no separate in-world pickup tile for it. A villain hideout is
+        // the one exception: its key sits behind the boss guarding it (DEVELOPMENT-PLAN's "hideout gauntlets
+        // granting gated key items"), so reaching the area alone isn't enough there.
         foreach (var gate in Region.Gating.Gates)
-            if (gate.KeyAreaId == areaId) Interactions.GrantKey(gate.KeyName);
+            if (gate.KeyAreaId == areaId && IsKeyReleasedAt(areaId)) Interactions.GrantKey(gate.KeyName);
         if (Region.Gating.Fly.AreaId == areaId) GrantFly();
+    }
+
+    /// <summary>Whether this area's key is available yet — always true, except a villain hideout with a
+    /// boss, which holds its key until that boss is defeated.</summary>
+    private bool IsKeyReleasedAt(int areaId)
+    {
+        var boss = Region.Trainers.TrainersOf(areaId).FirstOrDefault(trainer => trainer.IsHideoutBoss);
+        if (boss is null) return true;
+        // Only gym trainers ever have a null Position (region.Trainers.TrainersOf); a hideout boss always
+        // stands on a carved TrainerPost.
+        return HasDefeatedTrainer(InteractionRegistry.TrainerId(areaId, boss.Position!.Value));
     }
 
     public void SetTime(int minutesSinceMidnight)

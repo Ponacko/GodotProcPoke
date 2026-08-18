@@ -80,7 +80,13 @@ public static class HideoutCarver
         f.Write(grid, farNear.CenterU, farNear.CenterV, LogicalTile.TrainerPost);
         f.Write(grid, nearNear.CenterU, nearNear.CenterV, LogicalTile.TrainerPost);
 
-        return new CarvedArea { AreaId = area.Id, Grid = grid, Openings = [opening] };
+        return new CarvedArea
+        {
+            AreaId = area.Id,
+            Grid = grid,
+            Openings = [opening],
+            HideoutBossPost = f.Map(boss.CenterU, boss.CenterV),
+        };
     }
 
     /// <summary>An L-shaped one-tile canonical corridor: along v first, then along u.</summary>

@@ -59,8 +59,10 @@ public static class TrainerPass
             {
                 var assignment = areaAssignment
                     ?? ClassFor(area, biomes.Of(areaId), identity, ref hideoutIndex, rng);
+                var isBoss = area.Archetype == AreaArchetype.VillainHideout
+                    && carved[areaId].HideoutBossPost == position;
                 trainers.Add(CreateTrainer(area, areaId, position, assignment, pool, fraction,
-                    graph, biomes, gymPathIndices, anchors, data, rng));
+                    graph, biomes, gymPathIndices, anchors, data, rng, isBoss));
             }
 
             if (identity.GymTypes.TryGetValue(areaId, out var gymType))
@@ -124,15 +126,24 @@ public static class TrainerPass
             : AnyClass(className);
     }
 
+    /// <summary>How far above an ordinary hideout Grunt the boss's ace level sits — the same "step up on
+    /// the way to a clear spike" idea as <see cref="GymTrainerBandDepth"/>, just guarding the room instead
+    /// of announcing it.</summary>
+    private const int HideoutBossAceBonus = 3;
+
     private static TrainerEncounter CreateTrainer(
         Area area, int areaId, (int X, int Y) position, ClassAssignment assignment,
         IReadOnlyList<int> availableSpecies, double fraction, RegionGraph graph, BiomeMap biomes,
-        IReadOnlyList<int> gymPathIndices, IReadOnlyDictionary<int, int> anchors, GameData data, Pcg32 rng)
+        IReadOnlyList<int> gymPathIndices, IReadOnlyDictionary<int, int> anchors, GameData data, Pcg32 rng,
+        bool isBoss)
     {
         var wild = WildLevel(area, graph, biomes, gymPathIndices, anchors);
-        var ace = wild + 2 + rng.NextInt(3);
-        var roster = BuildRoster(availableSpecies, assignment.Bias, RosterSize(fraction), ace, data, rng);
-        return new TrainerEncounter(areaId, position, assignment.ClassName, assignment.TeamName, roster);
+        var ace = wild + 2 + rng.NextInt(3) + (isBoss ? HideoutBossAceBonus : 0);
+        var size = RosterSize(fraction) + (isBoss ? 1 : 0);
+        var roster = BuildRoster(availableSpecies, assignment.Bias, size, ace, data, rng);
+        var className = isBoss ? "Boss" : assignment.ClassName;
+        return new TrainerEncounter(
+            areaId, position, className, assignment.TeamName, roster, IsHideoutBoss: isBoss);
     }
 
     /// <summary>How many levels a gym's trainer band spans below its top.</summary>

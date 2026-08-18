@@ -70,6 +70,10 @@ public sealed record CarvedArea
     /// </summary>
     public int TrunkRow { get; init; } = -1;
 
+    /// <summary>The villain hideout's boss TrainerPost — the room diagonally opposite the entrance,
+    /// which <see cref="HideoutCarver"/> already computes; null for every other archetype.</summary>
+    public (int X, int Y)? HideoutBossPost { get; init; }
+
     /// <summary>
     /// The chambers this area was built from, for the archetypes that lay rooms (caves, hideouts); empty for
     /// the rest. Recorded because a room is a fact about the construction, not something to be recovered from

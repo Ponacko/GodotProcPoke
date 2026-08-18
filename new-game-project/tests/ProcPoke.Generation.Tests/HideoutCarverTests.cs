@@ -38,6 +38,15 @@ public class HideoutCarverTests
                 var item = Find(carved.Grid, LogicalTile.ItemBall)[0];
                 Assert.True(IsInFarthestRoom(carved.Grid, entrance, item),
                     $"seed {seed}/{badges} area {area.Id}: loot is not in the room farthest from the entrance");
+
+                // CarvedArea.HideoutBossPost is recorded metadata, not re-derived here — re-derive it
+                // independently: it must be the TrainerPost sitting in that same farthest room (7a keys the
+                // boss's stronger roster off this field, so a wrong value would silently pick the wrong post).
+                Assert.NotNull(carved.HideoutBossPost);
+                var bossPost = carved.HideoutBossPost!.Value;
+                Assert.Equal(LogicalTile.TrainerPost, carved.Grid[bossPost.X, bossPost.Y]);
+                Assert.True(IsInFarthestRoom(carved.Grid, entrance, bossPost),
+                    $"seed {seed}/{badges} area {area.Id}: HideoutBossPost is not in the room farthest from the entrance");
             }
         }
         Assert.True(checkedCount > 0, "no villain hideouts were exercised across the corpus");
