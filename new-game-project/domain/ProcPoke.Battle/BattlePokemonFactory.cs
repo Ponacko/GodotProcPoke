@@ -9,6 +9,10 @@ public sealed record BattlePokemonBuildOptions
     public int NatureId { get; init; } = 1;
     public string? Id { get; init; }
     public IReadOnlyList<int>? MoveIds { get; init; }
+
+    /// <summary>Starting HP carried in from a persisted <c>BattleProgressionState</c>; null means fresh/full
+    /// (the default for wild opponents and any Pokémon with no prior battle state).</summary>
+    public int? StartingHp { get; init; }
 }
 
 /// <summary>
@@ -29,6 +33,8 @@ public static class BattlePokemonFactory
             throw new ArgumentException($"Unknown species {speciesId}.", nameof(speciesId));
         if (level is < 1 or > 100)
             throw new ArgumentOutOfRangeException(nameof(level));
+        if (options.StartingHp is < 0)
+            throw new ArgumentOutOfRangeException(nameof(options), "Starting HP cannot be negative.");
         ValidateValues(options.IndividualValues, 31, "individual values");
         ValidateValues(options.EffortValues, 255, "effort values");
         if (Sum(options.EffortValues) > 510)
@@ -39,6 +45,7 @@ public static class BattlePokemonFactory
 
         var hp = CalculateStat(species.BaseStats.Hp, options.IndividualValues.Hp,
             options.EffortValues.Hp, level, Stat.Hp, nature);
+        var currentHp = options.StartingHp is { } startingHp ? Math.Min(startingHp, hp) : hp;
         var attack = CalculateStat(species.BaseStats.Attack, options.IndividualValues.Attack,
             options.EffortValues.Attack, level, Stat.Attack, nature);
         var defense = CalculateStat(species.BaseStats.Defense, options.IndividualValues.Defense,
@@ -62,7 +69,7 @@ public static class BattlePokemonFactory
             SpecialDefense = specialDefense,
             Types = species.Types,
             MaxHp = hp,
-            Hp = hp,
+            Hp = currentHp,
             Moves = moveIds.Select(moveId => data.Moves[moveId]).ToArray(),
         };
     }
@@ -76,13 +83,35 @@ public static class BattlePokemonFactory
         Nature nature)
     {
         ArgumentNullException.ThrowIfNull(nature);
+        if (stat == Stat.Hp) return CalculateHp(baseStat, individualValue, effortValue, level);
         var raw = (2 * baseStat + individualValue + effortValue / 4) * level / 100;
-        if (stat == Stat.Hp) return raw + level + 10;
         var statValue = raw + 5;
         if (nature.IncreasedStat == stat) statValue = statValue * 110 / 100;
         if (nature.DecreasedStat == stat) statValue = statValue * 90 / 100;
         return Math.Max(1, statValue);
     }
+
+    /// <summary>A species/level's real max HP — the same formula <see cref="Create"/> uses, without the
+    /// cost of resolving a moveset or nature just to read one field (a Pokémon Center healing the whole
+    /// party, or a post-battle reward clamping surviving HP, both only ever need this).</summary>
+    public static int MaxHpOf(
+        GameData data, int speciesId, int level, StatBlock effortValues = default, StatBlock? individualValues = null)
+    {
+        ArgumentNullException.ThrowIfNull(data);
+        if (!data.Species.TryGetValue(speciesId, out var species))
+            throw new ArgumentException($"Unknown species {speciesId}.", nameof(speciesId));
+        if (level is < 1 or > 100)
+            throw new ArgumentOutOfRangeException(nameof(level));
+        var ivs = individualValues ?? new StatBlock(15, 15, 15, 15, 15, 15);
+        ValidateValues(ivs, 31, "individual values");
+        ValidateValues(effortValues, 255, "effort values");
+        if (Sum(effortValues) > 510)
+            throw new ArgumentException("Effort values exceed the total Gen 5 cap.", nameof(effortValues));
+        return CalculateHp(species.BaseStats.Hp, ivs.Hp, effortValues.Hp, level);
+    }
+
+    private static int CalculateHp(int baseStat, int individualValue, int effortValue, int level)
+        => (2 * baseStat + individualValue + effortValue / 4) * level / 100 + level + 10;
 
     private static IReadOnlyList<int> ResolveMoves(
         GameData data, int speciesId, int level, IReadOnlyList<int>? requested)

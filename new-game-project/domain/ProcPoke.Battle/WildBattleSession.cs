@@ -123,6 +123,7 @@ public sealed class WildBattleSession
             current,
             State.Opponent.SpeciesId,
             State.Opponent.Level,
+            State.Player.Hp,
             evolutionContext,
             trainerBattle,
             participants);

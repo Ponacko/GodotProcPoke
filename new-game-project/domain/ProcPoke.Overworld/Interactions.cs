@@ -16,6 +16,7 @@ public enum InteractionKind
     Item,
     Gate,
     Shop,
+    Heal,
 }
 
 /// <summary>A stable, map-local interaction assembled from generation output.</summary>
@@ -312,7 +313,7 @@ public sealed class InteractionSession
 
         return interaction.Kind switch
         {
-            InteractionKind.Npc or InteractionKind.Sign or InteractionKind.Shop => new(
+            InteractionKind.Npc or InteractionKind.Sign or InteractionKind.Shop or InteractionKind.Heal => new(
                 InteractionOutcomeKind.Dialogue, interaction, interaction.Text),
             InteractionKind.Trainer => new(
                 InteractionOutcomeKind.TrainerPrompt, interaction, interaction.Text),

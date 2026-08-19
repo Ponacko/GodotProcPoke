@@ -224,15 +224,37 @@ public sealed class SessionStateTests
         var session = new OverworldSession(
             region, NewGameIdentity.Create(CharacterChoice.CharacterA, "Player"));
 
+        var progression = BattleProgressionFactory.AtLevel(TestData.Data, 1, 10);
+        session.Party.Add(progression with { CurrentHp = 1 });
+
         session.VisitArea(town.Id);
         session.VisitArea(route.Id);
-        var result = session.ApplyWhiteout();
+        var result = session.ApplyWhiteout(TestData.Data);
 
         Assert.Equal(route.Id, result.FromAreaId);
         Assert.Equal(town.Id, result.DestinationAreaId);
         Assert.False(result.WasAlreadyAtCenter);
         Assert.Equal(town.Id, session.CurrentAreaId);
         Assert.Equal(town.Id, session.LastPokemonCenterAreaId);
+        // A whiteout is what a Pokémon Center trip is for — the party comes back at full HP.
+        Assert.Equal(progression.CurrentHp, session.Party.Members[0].CurrentHp);
+    }
+
+    [Fact]
+    public void HealPartyRestoresEveryMemberToItsOwnMaxHp()
+    {
+        var region = Generate(31337);
+        var session = new OverworldSession(
+            region, NewGameIdentity.Create(CharacterChoice.CharacterA, "Player"));
+        var first = BattleProgressionFactory.AtLevel(TestData.Data, 1, 10);
+        var second = BattleProgressionFactory.AtLevel(TestData.Data, 4, 12);
+        session.Party.Add(first with { CurrentHp = 1 });
+        session.Party.Add(second); // already full — healing this one must be a no-op, not an error
+
+        session.HealParty(TestData.Data);
+
+        Assert.Equal(first.CurrentHp, session.Party.Members[0].CurrentHp);
+        Assert.Equal(second.CurrentHp, session.Party.Members[1].CurrentHp);
     }
 
     [Fact]

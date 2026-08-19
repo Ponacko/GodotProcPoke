@@ -68,5 +68,6 @@ public sealed class PartyTests
         TotalExperience = 0,
         EffortValues = new StatBlock(0, 0, 0, 0, 0, 0),
         MoveIds = [1],
+        CurrentHp = 20,
     };
 }

@@ -3,10 +3,10 @@ using ProcPoke.Battle;
 namespace ProcPoke.Overworld;
 
 /// <summary>
-/// The player's owned Pokémon, in party order. <see cref="BattleProgressionState"/> carries no HP field
-/// (HP is battle-session-local, not persisted between battles), so there is no "active"/"fainted" member
-/// selection here yet — with only ever one member possible until Bag/PC/multi-catch systems exist,
-/// callers simply use <see cref="Members"/>[0]. Real active-member selection is a Trainer-battles/Gyms
+/// The player's owned Pokémon, in party order. <see cref="BattleProgressionState.CurrentHp"/> persists
+/// between battles, but there is still no "active"/"fainted" member selection here — with only ever one
+/// member possible until Bag/PC/multi-catch systems exist, callers simply use <see cref="Members"/>[0].
+/// Real active-member selection is a Trainer-battles/Gyms
 /// concern, once the party can actually hold more than one Pokémon.
 /// </summary>
 public sealed class Party

@@ -489,11 +489,25 @@ public sealed class OverworldSession
         return true;
     }
 
-    public WhiteoutResult ApplyWhiteout()
+    public WhiteoutResult ApplyWhiteout(GameData data)
     {
         var result = WhiteoutResolver.Resolve(Region, CurrentAreaId, LastPokemonCenterAreaId);
         VisitArea(result.DestinationAreaId);
+        HealParty(data);
         return result;
+    }
+
+    /// <summary>Restores every party member to full HP — a whiteout's other half (mainline heals for free
+    /// on the trip back), and what a Pokémon Center's clerk does directly on request.</summary>
+    public void HealParty(GameData data)
+    {
+        ArgumentNullException.ThrowIfNull(data);
+        for (var i = 0; i < Party.Members.Count; i++)
+        {
+            var member = Party.Members[i];
+            var maxHp = BattlePokemonFactory.MaxHpOf(data, member.SpeciesId, member.Level, member.EffortValues);
+            if (member.CurrentHp != maxHp) Party.Replace(i, member with { CurrentHp = maxHp });
+        }
     }
 
     private bool IsPokemonCenter(int areaId)

@@ -3,7 +3,9 @@ using ProcPoke.Data;
 
 namespace ProcPoke.Battle;
 
-/// <summary>Persistent progression fields needed to apply one post-battle reward.</summary>
+/// <summary>Persistent progression fields needed to apply one post-battle reward. <see cref="CurrentHp"/>
+/// carries between battles (a Pokémon Center, not a fresh battle, is what restores it to max) — it is set
+/// here by the caller holding the just-ended battle's live state, never guessed at by this record itself.</summary>
 public sealed record BattleProgressionState
 {
     public required int SpeciesId { get; init; }
@@ -11,6 +13,7 @@ public sealed record BattleProgressionState
     public required int TotalExperience { get; init; }
     public required StatBlock EffortValues { get; init; }
     public required IReadOnlyList<int> MoveIds { get; init; }
+    public required int CurrentHp { get; init; }
 }
 
 public sealed record BattleRewardResult(
@@ -35,6 +38,7 @@ public static class BattleProgressionFactory
             TotalExperience = growth.CumulativeExperience[level],
             EffortValues = new StatBlock(0, 0, 0, 0, 0, 0),
             MoveIds = pokemon.Moves.Select(move => move.Id).ToArray(),
+            CurrentHp = pokemon.MaxHp,
         };
     }
 }
@@ -42,11 +46,15 @@ public static class BattleProgressionFactory
 /// <summary>Composes XP/EV, level-up move learning, and level-up evolution into one reward boundary.</summary>
 public static class BattleRewardResolver
 {
+    /// <param name="survivingHp">The player Pokémon's HP at the moment this opponent fainted (from the
+    /// live <c>BattleState</c> the caller is holding) — clamped into the result's (possibly higher, on a
+    /// level-up or evolution) max HP.</param>
     public static BattleRewardResult ApplyDefeat(
         GameData data,
         BattleProgressionState current,
         int defeatedSpeciesId,
         int defeatedLevel,
+        int survivingHp,
         EvolutionContext? evolutionContext = null,
         bool trainerBattle = false,
         int participants = 1)
@@ -54,6 +62,7 @@ public static class BattleRewardResolver
         ArgumentNullException.ThrowIfNull(data);
         ArgumentNullException.ThrowIfNull(current);
         ValidateCurrent(data, current);
+        if (survivingHp < 0) throw new ArgumentOutOfRangeException(nameof(survivingHp));
 
         var gain = ExperienceProgression.ApplyDefeat(
             data,
@@ -97,17 +106,23 @@ public static class BattleRewardResolver
                 evolution = EvolutionResolver.TryResolve(data, context);
         }
 
+        var resultSpeciesId = evolution?.ToSpeciesId ?? current.SpeciesId;
+        // A level-up or evolution can raise max HP; re-derive it rather than trusting the pre-battle max,
+        // so a HP total above the OLD max (but within the new one) isn't clamped away.
+        var maxHp = BattlePokemonFactory.MaxHpOf(data, resultSpeciesId, gain.NewLevel, gain.Progress.EffortValues);
+
         return new BattleRewardResult(
             gain,
             moves,
             evolution,
             new BattleProgressionState
             {
-                SpeciesId = evolution?.ToSpeciesId ?? current.SpeciesId,
+                SpeciesId = resultSpeciesId,
                 Level = gain.NewLevel,
                 TotalExperience = gain.Progress.TotalExperience,
                 EffortValues = gain.Progress.EffortValues,
                 MoveIds = moves.MoveIds,
+                CurrentHp = Math.Min(survivingHp, maxHp),
             });
     }
 

@@ -105,6 +105,7 @@ public partial class OverworldRootController : Node2D
         {
             InteriorKind.Gym => GymInteriorBattles.Build(_session.Region, interior.OverworldAreaId, interior.Template),
             InteriorKind.Mart => MartInteractions.Build(interior.OverworldAreaId, interior.Template),
+            InteriorKind.Center => CenterInteractions.Build(interior.OverworldAreaId, interior.Template),
             _ => [],
         };
         _realizer.Realize(interior.Template.Grid, interior.Template.Biome);
@@ -196,6 +197,12 @@ public partial class OverworldRootController : Node2D
 
         if (interaction.Kind == InteractionKind.Shop)
             _message.Text += "\n" + _session.BuyFromMart(Data, interaction.AreaId).Message;
+
+        if (interaction.Kind == InteractionKind.Heal)
+        {
+            _session.HealParty(Data);
+            _message.Text += "\nYour Pokémon are fighting fit!";
+        }
 
         if (outcome.Kind == InteractionOutcomeKind.GateUnlocked)
             _movement.UpdateCapabilities(_session.Interactions.ForMovement(

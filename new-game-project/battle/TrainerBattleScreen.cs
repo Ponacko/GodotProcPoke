@@ -64,7 +64,12 @@ public partial class TrainerBattleScreen : BattleScreenBase
         _progression = session.Party.Members[0];
 
         var player = BattlePokemonFactory.Create(_data, _progression.SpeciesId, _progression.Level,
-            new BattlePokemonBuildOptions { MoveIds = _progression.MoveIds, EffortValues = _progression.EffortValues });
+            new BattlePokemonBuildOptions
+            {
+                MoveIds = _progression.MoveIds,
+                EffortValues = _progression.EffortValues,
+                StartingHp = _progression.CurrentHp,
+            });
         _session = TrainerBattleSession.Start(
             _data, player, _roster, RandomSeed(), $"{_trainerName}'s");
         State = _session.State;
@@ -118,7 +123,7 @@ public partial class TrainerBattleScreen : BattleScreenBase
                 await ReturnToOverworld(_returnState);
                 break;
             case TrainerBattleOutcome.PlayerLost:
-                GameState.Instance.Session!.ApplyWhiteout();
+                GameState.Instance.Session!.ApplyWhiteout(_data);
                 await ReturnToOverworld(resumeAt: null);
                 break;
             default:

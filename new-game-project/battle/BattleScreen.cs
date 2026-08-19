@@ -46,7 +46,12 @@ public partial class BattleScreen : BattleScreenBase
         _progression = party.Members[0];
 
         var player = BattlePokemonFactory.Create(_data, _progression.SpeciesId, _progression.Level,
-            new BattlePokemonBuildOptions { MoveIds = _progression.MoveIds, EffortValues = _progression.EffortValues });
+            new BattlePokemonBuildOptions
+            {
+                MoveIds = _progression.MoveIds,
+                EffortValues = _progression.EffortValues,
+                StartingHp = _progression.CurrentHp,
+            });
         _session = WildBattleSession.Start(_data, player, _request.Battle, RandomSeed());
         State = _session.State;
 
@@ -75,6 +80,7 @@ public partial class BattleScreen : BattleScreenBase
     {
         if (_busy || _session.Outcome != WildBattleOutcome.Ongoing) return;
         Log.AppendText("\nGot away safely!\n");
+        PersistSurvivingHp();
         await ReturnToOverworld(_request.ReturnState);
     }
 
@@ -100,11 +106,12 @@ public partial class BattleScreen : BattleScreenBase
                 await ReturnToOverworld(_request.ReturnState);
                 break;
             case WildBattleOutcome.PlayerLost:
-                GameState.Instance.Session!.ApplyWhiteout();
+                GameState.Instance.Session!.ApplyWhiteout(_data);
                 await ReturnToOverworld(resumeAt: null);
                 break;
             case WildBattleOutcome.Captured:
                 ResolveLegendaryIfPresent();
+                PersistSurvivingHp();
                 await ReturnToOverworld(_request.ReturnState);
                 break;
             default:
@@ -118,6 +125,14 @@ public partial class BattleScreen : BattleScreenBase
     {
         if (_request.Legendary is { } legendary)
             GameState.Instance.Session!.MarkLegendaryResolved(legendary.SpeciesId);
+    }
+
+    /// <summary>For the two outcomes that never touch progression/rewards (flee, capture): the player's own
+    /// HP still took whatever damage this battle dealt, and that must carry back to the party.</summary>
+    private void PersistSurvivingHp()
+    {
+        _progression = _progression with { CurrentHp = State.Player.Hp };
+        GameState.Instance.Session!.Party.Replace(0, _progression);
     }
 
     private void ApplyVictory()

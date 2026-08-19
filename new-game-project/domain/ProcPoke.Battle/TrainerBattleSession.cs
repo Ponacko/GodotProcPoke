@@ -140,7 +140,8 @@ public sealed class TrainerBattleSession
         foreach (var defeated in _defeated)
         {
             var result = BattleRewardResolver.ApplyDefeat(
-                _data, running, defeated.SpeciesId, defeated.Level, evolutionContext, trainerBattle: true, participants: 1);
+                _data, running, defeated.SpeciesId, defeated.Level, State.Player.Hp,
+                evolutionContext, trainerBattle: true, participants: 1);
             results.Add(result);
             running = result.Progression;
         }

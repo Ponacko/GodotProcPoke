@@ -141,6 +141,13 @@ public sealed class TrainerBattleSessionTests
         // The second defeat's reward is computed against the level the first defeat just leveled up to,
         // not the original starting progression — confirming the two calls chain rather than run independently.
         Assert.True(rewards[1].Progression.TotalExperience >= rewards[0].Progression.TotalExperience);
+        // Every reward in the chain carries the player's real end-of-battle HP (clamped to whatever that
+        // step's max HP is), not the pre-battle progression's HP.
+        foreach (var reward in rewards)
+        {
+            var expectedMaxHp = BattlePokemonFactory.MaxHpOf(Data, reward.Progression.SpeciesId, reward.Progression.Level);
+            Assert.Equal(Math.Min(session.State.Player.Hp, expectedMaxHp), reward.Progression.CurrentHp);
+        }
         Assert.Throws<InvalidOperationException>(() => session.ApplyVictoryRewards(progression));
     }
 
