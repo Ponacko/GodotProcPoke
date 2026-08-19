@@ -122,6 +122,15 @@ public static class BattleTurnResolver
         {
             var pokemon = actor == BattleActor.Player ? workingState.Player : workingState.Opponent;
             if (pokemon.IsFainted) continue;
+
+            // Bag items are handled before the action check on purpose: a Pokémon asleep, paralysed or
+            // frozen can still be given a potion — it is the trainer who reaches for the bag, not it.
+            if (action is UseItemAction itemAction)
+            {
+                ApplyBattleItem(itemAction, turn, actor, ref workingState, events);
+                continue;
+            }
+
             if (!CanAct(turn, actor, ref workingState, events, random)) continue;
 
             pokemon = actor == BattleActor.Player ? workingState.Player : workingState.Opponent;
@@ -215,10 +224,52 @@ public static class BattleTurnResolver
         return random.NextInt(2) == 0 ? [player, opponent] : [opponent, player];
     }
 
-    private static int Priority(BattlePokemon pokemon, BattleAction action)
-        => action is UseMoveAction moveAction
-            ? pokemon.Moves.Single(move => move.Id == moveAction.MoveId).Priority
-            : 0;
+    /// <summary>Move priority, except that a bag item beats every move (Gen 5 resolves items and switches
+    /// before the priority bracket +5 ceiling that moves live under).</summary>
+    private static int Priority(BattlePokemon pokemon, BattleAction action) => action switch
+    {
+        UseItemAction => 6,
+        UseMoveAction moveAction => pokemon.Moves.Single(move => move.Id == moveAction.MoveId).Priority,
+        _ => 0,
+    };
+
+    /// <summary>
+    /// One bag item spent on the actor's own Pokémon. Only healing is modelled: reviving needs a party to
+    /// revive from, which a single-active battle does not have, so the caller offers only what works and an
+    /// item with nothing to do says so rather than silently passing.
+    /// </summary>
+    private static void ApplyBattleItem(
+        UseItemAction action, int turn, BattleActor actor, ref BattleState state, List<BattleEvent> events)
+    {
+        var pokemon = actor == BattleActor.Player ? state.Player : state.Opponent;
+        events.Add(new ItemUsed(turn, actor, action.ItemId, action.ItemName));
+
+        if (action.Medicine.Effect != MedicineEffect.RestoreHp)
+        {
+            events.Add(new MessageShown(turn, $"{action.ItemName} had no effect."));
+            return;
+        }
+
+        var restored = Math.Min(pokemon.MaxHp - pokemon.Hp, action.Medicine.HpRestoredFor(pokemon.MaxHp));
+        var cured = action.Medicine.CuresStatus && pokemon.Status != BattleStatus.None;
+        if (restored <= 0 && !cured)
+        {
+            events.Add(new MessageShown(turn, $"{action.ItemName} had no effect."));
+            return;
+        }
+
+        var healed = pokemon with { Hp = pokemon.Hp + restored };
+        if (restored > 0) events.Add(new HpRestored(turn, actor, restored));
+        if (cured)
+        {
+            events.Add(new StatusCured(turn, actor, pokemon.Status));
+            healed = healed with
+            {
+                Status = BattleStatus.None, SleepTurns = 0, ToxicTurns = 0, FrozenSinceTurn = 0,
+            };
+        }
+        state = actor == BattleActor.Player ? state with { Player = healed } : state with { Opponent = healed };
+    }
 
     private static void ValidateAction(BattlePokemon pokemon, BattleAction action)
     {

@@ -27,6 +27,79 @@ public sealed class TrainerBattleSessionTests
         Moves = [Data.Moves[33]],
     };
 
+    /// <summary>A wall: it survives anything but takes forever to win, so a battle runs long enough to
+    /// watch what the opponent does on its way down.</summary>
+    private static BattlePokemon Sturdy(int speciesId) => new()
+    {
+        Id = "player",
+        SpeciesId = speciesId,
+        Level = 50,
+        Speed = 500,
+        Attack = 12,
+        Defense = 500,
+        SpecialAttack = 12,
+        SpecialDefense = 500,
+        Types = [PokeType.Normal],
+        MaxHp = 4000,
+        Hp = 4000,
+        Moves = [Data.Moves[33]],
+    };
+
+    [Fact]
+    public void OnlyABossCarriesPotions()
+    {
+        var roster = new[] { new TrainerRosterMember(16, 12) };
+
+        Assert.Equal(
+            0,
+            TrainerBattleSession.Start(Data, Overpowered(1), roster, seed: 1).OpponentPotionsLeft);
+        Assert.Equal(
+            TrainerBattleSession.BossPotions,
+            TrainerBattleSession.Start(Data, Overpowered(1), roster, seed: 1, tier: BattleAiTier.Boss)
+                .OpponentPotionsLeft);
+        Assert.Throws<ArgumentException>(() => TrainerBattleSession.Start(
+            Data, Overpowered(1), roster, seed: 1, tier: BattleAiTier.Wild));
+    }
+
+    /// <summary>
+    /// CONTEXT.md's AI Tier 2 heal, end to end: whittled down in small steps, a boss must pass through the
+    /// quarter-HP band, and it heals there rather than trading hits — spending its whole (small, fixed)
+    /// supply before it goes down.
+    /// </summary>
+    [Fact]
+    public void ABossSpendsItsPotionsOnTheWayDown()
+    {
+        var roster = new[] { new TrainerRosterMember(143, 50) }; // a big HP pool to grind through
+        var session = TrainerBattleSession.Start(
+            Data, Sturdy(1), roster, seed: 7, opponentIdPrefix: "Leader's", tier: BattleAiTier.Boss);
+
+        var itemsUsed = 0;
+        for (var turn = 0; turn < 2000 && session.Outcome == TrainerBattleOutcome.Ongoing; turn++)
+        {
+            var result = session.TakeTurn(new UseMoveAction(33));
+            itemsUsed += result.Events.OfType<ItemUsed>().Count(item => item.Actor == BattleActor.Opponent);
+        }
+
+        Assert.Equal(TrainerBattleOutcome.PlayerWon, session.Outcome);
+        Assert.Equal(TrainerBattleSession.BossPotions, itemsUsed);
+        Assert.Equal(0, session.OpponentPotionsLeft);
+    }
+
+    /// <summary>The same grind against a standard trainer: no potions, ever.</summary>
+    [Fact]
+    public void AStandardTrainerNeverHeals()
+    {
+        var roster = new[] { new TrainerRosterMember(143, 50) };
+        var session = TrainerBattleSession.Start(Data, Sturdy(1), roster, seed: 7);
+
+        var itemsUsed = 0;
+        for (var turn = 0; turn < 2000 && session.Outcome == TrainerBattleOutcome.Ongoing; turn++)
+            itemsUsed += session.TakeTurn(new UseMoveAction(33)).Events.OfType<ItemUsed>().Count();
+
+        Assert.Equal(TrainerBattleOutcome.PlayerWon, session.Outcome);
+        Assert.Equal(0, itemsUsed);
+    }
+
     [Fact]
     public void StartBuildsTheFirstRosterMemberAsTheOpponent()
     {

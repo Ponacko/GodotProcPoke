@@ -311,7 +311,8 @@ public sealed class OverworldSession
                 .ToArray();
             var prize = checked(TrainerPayout.BaseRateFor(trainer.ClassName) * trainer.AceLevel);
             return new GeneratedTrainerBattleTransitionRequest(
-                interaction.Id, trainer.DisplayClass, returnState, roster, prize);
+                interaction.Id, trainer.DisplayClass, returnState, roster, prize,
+                IsBoss: trainer.IsHideoutBoss);
         }
 
         if (interaction.Boss is { } interactionBoss && interaction.LeagueStage is int stage)
@@ -328,7 +329,8 @@ public sealed class OverworldSession
             return new GeneratedTrainerBattleTransitionRequest(
                 interaction.Id, boss.Name, returnState, roster,
                 checked(TrainerPayout.BaseRateFor(rate) * aceLevel),
-                LeagueReward: new LeagueVictoryReward(interaction.AreaId, stage));
+                LeagueReward: new LeagueVictoryReward(interaction.AreaId, stage),
+                IsBoss: true);
         }
 
         if (interaction.GymLeader is { } leader)
@@ -346,7 +348,8 @@ public sealed class OverworldSession
             return new GeneratedTrainerBattleTransitionRequest(
                 interaction.Id, leader.Name, returnState, roster,
                 checked(TrainerPayout.BaseRateFor("Gym Leader") * aceLevel),
-                new GymVictoryReward(areaId, badgeNumber));
+                new GymVictoryReward(areaId, badgeNumber),
+                IsBoss: true);
         }
 
         throw new InvalidOperationException($"trainer interaction {interaction.Id} has no generated encounter");
@@ -742,6 +745,15 @@ public sealed class OverworldSession
             ItemUseKind.Revived,
             revived == 1 ? "Your fainted Pokémon is back on its feet." : $"{revived} Pokémon were revived.");
     }
+
+    /// <summary>The bag item a battle turn just spent. Separate from <see cref="UseItem"/> because in
+    /// battle the simulation applies the effect and this only pays for it.</summary>
+    public bool SpendItem(int itemId) => Interactions.Bag.Remove(itemId);
+
+    /// <summary>The medicine to reach for on the active Pokémon, or null when the bag holds nothing that
+    /// would help — what a battle screen's Bag button offers.</summary>
+    public BattleItemChoice? BestBattleItem(GameData data, int hp, int maxHp, BattleStatus status)
+        => BattleBag.BestFor(data, Interactions.Bag, hp, maxHp, status);
 
     public void EnableDebugUnlock() => Interactions.EnableDebugUnlock();
 

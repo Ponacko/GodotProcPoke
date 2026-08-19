@@ -24,7 +24,9 @@ public sealed record TrainerBattleTurnResult(
 /// roster[1], and so on as each faints, exactly like a mainline trainer sending out their next Pokémon.
 /// There is no player-side switching yet — <see cref="Overworld.Party"/> only ever holds one battle-ready
 /// member today — so a fainted player Pokémon ends the battle in a loss, same as a wild battle. Catching is
-/// never legal here (no <see cref="ThrowBallAction"/>), and the AI always uses <see cref="BattleAiTier.Trainer"/>.
+/// never legal here (no <see cref="ThrowBallAction"/>). The AI tier is the caller's call: gym leaders, the
+/// Elite Four, the Champion and villain bosses fight at <see cref="BattleAiTier.Boss"/>, everyone else at
+/// <see cref="BattleAiTier.Trainer"/>.
 /// </summary>
 public sealed class TrainerBattleSession
 {
@@ -34,6 +36,8 @@ public sealed class TrainerBattleSession
     private readonly IReadOnlyList<TrainerRosterMember> _roster;
     private readonly string? _opponentIdPrefix;
     private readonly List<TrainerRosterMember> _defeated = [];
+    private readonly BattleAiTier _tier;
+    private int _potionsLeft;
     private int _opponentIndex;
     private bool _rewardsApplied;
 
@@ -43,7 +47,8 @@ public sealed class TrainerBattleSession
         BattleState state,
         IBattleRandom random,
         TypeChart typeChart,
-        GameData data)
+        GameData data,
+        BattleAiTier tier)
     {
         _roster = roster;
         _opponentIdPrefix = opponentIdPrefix;
@@ -51,7 +56,17 @@ public sealed class TrainerBattleSession
         _random = random;
         _typeChart = typeChart;
         _data = data;
+        _tier = tier;
+        _potionsLeft = tier == BattleAiTier.Boss ? BossPotions : 0;
     }
+
+    /// <summary>How many potions a boss brings (CONTEXT.md's AI Tier 2 heal). Small and fixed: difficulty
+    /// is meant to come from team composition and levels, not from an unkillable healer.</summary>
+    public const int BossPotions = 2;
+
+    /// <summary>The medicine a boss reaches for, and the reason this session needs <c>GameData</c> for more
+    /// than building opponents.</summary>
+    private const string BossPotionName = "Hyper Potion";
 
     public BattleState State { get; private set; }
     public TrainerBattleOutcome Outcome { get; private set; } = TrainerBattleOutcome.Ongoing;
@@ -65,7 +80,8 @@ public sealed class TrainerBattleSession
         BattlePokemon player,
         IReadOnlyList<TrainerRosterMember> roster,
         ulong seed,
-        string? opponentIdPrefix = null)
+        string? opponentIdPrefix = null,
+        BattleAiTier tier = BattleAiTier.Trainer)
     {
         ArgumentNullException.ThrowIfNull(data);
         ArgumentNullException.ThrowIfNull(player);
@@ -75,6 +91,9 @@ public sealed class TrainerBattleSession
         if (roster.Count == 0)
             throw new ArgumentException("A trainer battle requires a non-empty roster.", nameof(roster));
 
+        if (tier == BattleAiTier.Wild)
+            throw new ArgumentException("A trainer battle is never fought at the wild tier.", nameof(tier));
+
         var opponent = BuildOpponent(data, roster[0], opponentIdPrefix);
         return new TrainerBattleSession(
             roster,
@@ -82,7 +101,8 @@ public sealed class TrainerBattleSession
             new BattleState { Player = player, Opponent = opponent },
             new BattleRandom(seed),
             data.TypeChart,
-            data);
+            data,
+            tier);
     }
 
     public TrainerBattleTurnResult TakeTurn(BattleAction playerAction)
@@ -94,7 +114,8 @@ public sealed class TrainerBattleSession
             throw new ArgumentException("You cannot throw a ball in a trainer battle.", nameof(playerAction));
 
         var opponentAction = BattleAi.ChooseAction(
-            State, BattleActor.Opponent, BattleAiTier.Trainer, _random, _typeChart);
+            State, BattleActor.Opponent, _tier, _random, _typeChart, BossPotion());
+        if (opponentAction is UseItemAction) _potionsLeft--;
         var turn = BattleTurnResolver.Resolve(State, playerAction, opponentAction, _random, _typeChart);
         State = turn.State;
 
@@ -148,6 +169,18 @@ public sealed class TrainerBattleSession
         _rewardsApplied = true;
         return results;
     }
+
+    /// <summary>The boss's next potion, or null once it has spent them all.</summary>
+    private UseItemAction? BossPotion()
+    {
+        if (_potionsLeft <= 0) return null;
+        var item = _data.Items.Values.FirstOrDefault(candidate => candidate.Name == BossPotionName);
+        if (item is null || MedicineCatalog.For(BossPotionName) is not { } medicine) return null;
+        return new UseItemAction(item.Id, item.Name, medicine);
+    }
+
+    /// <summary>Potions this boss has left; zero for every non-boss trainer.</summary>
+    public int OpponentPotionsLeft => _potionsLeft;
 
     private static BattlePokemon BuildOpponent(GameData data, TrainerRosterMember member, string? idPrefix)
     {

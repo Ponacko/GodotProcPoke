@@ -10,17 +10,25 @@ public enum BattleAiTier
 }
 
 /// <summary>
-/// Selects a move for the active combatant. Party switching and item use require a party/inventory
-/// state that is not part of the current single-active battle contract and remain presentation wiring.
+/// Selects an action for the active combatant, per the three-tier ladder (CONTEXT.md's AI Tier): wild picks
+/// at random, a standard trainer picks the best damage with ~20% imperfection, and a boss picks the best
+/// damage outright and reaches for a potion below a quarter HP. The tier-2 hopeless-matchup switch is still
+/// missing: the opponent's roster is sent out in fixed order, so there is nothing to switch to yet.
 /// </summary>
 public static class BattleAi
 {
+    /// <summary>HP fraction below which a boss heals instead of attacking.</summary>
+    public const double BossHealThreshold = 0.25;
+
+    /// <param name="healingItem">A potion the boss still has, or null when it has none left. Ignored by
+    /// every other tier — only a boss carries items.</param>
     public static BattleAction ChooseAction(
         BattleState state,
         BattleActor actor,
         BattleAiTier tier,
         IBattleRandom random,
-        TypeChart? typeChart = null)
+        TypeChart? typeChart = null,
+        UseItemAction? healingItem = null)
     {
         ArgumentNullException.ThrowIfNull(state);
         ArgumentNullException.ThrowIfNull(random);
@@ -29,6 +37,11 @@ public static class BattleAi
         if (pokemon.IsFainted) return new WaitAction();
         if (pokemon.Moves.Count == 0)
             throw new InvalidOperationException($"{pokemon.Id} has no legal moves.");
+
+        if (tier == BattleAiTier.Boss
+            && healingItem is not null
+            && pokemon.Hp < pokemon.MaxHp * BossHealThreshold)
+            return healingItem;
 
         if (tier == BattleAiTier.Wild)
             return new UseMoveAction(pokemon.Moves[random.NextInt(pokemon.Moves.Count)].Id);

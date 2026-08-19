@@ -8,6 +8,8 @@ namespace ProcPoke.Overworld;
 /// The stable interaction id doubles as the session defeat flag, so returning to the map cannot retrigger
 /// a trainer whose battle has already paid out.
 /// </summary>
+/// <param name="IsBoss">Whether this trainer fights at <see cref="BattleAiTier.Boss"/> (CONTEXT.md's AI
+/// Tier): gym leaders, the Elite Four, the Champion, and a villain hideout's boss.</param>
 public sealed record GeneratedTrainerBattleTransitionRequest(
     string TrainerId,
     string TrainerName,
@@ -15,7 +17,11 @@ public sealed record GeneratedTrainerBattleTransitionRequest(
     IReadOnlyList<TrainerRosterMember> Roster,
     int PrizeMoney,
     GymVictoryReward? GymReward = null,
-    LeagueVictoryReward? LeagueReward = null);
+    LeagueVictoryReward? LeagueReward = null,
+    bool IsBoss = false)
+{
+    public BattleAiTier AiTier => IsBoss ? BattleAiTier.Boss : BattleAiTier.Trainer;
+}
 
 public sealed record GymVictoryReward(int AreaId, int BadgeNumber);
 

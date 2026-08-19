@@ -76,6 +76,42 @@ public abstract partial class BattleScreenBase : Control
         GetTree().ChangeSceneToFile("res://overworld/OverworldRoot.tscn");
     }
 
+    /// <summary>
+    /// Adds the Bag button beside Fight, built in code because every other action button is authored in the
+    /// scene and there is no item menu to author yet: one press uses the most fitting medicine in the bag
+    /// (<see cref="OverworldSession.BestBattleItem"/>) on the active Pokémon, the same
+    /// one-unambiguous-action shape the Mart clerk and the service NPCs use. It disables itself whenever
+    /// the bag holds nothing that would help, so the choice is never a wasted turn.
+    /// </summary>
+    protected Button BuildBagButton(Action<BattleItemChoice> onItemChosen)
+    {
+        var button = new Button { Text = "Bag" };
+        button.Pressed += () =>
+        {
+            if (CurrentBattleItem() is { } choice) onItemChosen(choice);
+        };
+        Actions.AddChild(button);
+        BagButton = button;
+        return button;
+    }
+
+    protected Button? BagButton { get; private set; }
+
+    /// <summary>The item the Bag button would use right now, or null if there is nothing worth using.</summary>
+    protected BattleItemChoice? CurrentBattleItem()
+    {
+        var session = GameState.Instance.Session;
+        var data = GameState.Instance.Data;
+        if (session is null || data is null) return null;
+        return session.BestBattleItem(data, State.Player.Hp, State.Player.MaxHp, State.Player.Status);
+    }
+
+    /// <summary>Greys the Bag button out when the bag has nothing to offer the active Pokémon.</summary>
+    protected void RefreshBagButton()
+    {
+        if (BagButton is not null) BagButton.Disabled = CurrentBattleItem() is null;
+    }
+
     protected async Task Pause() => await ToSignal(GetTree().CreateTimer(0.8), Timer.SignalName.Timeout);
 
     // ── event replay: ADR-0006 — the sim narrates, this only animates + logs in strict order ──────────
@@ -136,6 +172,11 @@ public abstract partial class BattleScreenBase : Control
                 break;
             case FlinchInflicted flinch:
                 Log.AppendText($"{NameOf(flinch.Target)} flinched!\n");
+                break;
+            case ItemUsed item:
+                Log.AppendText(item.Actor == BattleActor.Player
+                    ? $"You used the {item.ItemName}.\n"
+                    : $"The opponent used a {item.ItemName}!\n");
                 break;
             case AbilityTriggered ability:
                 Log.AppendText($"{NameOf(ability.Actor)}'s {ability.AbilityName} activated!\n");

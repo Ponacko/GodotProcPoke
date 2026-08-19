@@ -77,6 +77,14 @@ public partial class BattleScreen : BattleScreenBase
         _runButton.Pressed += Flee;
 
         BuildMoveButtons(moveId => ResolveAction(new UseMoveAction(moveId)));
+        BuildBagButton(choice =>
+        {
+            // The item is spent whether or not the sim finds anything to heal; the button is only offered
+            // when there is, and a spent turn with a spent item is the mainline bargain either way.
+            GameState.Instance.Session!.SpendItem(choice.ItemId);
+            ResolveAction(choice.ToAction());
+        });
+        RefreshBagButton();
         RefreshLabels();
         Log.Text = $"A wild {_data.Species[State.Opponent.SpeciesId].Name} appeared!\n";
     }
@@ -183,6 +191,8 @@ public partial class BattleScreen : BattleScreenBase
         _runButton.Disabled = !enabled;
         foreach (var child in MoveButtons.GetChildren())
             if (child is Button button) button.Disabled = !enabled;
+        if (BagButton is not null) BagButton.Disabled = !enabled;
+        if (enabled) RefreshBagButton();
     }
 
     private void RefreshLabels()

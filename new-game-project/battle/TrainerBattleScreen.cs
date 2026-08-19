@@ -73,8 +73,12 @@ public partial class TrainerBattleScreen : BattleScreenBase
                 EffortValues = _progression.EffortValues,
                 StartingHp = _progression.CurrentHp,
             });
+        // A gym leader, an Elite Four member, the Champion and a hideout boss all fight at the boss tier
+        // (CONTEXT.md's AI Tier): no imperfection, and a potion when their Pokémon drops low. A rival beat
+        // is a scripted trainer battle, not a boss fight.
         _session = TrainerBattleSession.Start(
-            _data, player, _roster, RandomSeed(), $"{_trainerName}'s");
+            _data, player, _roster, RandomSeed(), $"{_trainerName}'s",
+            _generatedRequest?.AiTier ?? BattleAiTier.Trainer);
         State = _session.State;
         session.MarkSpeciesSeen(State.Opponent.SpeciesId);
 
@@ -91,6 +95,12 @@ public partial class TrainerBattleScreen : BattleScreenBase
         FightButton.Pressed += () => { Actions.Visible = false; MoveButtons.Visible = true; };
 
         BuildMoveButtons(moveId => ResolveAction(new UseMoveAction(moveId)));
+        BuildBagButton(choice =>
+        {
+            GameState.Instance.Session!.SpendItem(choice.ItemId);
+            ResolveAction(choice.ToAction());
+        });
+        RefreshBagButton();
         RefreshLabels();
         var greeting = _rivalRequest is not null
             ? RivalDialogue.Greeting(session.Region.Identity.Rival)
@@ -185,6 +195,8 @@ public partial class TrainerBattleScreen : BattleScreenBase
         FightButton.Disabled = !enabled;
         foreach (var child in MoveButtons.GetChildren())
             if (child is Button button) button.Disabled = !enabled;
+        if (BagButton is not null) BagButton.Disabled = !enabled;
+        if (enabled) RefreshBagButton();
     }
 
     private void LoadOpponentSprite()

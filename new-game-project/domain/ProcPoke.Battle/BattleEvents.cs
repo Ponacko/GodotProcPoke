@@ -12,6 +12,7 @@ public enum BattleActionKind
 {
     UseMove,
     ThrowBall,
+    UseItem,
     Wait,
 }
 
@@ -23,6 +24,15 @@ public sealed record UseMoveAction(int MoveId) : BattleAction(BattleActionKind.U
 public sealed record ThrowBallAction(
     string BallId,
     double BallMultiplier = 1.0) : BattleAction(BattleActionKind.ThrowBall);
+
+/// <summary>
+/// A bag item used on the actor's own active Pokémon. The effect travels with the action because the
+/// simulation reads no game data of its own — the caller, which owns <c>GameData</c>, resolves the item to
+/// a <see cref="Medicine"/> first. Items act before every move and are never stopped by a status condition,
+/// exactly as in Gen 5.
+/// </summary>
+public sealed record UseItemAction(
+    int ItemId, string ItemName, Medicine Medicine) : BattleAction(BattleActionKind.UseItem);
 
 public sealed record WaitAction() : BattleAction(BattleActionKind.Wait);
 
@@ -76,6 +86,9 @@ public sealed record RecoilDamage(
 
 public sealed record FlinchInflicted(
     int Turn, BattleActor Actor, BattleActor Target) : BattleEvent(Turn);
+
+public sealed record ItemUsed(
+    int Turn, BattleActor Actor, int ItemId, string ItemName) : BattleEvent(Turn);
 
 public sealed record BallThrown(
     int Turn, BattleActor Actor, string BallId) : BattleEvent(Turn);

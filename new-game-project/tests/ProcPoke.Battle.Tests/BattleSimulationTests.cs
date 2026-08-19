@@ -640,6 +640,84 @@ public sealed class BattleSimulationTests
         Assert.Equal(255, result.ModifiedCatchValue);
     }
 
+    // ── bag items ─────────────────────────────────────────────────────────────────────────────────────
+
+    [Fact]
+    public void ABagItemHealsBeforeAnyMoveLands()
+    {
+        var state = State(playerSpeed: 1, opponentSpeed: 200);
+        state = state with { Player = state.Player with { Hp = 5 } };
+        var potion = new UseItemAction(17, "Potion", new Medicine(MedicineEffect.RestoreHp, FixedHp: 20));
+
+        var result = BattleTurnResolver.Resolve(state, potion, new UseMoveAction(2), new ScriptedRandom(15));
+
+        // Item first despite the player being far slower, and the opponent's hit lands on the healed total.
+        Assert.IsType<ItemUsed>(result.Events[1]);
+        var restored = Assert.IsType<HpRestored>(result.Events[2]);
+        Assert.Equal(20, restored.Amount);
+        var damage = result.Events.OfType<DamageDealt>().Single();
+        Assert.Equal(25 - damage.Amount, result.State.Player.Hp);
+    }
+
+    [Fact]
+    public void ABagItemNeverOverhealsAndSaysSoWhenItCannotHelp()
+    {
+        var state = State(playerSpeed: 100, opponentSpeed: 1);
+        state = state with { Player = state.Player with { Hp = state.Player.MaxHp - 5 } };
+        var maxPotion = new UseItemAction(24, "Max Potion", new Medicine(MedicineEffect.RestoreHp));
+
+        var healed = BattleTurnResolver.Resolve(
+            state, maxPotion, new UseMoveAction(2), new ScriptedRandom(15));
+        Assert.Equal(5, healed.Events.OfType<HpRestored>().Single().Amount);
+
+        var full = BattleTurnResolver.Resolve(
+            state with { Player = state.Player with { Hp = state.Player.MaxHp } },
+            maxPotion, new UseMoveAction(2), new ScriptedRandom(15));
+        Assert.Empty(full.Events.OfType<HpRestored>());
+        Assert.Contains(
+            full.Events.OfType<MessageShown>(), message => message.Message.Contains("no effect"));
+    }
+
+    /// <summary>Sleep and paralysis stop a Pokémon acting, not its trainer opening the bag.</summary>
+    [Fact]
+    public void ABagItemWorksThroughAStatusThatWouldBlockAMove()
+    {
+        var state = State(playerSpeed: 100, opponentSpeed: 1);
+        state = state with
+        {
+            Player = state.Player with
+            {
+                Hp = 5, Status = BattleStatus.Sleep, SleepTurns = 3,
+            },
+        };
+        var fullRestore = new UseItemAction(
+            23, "Full Restore", new Medicine(MedicineEffect.RestoreHp, CuresStatus: true));
+
+        var result = BattleTurnResolver.Resolve(
+            state, fullRestore, new UseMoveAction(2), new ScriptedRandom(15));
+
+        Assert.Single(result.Events.OfType<ItemUsed>());
+        Assert.Equal(BattleStatus.Sleep, result.Events.OfType<StatusCured>().Single().Status);
+        Assert.Equal(BattleStatus.None, result.State.Player.Status);
+        Assert.Equal(0, result.State.Player.SleepTurns);
+    }
+
+    [Fact]
+    public void AReviveInBattleIsSpentWithoutEffect()
+    {
+        var state = State(playerSpeed: 100, opponentSpeed: 1);
+        state = state with { Player = state.Player with { Hp = 5 } };
+        var revive = new UseItemAction(
+            28, "Revive", new Medicine(MedicineEffect.Revive, MaxHpFraction: 0.5));
+
+        var result = BattleTurnResolver.Resolve(state, revive, new UseMoveAction(2), new ScriptedRandom(15));
+
+        Assert.Single(result.Events.OfType<ItemUsed>());
+        Assert.Empty(result.Events.OfType<HpRestored>());
+        Assert.Contains(
+            result.Events.OfType<MessageShown>(), message => message.Message.Contains("no effect"));
+    }
+
     private static BattleState State(int playerSpeed, int opponentSpeed, int playerPriority = 0)
         => new()
         {

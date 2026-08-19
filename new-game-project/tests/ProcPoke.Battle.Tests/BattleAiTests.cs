@@ -67,6 +67,28 @@ public sealed class BattleAiTests
         Assert.Equal(2, Assert.IsType<UseMoveAction>(action).MoveId);
     }
 
+    /// <summary>CONTEXT.md's AI Tier 2: a boss heals below ~25% HP, and only a boss does.</summary>
+    [Fact]
+    public void BossAiReachesForAPotionBelowAQuarterHealth()
+    {
+        var potion = new UseItemAction(17, "Potion", new Medicine(MedicineEffect.RestoreHp, FixedHp: 20));
+        var full = State(Move(1, "Tackle"), Move(2, "Ember", PokeType.Fire));
+        var hurt = full with { Player = full.Player with { Hp = 9 } };   // 9/40 — under a quarter
+        var scratched = full with { Player = full.Player with { Hp = 11 } }; // 11/40 — over it
+
+        Assert.Same(potion, BattleAi.ChooseAction(
+            hurt, BattleActor.Player, BattleAiTier.Boss, new ScriptedRandom(0), null, potion));
+        Assert.IsType<UseMoveAction>(BattleAi.ChooseAction(
+            scratched, BattleActor.Player, BattleAiTier.Boss, new ScriptedRandom(0), null, potion));
+        // No potion left, and every lesser tier: it attacks regardless of how low it is.
+        Assert.IsType<UseMoveAction>(BattleAi.ChooseAction(
+            hurt, BattleActor.Player, BattleAiTier.Boss, new ScriptedRandom(0)));
+        Assert.IsType<UseMoveAction>(BattleAi.ChooseAction(
+            hurt, BattleActor.Player, BattleAiTier.Trainer, new ScriptedRandom(0, 0), null, potion));
+        Assert.IsType<UseMoveAction>(BattleAi.ChooseAction(
+            hurt, BattleActor.Player, BattleAiTier.Wild, new ScriptedRandom(0), null, potion));
+    }
+
     private static BattleState State(Move playerFirst, Move playerSecond)
         => new()
         {

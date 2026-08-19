@@ -19,7 +19,8 @@ public enum MedicineEffect
 /// share of the Pokémon's own maximum (<paramref name="MaxHpFraction"/>, e.g. Revive's half). Exactly one
 /// is set; both null means full.
 /// </summary>
-public sealed record Medicine(MedicineEffect Effect, int? FixedHp = null, double? MaxHpFraction = null)
+public sealed record Medicine(
+    MedicineEffect Effect, int? FixedHp = null, double? MaxHpFraction = null, bool CuresStatus = false)
 {
     /// <summary>HP this medicine restores to a Pokémon with <paramref name="maxHp"/> maximum. Fractions
     /// floor, per Gen 5 — Revive on a 45 HP Pokémon gives 22, not 23.</summary>
@@ -31,8 +32,9 @@ public sealed record Medicine(MedicineEffect Effect, int? FixedHp = null, double
 /// The Gen 5 medicine table (the Canonical Ruleset), keyed by baked item name — the bake carries an item's
 /// cost and category but not its effect, and hard-coding ids would break the moment the data pin moves.
 /// Items from later generations are absent on purpose: the bake includes their medicine, and a Gen 5 game
-/// has no rule for it. Status cures are absent too, because a party member carries no status condition
-/// outside battle to cure — they become meaningful when in-battle bag use lands.
+/// has no rule for it. The dedicated status cures (Antidote, Full Heal, …) are absent too: outside battle a
+/// party member carries no status condition to cure, and inside it the only cure modelled is Full
+/// Restore's, which comes with the HP.
 /// </summary>
 public static class MedicineCatalog
 {
@@ -42,7 +44,8 @@ public static class MedicineCatalog
         ["Super Potion"] = new(MedicineEffect.RestoreHp, FixedHp: 50),
         ["Hyper Potion"] = new(MedicineEffect.RestoreHp, FixedHp: 200),
         ["Max Potion"] = new(MedicineEffect.RestoreHp),
-        ["Full Restore"] = new(MedicineEffect.RestoreHp),
+        // Full Restore is the one medicine here that also clears a status condition (Gen 5).
+        ["Full Restore"] = new(MedicineEffect.RestoreHp, CuresStatus: true),
         ["Fresh Water"] = new(MedicineEffect.RestoreHp, FixedHp: 50),
         ["Soda Pop"] = new(MedicineEffect.RestoreHp, FixedHp: 60),
         ["Lemonade"] = new(MedicineEffect.RestoreHp, FixedHp: 80),
