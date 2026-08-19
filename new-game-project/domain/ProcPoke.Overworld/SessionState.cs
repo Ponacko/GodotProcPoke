@@ -608,6 +608,50 @@ public sealed class OverworldSession
             ? Party.Members[partyIndex]
             : throw new ArgumentOutOfRangeException(nameof(partyIndex), partyIndex, "no such party member");
 
+    /// <summary>
+    /// Uses one bag item on one party member: medicine, an evolution stone, or the Link Cable. The item is
+    /// spent only when it actually did something, so a Potion tapped at full HP stays in the bag. Held
+    /// items and in-battle use are separate seams — this is the field bag, the one a party menu drives.
+    /// </summary>
+    public ItemUseResult UseItem(GameData data, int itemId, int partyIndex)
+    {
+        ArgumentNullException.ThrowIfNull(data);
+        if (!Interactions.Bag.Has(itemId))
+            return new ItemUseResult(ItemUseKind.NotUsable, "You don't have that item.");
+        if (MedicineCatalog.For(data, itemId)?.Effect == MedicineEffect.RevivePartyFully)
+            return UsePartyRevive(data, itemId);
+
+        var member = MemberAt(partyIndex);
+        if (ItemUse.TryApply(data, member, itemId) is not { } applied)
+            return new ItemUseResult(ItemUseKind.NotUsable, "That item can't be used here.");
+
+        if (!applied.Result.Changed) return applied.Result;
+        Party.Replace(partyIndex, applied.Member);
+        Interactions.Bag.Remove(itemId);
+        return applied.Result;
+    }
+
+    /// <summary>Sacred Ash: the one medicine that treats the party rather than a Pokémon.</summary>
+    private ItemUseResult UsePartyRevive(GameData data, int itemId)
+    {
+        var revived = 0;
+        for (var i = 0; i < Party.Members.Count; i++)
+        {
+            var member = Party.Members[i];
+            if (member.CurrentHp > 0) continue;
+            var maxHp = BattlePokemonFactory.MaxHpOf(data, member.SpeciesId, member.Level, member.EffortValues);
+            Party.Replace(i, member with { CurrentHp = maxHp });
+            revived++;
+        }
+        if (revived == 0)
+            return new ItemUseResult(ItemUseKind.NoEffect, "No Pokémon in your party has fainted.");
+
+        Interactions.Bag.Remove(itemId);
+        return new ItemUseResult(
+            ItemUseKind.Revived,
+            revived == 1 ? "Your fainted Pokémon is back on its feet." : $"{revived} Pokémon were revived.");
+    }
+
     public void EnableDebugUnlock() => Interactions.EnableDebugUnlock();
 
     public IReadOnlyList<int> FlyTargets()
