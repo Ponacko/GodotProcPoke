@@ -4,6 +4,7 @@ using ProcPoke.Generation;
 using ProcPoke.Generation.Bosses;
 using ProcPoke.Generation.Encounters;
 using ProcPoke.Generation.Rivals;
+using ProcPoke.Generation.Services;
 using ProcPoke.Generation.Topology;
 
 namespace ProcPoke.Overworld;
@@ -136,8 +137,7 @@ public sealed record GenerationDebugInfo(
     }
 }
 
-/// <summary>A freshly revived fossil, ready for the caller (which owns <c>GameData</c>) to build into a
-/// party member at <see cref="Level"/>.</summary>
+/// <summary>A fossil in the player's possession: which species it revives into, at what level.</summary>
 public sealed record FossilPickup(int SpeciesId, int Level);
 
 /// <summary>Small in-memory Phase 3 session tying identity, map state, Fly, and presentation time together.</summary>
@@ -151,6 +151,7 @@ public sealed class OverworldSession
     private readonly HashSet<int> _defeatedLeagueStages = [];
     private readonly HashSet<int> _resolvedLegendaries = [];
     private readonly HashSet<int> _collectedFossils = [];
+    private readonly List<FossilPickup> _pendingRevivals = [];
     private bool _creditsReached;
 
     public OverworldSession(GeneratedRegion region, PlayerIdentity player)
@@ -425,17 +426,17 @@ public sealed class OverworldSession
 
     public bool HasCollectedFossil(int speciesId) => _collectedFossils.Contains(speciesId);
 
+    /// <summary>Fossils picked up but not yet brought to life, in pickup order.</summary>
+    public IReadOnlyList<FossilPickup> PendingFossilRevivals => _pendingRevivals;
+
     /// <summary>
-    /// Reviving a fossil is normally its own service (still unbuilt — see the Phase 5 services pass); as
-    /// an explicit MVP simplification, first reaching <see cref="Generation.Roster.DexPlan.FossilAreaId"/>
-    /// revives every not-yet-collected fossil straight into the party, one per call at most while the
-    /// party has room. A fossil is never dropped if the party is full — it just stays uncollected for a
-    /// later visit. The caller (which owns <c>GameData</c>) turns each pickup into a party member.
-    /// Unlike <see cref="TryTriggerLegendaryEncounter"/> — a query the caller must separately confirm via
-    /// <see cref="MarkLegendaryResolved"/> once a battle outcome is known — this marks each species
-    /// collected immediately: a pickup has no failure path to wait on.
+    /// First reaching <see cref="Generation.Roster.DexPlan.FossilAreaId"/> picks up every fossil the cave
+    /// holds. A fossil is an object, not a Pokémon: it waits in <see cref="PendingFossilRevivals"/> until
+    /// the revival service (<see cref="ReviveFossils"/>) works on it, so a full party can never cost the
+    /// player a fossil. There is no fossil tile marker — reaching the area is the trigger, the same
+    /// reachable-area convention key/HM acquisition uses.
     /// </summary>
-    public IReadOnlyList<FossilPickup> TryCollectFossils(int areaId)
+    public IReadOnlyList<FossilPickup> CollectFossils(int areaId)
     {
         if (areaId != Region.Dex.FossilAreaId) return [];
         var baseLevel = Region.Encounters.Of(areaId)?.BaseLevel
@@ -444,12 +445,28 @@ public sealed class OverworldSession
         var collected = new List<FossilPickup>();
         foreach (var fossil in Region.Special.Fossils)
         {
-            if (HasCollectedFossil(fossil.SpeciesId)) continue;
-            if (!Party.HasRoomFor(collected.Count)) break;
-            _collectedFossils.Add(fossil.SpeciesId);
-            collected.Add(new FossilPickup(fossil.SpeciesId, baseLevel));
+            if (!_collectedFossils.Add(fossil.SpeciesId)) continue;
+            var pickup = new FossilPickup(fossil.SpeciesId, baseLevel);
+            _pendingRevivals.Add(pickup);
+            collected.Add(pickup);
         }
         return collected;
+    }
+
+    /// <summary>Revives pending fossils into the party in pickup order, stopping when the party fills up —
+    /// what is left stays pending for a later visit.</summary>
+    public IReadOnlyList<FossilPickup> ReviveFossils(GameData data)
+    {
+        ArgumentNullException.ThrowIfNull(data);
+        var revived = new List<FossilPickup>();
+        while (_pendingRevivals.Count > 0 && !Party.IsFull)
+        {
+            var pickup = _pendingRevivals[0];
+            _pendingRevivals.RemoveAt(0);
+            Party.Add(BattleProgressionFactory.AtLevel(data, pickup.SpeciesId, pickup.Level));
+            revived.Add(pickup);
+        }
+        return revived;
     }
 
     /// <summary>Talking to a town's Mart clerk (see <see cref="MartInteractions"/>): buys the single most
@@ -460,7 +477,8 @@ public sealed class OverworldSession
     {
         ArgumentNullException.ThrowIfNull(data);
         var fraction = MartAvailability.FractionOf(Region.Graph, areaId);
-        var stock = MartCatalog.For(data, fraction);
+        var stock = MartCatalog.For(
+            data, fraction, stocksLinkCable: areaId == Region.Services.LinkCableVendorAreaId);
         if (stock.Count == 0)
             return new MartPurchaseResult(MartPurchaseKind.StockEmpty, "There's nothing in stock yet.");
 
@@ -476,6 +494,119 @@ public sealed class OverworldSession
         return new MartPurchaseResult(
             MartPurchaseKind.Bought, $"Bought {data.Items[itemId].Name} for ${cost}.", itemId, cost);
     }
+
+    /// <summary>
+    /// What a service NPC does when talked to. The two additive services act on the spot — a fossil comes
+    /// to life, a tutor fills a free move slot — while the two that need the player to pick something
+    /// (which move to forget, what name to give) report what they can do and leave the change to
+    /// <see cref="DeleteMove"/> / <see cref="RenamePartyMember"/>, which is what a party menu will call.
+    /// Same shape as <see cref="BuyFromMart"/>: one unambiguous action per talk, no menu required.
+    /// </summary>
+    public ServiceOutcome UseService(GameData data, ServiceKind kind)
+    {
+        ArgumentNullException.ThrowIfNull(data);
+        if (Party.Members.Count == 0 && kind != ServiceKind.FossilRevival)
+            return new ServiceOutcome(kind, false, "Come back when you have a Pokémon with you.");
+
+        return kind switch
+        {
+            ServiceKind.FossilRevival => ReviveOnePending(data),
+            ServiceKind.MoveTutor => TeachBestTutorMove(data),
+            ServiceKind.MoveDeleter => new ServiceOutcome(kind, false, DeletableMovesText(data)),
+            ServiceKind.NameRater => new ServiceOutcome(kind, false, NameRatingText(data)),
+            _ => throw new ArgumentOutOfRangeException(nameof(kind), kind, null),
+        };
+    }
+
+    private ServiceOutcome ReviveOnePending(GameData data)
+    {
+        if (_pendingRevivals.Count == 0)
+            return new ServiceOutcome(ServiceKind.FossilRevival, false, "Bring me a fossil and I'll see to it.");
+        if (Party.IsFull)
+            return new ServiceOutcome(
+                ServiceKind.FossilRevival, false, "Your party is full — make room and I'll revive it.");
+
+        var pickup = _pendingRevivals[0];
+        _pendingRevivals.RemoveAt(0);
+        Party.Add(BattleProgressionFactory.AtLevel(data, pickup.SpeciesId, pickup.Level));
+        return new ServiceOutcome(
+            ServiceKind.FossilRevival, true,
+            $"The fossil came back to life as {data.Species[pickup.SpeciesId].Name}!");
+    }
+
+    /// <summary>Teaches the strongest tutor move the first party member with a free slot can learn. A full
+    /// moveset is never overwritten — the Move Deleter is the intended pairing.</summary>
+    private ServiceOutcome TeachBestTutorMove(GameData data)
+    {
+        for (var i = 0; i < Party.Members.Count; i++)
+        {
+            var member = Party.Members[i];
+            if (member.MoveIds.Count >= MoveTutor.MoveSlotCount) continue;
+            var offers = MoveTutor.OffersFor(data, member);
+            if (offers.Count == 0) continue;
+
+            var moveId = offers[0];
+            Party.Replace(i, MoveTutor.Teach(data, member, moveId));
+            return new ServiceOutcome(
+                ServiceKind.MoveTutor, true,
+                $"{Nicknames.DisplayName(data, member)} learned {data.Moves[moveId].Name}!");
+        }
+        return new ServiceOutcome(
+            ServiceKind.MoveTutor, false, "Every Pokémon you have is out of room for what I teach.");
+    }
+
+    private string DeletableMovesText(GameData data)
+    {
+        var lead = Party.Members[0];
+        if (lead.MoveIds.Count <= 1)
+            return $"{Nicknames.DisplayName(data, lead)} only knows one move — it cannot forget that.";
+        var moves = string.Join(", ", lead.MoveIds.Select(moveId => data.Moves[moveId].Name));
+        return $"{Nicknames.DisplayName(data, lead)} could forget any of these: {moves}.";
+    }
+
+    private string NameRatingText(GameData data)
+    {
+        var lead = Party.Members[0];
+        return lead.Nickname is null
+            ? $"{data.Species[lead.SpeciesId].Name}? A fine name, but no name of your own giving."
+            : $"{lead.Nickname}? A first-rate name — I wouldn't change a thing.";
+    }
+
+    /// <summary>The Move Deleter's real operation (GDD §8.4). Returns false rather than throwing when the
+    /// move isn't known or is the last one, so a menu can grey the choice out.</summary>
+    public bool DeleteMove(int partyIndex, int moveId)
+    {
+        var member = MemberAt(partyIndex);
+        if (!MoveDeleter.CanDelete(member, moveId)) return false;
+        Party.Replace(partyIndex, MoveDeleter.Delete(member, moveId));
+        return true;
+    }
+
+    /// <summary>The Name Rater's real operation. Rejects unusable names (empty, over-long, control
+    /// characters) the same way the player's own name is checked.</summary>
+    public bool RenamePartyMember(int partyIndex, string nickname)
+    {
+        var member = MemberAt(partyIndex);
+        if (!Nicknames.TryNormalize(nickname, out var normalized)) return false;
+        Party.Replace(partyIndex, member with { Nickname = normalized });
+        return true;
+    }
+
+    /// <summary>A move tutor's real operation: teach one specific tutor-legal move into a free slot.</summary>
+    public bool TeachTutorMove(GameData data, int partyIndex, int moveId)
+    {
+        ArgumentNullException.ThrowIfNull(data);
+        var member = MemberAt(partyIndex);
+        if (member.MoveIds.Count >= MoveTutor.MoveSlotCount) return false;
+        if (!MoveTutor.OffersFor(data, member).Contains(moveId)) return false;
+        Party.Replace(partyIndex, MoveTutor.Teach(data, member, moveId));
+        return true;
+    }
+
+    private BattleProgressionState MemberAt(int partyIndex)
+        => partyIndex >= 0 && partyIndex < Party.Members.Count
+            ? Party.Members[partyIndex]
+            : throw new ArgumentOutOfRangeException(nameof(partyIndex), partyIndex, "no such party member");
 
     public void EnableDebugUnlock() => Interactions.EnableDebugUnlock();
 

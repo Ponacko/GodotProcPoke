@@ -48,6 +48,9 @@ public partial class BattleScreen : BattleScreenBase
         var player = BattlePokemonFactory.Create(_data, _progression.SpeciesId, _progression.Level,
             new BattlePokemonBuildOptions
             {
+                // The battle HUD prints Id beside the level, so a party member is labelled by the name the
+                // player knows it as — its nickname from the Name Rater, or its species.
+                Id = Nicknames.DisplayName(_data, _progression),
                 MoveIds = _progression.MoveIds,
                 EffortValues = _progression.EffortValues,
                 StartingHp = _progression.CurrentHp,

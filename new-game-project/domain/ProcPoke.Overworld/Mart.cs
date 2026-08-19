@@ -20,18 +20,45 @@ public static class MartCatalog
     private static readonly string[] EarlyCategories = [StandardBalls, Healing];
     private static readonly string[] LateCategories = [StandardBalls, Healing, StatusCures, Revival];
 
-    public static IReadOnlyList<int> For(GameData data, double availabilityFraction)
+    /// <summary>Progression fraction past which every Mart stocks Link Cables (GDD §8.4's "late-game
+    /// Marts"); before it, only the services pass's one guaranteed vendor does.</summary>
+    public const double LinkCableFraction = 0.75;
+
+    public static IReadOnlyList<int> For(GameData data, double availabilityFraction, bool stocksLinkCable = false)
     {
         ArgumentNullException.ThrowIfNull(data);
         var priceCeiling = 200 + availabilityFraction * 2800;
         var categories = availabilityFraction >= 0.5 ? LateCategories : EarlyCategories;
 
-        return data.Items.Values
+        var stock = data.Items.Values
             .Where(item => item.Cost > 0 && item.Cost <= priceCeiling && categories.Contains(item.Category))
             .OrderBy(item => item.Category, StringComparer.Ordinal)
             .ThenBy(item => item.Cost)
             .Select(item => item.Id)
-            .ToArray();
+            .ToList();
+
+        // The Link Cable is stocked by name, not by the price/category filter above: at 8000 it is far over
+        // any ceiling, and its category ("evolution") would drag in every stone with it.
+        if (stocksLinkCable || availabilityFraction >= LinkCableFraction)
+            stock.Add(LinkCable.IdIn(data));
+        return stock;
+    }
+}
+
+/// <summary>
+/// The Link Cable (CONTEXT.md): ProcPoke's stand-in for trading, and the only bag item any evolution rule
+/// needs that the baked data does not name — trade rows carry no trigger item, so the item is resolved here
+/// by its canonical name against the pinned bake.
+/// </summary>
+public static class LinkCable
+{
+    public const string ItemName = "Linking Cord";
+
+    public static int IdIn(GameData data)
+    {
+        ArgumentNullException.ThrowIfNull(data);
+        return data.Items.Values.FirstOrDefault(item => item.Name == ItemName)?.Id
+            ?? throw new InvalidOperationException($"baked items contain no \"{ItemName}\"");
     }
 }
 

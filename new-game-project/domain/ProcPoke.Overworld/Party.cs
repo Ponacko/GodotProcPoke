@@ -21,6 +21,10 @@ public sealed class Party
     /// <see cref="MaxSize"/> — the same room-check <see cref="Add"/> itself enforces, kept in one place.</summary>
     public bool HasRoomFor(int additional) => _members.Count + additional < MaxSize;
 
+    /// <summary>Whether one more member would fit at all — <c>HasRoomFor(0)</c> read the way callers
+    /// that only ever add one Pokémon at a time want to ask it.</summary>
+    public bool IsFull => !HasRoomFor(0);
+
     public void Add(BattleProgressionState member)
     {
         ArgumentNullException.ThrowIfNull(member);

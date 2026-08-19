@@ -116,7 +116,7 @@ public sealed class SessionStateTests
     }
 
     [Fact]
-    public void FossilsAreCollectedOnceIntoTheParty()
+    public void FossilsAreCollectedOnceAndWaitForRevival()
     {
         var region = Generate(31337);
         var session = new OverworldSession(
@@ -125,9 +125,9 @@ public sealed class SessionStateTests
         var otherAreaId = region.Graph.Areas.First(area => area.Id != fossilAreaId).Id;
         var expectedLevel = region.Encounters.Of(fossilAreaId)!.BaseLevel;
 
-        Assert.Empty(session.TryCollectFossils(otherAreaId));
+        Assert.Empty(session.CollectFossils(otherAreaId));
 
-        var firstVisit = session.TryCollectFossils(fossilAreaId);
+        var firstVisit = session.CollectFossils(fossilAreaId);
         Assert.Equal(region.Special.Fossils.Count, firstVisit.Count);
         Assert.Equal(
             region.Special.Fossils.Select(fossil => fossil.SpeciesId).OrderBy(id => id),
@@ -135,11 +135,21 @@ public sealed class SessionStateTests
         Assert.All(firstVisit, pickup => Assert.Equal(expectedLevel, pickup.Level));
         Assert.All(firstVisit, pickup => Assert.True(session.HasCollectedFossil(pickup.SpeciesId)));
 
-        Assert.Empty(session.TryCollectFossils(fossilAreaId));
+        Assert.Empty(session.CollectFossils(fossilAreaId));
+
+        // A pickup is a fossil, not a Pokémon: nothing joins the party until the revival service runs.
+        Assert.Empty(session.Party.Members);
+        Assert.Equal(firstVisit, session.PendingFossilRevivals);
+        var revived = session.ReviveFossils(TestData.Data);
+        Assert.Equal(firstVisit, revived);
+        Assert.Empty(session.PendingFossilRevivals);
+        Assert.Equal(
+            firstVisit.Select(pickup => pickup.SpeciesId),
+            session.Party.Members.Select(member => member.SpeciesId));
     }
 
     [Fact]
-    public void FossilsAreSkippedRatherThanOverflowingAFullParty()
+    public void FossilsStayPendingRatherThanOverflowingAFullParty()
     {
         var region = Generate(31337);
         var session = new OverworldSession(
@@ -147,10 +157,13 @@ public sealed class SessionStateTests
         for (var i = 0; i < Party.MaxSize; i++)
             session.Party.Add(BattleProgressionFactory.AtLevel(TestData.Data, 1, 5));
 
-        var pickups = session.TryCollectFossils(region.Dex.FossilAreaId);
+        var pickups = session.CollectFossils(region.Dex.FossilAreaId);
 
-        Assert.Empty(pickups);
-        Assert.All(region.Special.Fossils, fossil => Assert.False(session.HasCollectedFossil(fossil.SpeciesId)));
+        // The pickup still happens — a full party costs the player nothing but a second trip to the lab.
+        Assert.Equal(region.Special.Fossils.Count, pickups.Count);
+        Assert.All(region.Special.Fossils, fossil => Assert.True(session.HasCollectedFossil(fossil.SpeciesId)));
+        Assert.Empty(session.ReviveFossils(TestData.Data));
+        Assert.Equal(pickups, session.PendingFossilRevivals);
     }
 
     [Fact]

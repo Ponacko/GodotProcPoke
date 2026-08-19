@@ -14,6 +14,10 @@ public sealed record BattleProgressionState
     public required StatBlock EffortValues { get; init; }
     public required IReadOnlyList<int> MoveIds { get; init; }
     public required int CurrentHp { get; init; }
+
+    /// <summary>Player-given name, or null for a Pokémon still called by its species. Set by the Name Rater
+    /// service and never by any battle path — evolution keeps it, exactly as mainline does.</summary>
+    public string? Nickname { get; init; }
 }
 
 public sealed record BattleRewardResult(
@@ -123,6 +127,7 @@ public static class BattleRewardResolver
                 EffortValues = gain.Progress.EffortValues,
                 MoveIds = moves.MoveIds,
                 CurrentHp = Math.Min(survivingHp, maxHp),
+                Nickname = current.Nickname,
             });
     }
 

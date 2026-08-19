@@ -3,6 +3,7 @@ using ProcPoke.Generation.Bosses;
 using ProcPoke.Generation.Carving;
 using ProcPoke.Generation.Gating;
 using ProcPoke.Generation.Npcs;
+using ProcPoke.Generation.Services;
 using ProcPoke.Generation.Topology;
 using ProcPoke.Generation.Trainers;
 
@@ -17,6 +18,7 @@ public enum InteractionKind
     Gate,
     Shop,
     Heal,
+    Service,
 }
 
 /// <summary>A stable, map-local interaction assembled from generation output.</summary>
@@ -34,6 +36,8 @@ public sealed record InteractionRegistration
     public int? BadgePrerequisite { get; init; }
     public ObstacleClass? Obstacle { get; init; }
     public string? TrainerClass { get; init; }
+    /// <summary>Which one-off city service this NPC provides; null for every other interaction.</summary>
+    public ServiceKind? Service { get; init; }
     public TrainerEncounter? Trainer { get; init; }
     /// <summary>A generated gym, Elite Four, or Champion roster attached to this post.</summary>
     public BossTeam? Boss { get; init; }
@@ -313,7 +317,8 @@ public sealed class InteractionSession
 
         return interaction.Kind switch
         {
-            InteractionKind.Npc or InteractionKind.Sign or InteractionKind.Shop or InteractionKind.Heal => new(
+            InteractionKind.Npc or InteractionKind.Sign or InteractionKind.Shop or InteractionKind.Heal
+                or InteractionKind.Service => new(
                 InteractionOutcomeKind.Dialogue, interaction, interaction.Text),
             InteractionKind.Trainer => new(
                 InteractionOutcomeKind.TrainerPrompt, interaction, interaction.Text),

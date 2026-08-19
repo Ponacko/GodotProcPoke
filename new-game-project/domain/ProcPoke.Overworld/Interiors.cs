@@ -113,7 +113,10 @@ public static class InteriorTemplateCatalog
                 grid[Math.Min(width - 2, center.X + 2), center.Y + 2] = LogicalTile.TrainerPost;
                 break;
             case InteriorKind.House:
+                // Two posts, because a house is where the services pass seats city services and a city can
+                // hold two of them (GDD §8.4). An ordinary house simply leaves both posts unbound.
                 grid[center.X, center.Y] = LogicalTile.NpcPost;
+                grid[Math.Max(1, center.X - 2), center.Y] = LogicalTile.NpcPost;
                 break;
             case InteriorKind.Cave:
             case InteriorKind.Tower:

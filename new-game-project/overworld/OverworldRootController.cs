@@ -87,8 +87,12 @@ public partial class OverworldRootController : Node2D
             return;
         }
 
-        foreach (var fossil in _session.TryCollectFossils(areaId))
-            _session.Party.Add(BattleProgressionFactory.AtLevel(Data, fossil.SpeciesId, fossil.Level));
+        // Fossils are picked up here and revived at the fossil-revival service (ServiceKind.FossilRevival).
+        var fossils = _session.CollectFossils(areaId);
+        if (fossils.Count > 0)
+            _message.Text = fossils.Count == 1
+                ? "You found a fossil! Someone may be able to revive it."
+                : $"You found {fossils.Count} fossils! Someone may be able to revive them.";
 
         var carved = _session.Region.Carved[areaId];
         _realizer.Realize(carved, _session.Region.Biomes.Of(areaId));
@@ -106,6 +110,7 @@ public partial class OverworldRootController : Node2D
             InteriorKind.Gym => GymInteriorBattles.Build(_session.Region, interior.OverworldAreaId, interior.Template),
             InteriorKind.Mart => MartInteractions.Build(interior.OverworldAreaId, interior.Template),
             InteriorKind.Center => CenterInteractions.Build(interior.OverworldAreaId, interior.Template),
+            InteriorKind.House => ServiceInteractions.Build(_session.Region, interior),
             _ => [],
         };
         _realizer.Realize(interior.Template.Grid, interior.Template.Biome);
@@ -203,6 +208,9 @@ public partial class OverworldRootController : Node2D
             _session.HealParty(Data);
             _message.Text += "\nYour Pokémon are fighting fit!";
         }
+
+        if (interaction.Service is { } service)
+            _message.Text += "\n" + _session.UseService(Data, service).Message;
 
         if (outcome.Kind == InteractionOutcomeKind.GateUnlocked)
             _movement.UpdateCapabilities(_session.Interactions.ForMovement(

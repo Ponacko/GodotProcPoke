@@ -20,7 +20,11 @@ public sealed class MartTests
         Assert.NotEmpty(late);
         Assert.All(early.Concat(late), itemId => Assert.True(TestData.Data.Items[itemId].Cost > 0));
         Assert.All(early, itemId => Assert.True(TestData.Data.Items[itemId].Cost <= 200));
-        Assert.All(late, itemId => Assert.True(TestData.Data.Items[itemId].Cost <= 3000));
+        // The Link Cable is stocked by name rather than by the price ceiling, so it is the one exception.
+        var linkCableId = LinkCable.IdIn(TestData.Data);
+        Assert.All(
+            late.Where(itemId => itemId != linkCableId),
+            itemId => Assert.True(TestData.Data.Items[itemId].Cost <= 3000));
 
         // Late-game stock is a superset of categories the early catalog carries at all (standard-balls,
         // healing), never narrower — the fraction only ever adds categories/price headroom.
@@ -29,6 +33,36 @@ public sealed class MartTests
         Assert.Subset(lateCategories, earlyCategories.Concat(lateCategories).ToHashSet());
         Assert.Contains("standard-balls", lateCategories);
         Assert.Contains("healing", lateCategories);
+    }
+
+    [Fact]
+    public void LinkCablesAreStockedLateOrByTheGuaranteedVendor()
+    {
+        var linkCableId = LinkCable.IdIn(TestData.Data);
+
+        // Early stock has none, unless this Mart is the services pass's guaranteed early vendor.
+        Assert.DoesNotContain(linkCableId, MartCatalog.For(TestData.Data, 0.2));
+        Assert.Contains(linkCableId, MartCatalog.For(TestData.Data, 0.2, stocksLinkCable: true));
+        // Late-game Marts stock them regardless (GDD §8.4).
+        Assert.Contains(linkCableId, MartCatalog.For(TestData.Data, 1.0));
+    }
+
+    [Fact]
+    public void TheGuaranteedVendorsMartCarriesALinkCable()
+    {
+        var region = Generate();
+        var vendorAreaId = region.Services.LinkCableVendorAreaId;
+        var session = new OverworldSession(
+            region, NewGameIdentity.Create(CharacterChoice.CharacterA, "Player"));
+
+        // The session, not the caller, decides which Mart is the vendor — buy with enough money for the
+        // cable and it is the most expensive affordable thing in stock, so it is what the clerk sells.
+        session.CompleteTrainerBattle(new GeneratedTrainerBattleTransitionRequest(
+            "t1", "Rich Trainer", new PlayerState(new GridPosition(0, 0)), [], 100_000));
+        var result = session.BuyFromMart(TestData.Data, vendorAreaId);
+
+        Assert.Equal(MartPurchaseKind.Bought, result.Kind);
+        Assert.Equal(LinkCable.IdIn(TestData.Data), result.ItemId);
     }
 
     [Fact]
@@ -73,7 +107,10 @@ public sealed class MartTests
         session.CompleteTrainerBattle(new GeneratedTrainerBattleTransitionRequest(
             "t1", "Rich Trainer", new PlayerState(new GridPosition(0, 0)), [], 100_000));
 
-        var stock = MartCatalog.For(TestData.Data, MartAvailability.FractionOf(region.Graph, town.Id));
+        var stock = MartCatalog.For(
+            TestData.Data,
+            MartAvailability.FractionOf(region.Graph, town.Id),
+            stocksLinkCable: town.Id == region.Services.LinkCableVendorAreaId);
         var expectedItemId = stock.OrderByDescending(id => TestData.Data.Items[id].Cost).First();
         var expectedCost = TestData.Data.Items[expectedItemId].Cost;
         var moneyBefore = session.Money;
