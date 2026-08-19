@@ -57,6 +57,8 @@ public partial class BattleScreen : BattleScreenBase
             });
         _session = WildBattleSession.Start(_data, player, _request.Battle, RandomSeed());
         State = _session.State;
+        // Meeting it is enough for the dex's "seen" half, whichever way the battle goes.
+        GameState.Instance.Session!.MarkSpeciesSeen(State.Opponent.SpeciesId);
 
         var biome = GameState.Instance.Session!.Region.Biomes.Of(_request.Encounter.AreaId);
         Backdrop.Color = BattleBackdropPalette.Of(biome);
@@ -105,7 +107,7 @@ public partial class BattleScreen : BattleScreenBase
         {
             case WildBattleOutcome.PlayerWon:
                 ApplyVictory();
-                ResolveLegendaryIfPresent();
+                ResolveLegendaryIfPresent(captured: false);
                 await ReturnToOverworld(_request.ReturnState);
                 break;
             case WildBattleOutcome.PlayerLost:
@@ -113,8 +115,9 @@ public partial class BattleScreen : BattleScreenBase
                 await ReturnToOverworld(resumeAt: null);
                 break;
             case WildBattleOutcome.Captured:
-                ResolveLegendaryIfPresent();
+                ResolveLegendaryIfPresent(captured: true);
                 PersistSurvivingHp();
+                KeepCaptured();
                 await ReturnToOverworld(_request.ReturnState);
                 break;
             default:
@@ -124,10 +127,29 @@ public partial class BattleScreen : BattleScreenBase
         }
     }
 
-    private void ResolveLegendaryIfPresent()
+    /// <summary>A caught legendary is gone for good; a beaten one sleeps until the next Champion victory
+    /// wakes it (GDD §5.5). Fleeing resolves nothing, so the encounter is still there next visit.</summary>
+    private void ResolveLegendaryIfPresent(bool captured)
     {
-        if (_request.Legendary is { } legendary)
-            GameState.Instance.Session!.MarkLegendaryResolved(legendary.SpeciesId);
+        if (_request.Legendary is not { } legendary) return;
+        var session = GameState.Instance.Session!;
+        if (captured) session.MarkLegendaryCaptured(legendary.SpeciesId);
+        else session.MarkLegendaryDefeated(legendary.SpeciesId);
+    }
+
+    /// <summary>
+    /// The caught Pokémon actually becomes the player's: it joins the party, or goes to a PC box if the
+    /// party is full. It keeps the HP the ball caught it at, as mainline does. A capture with the party and
+    /// every box full cannot happen in practice — the bag menu would refuse the throw — but the message is
+    /// surfaced rather than swallowed if it ever does.
+    /// </summary>
+    private void KeepCaptured()
+    {
+        var session = GameState.Instance.Session!;
+        var caught = BattleProgressionFactory.AtLevel(
+            _data, State.Opponent.SpeciesId, State.Opponent.Level) with { CurrentHp = State.Opponent.Hp };
+        var gained = session.GainPokemon(_data, caught);
+        Log.AppendText(gained.Message + "\n");
     }
 
     /// <summary>For the two outcomes that never touch progression/rewards (flee, capture): the player's own

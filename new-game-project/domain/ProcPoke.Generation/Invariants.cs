@@ -38,8 +38,16 @@ public static class Invariants
                 Fail($"connection {connection.AreaA}-{connection.AreaB} is not adjacent");
 
         if (!GatingValidator.IsSolvable(graph, region.Gating)) Fail("gating replay cannot reach the League");
+        // The post-game cave opens only after the credits (GDD §11a), so nothing the run needs may sit
+        // inside it. Fly included: it is a mid-game utility, not a reward for winning.
+        if (graph[region.Gating.Fly.AreaId].Archetype.IsPostGame())
+            Fail("Fly is placed in the post-game area");
         foreach (var gate in region.Gating.Gates)
         {
+            if (graph.Areas.Any(a => a.Id == gate.KeyAreaId) && graph[gate.KeyAreaId].Archetype.IsPostGame())
+                Fail($"gate {gate.Id} key is in the post-game area");
+            if (graph.Areas.Any(a => a.Id == gate.HintAreaId) && graph[gate.HintAreaId].Archetype.IsPostGame())
+                Fail($"gate {gate.Id} hint is in the post-game area");
             if (!graph.Areas.Any(a => a.Id == gate.KeyAreaId) || Position(graph[gate.KeyAreaId]) > gate.BlockPathIndex)
                 Fail($"gate {gate.Id} key is after its block frontier");
             if (!graph.Areas.Any(a => a.Id == gate.HintAreaId) || Position(graph[gate.HintAreaId]) > gate.BlockPathIndex)

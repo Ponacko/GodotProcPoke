@@ -68,7 +68,7 @@ public partial class StarterSelectScreen : Control
         await ToSignal(GetTree().CreateTimer(1.5), Timer.SignalName.Timeout);
 
         var session = new OverworldSession(region, identity);
-        session.Party.Add(progression);
+        session.GainPokemon(data, progression);
         session.SetStarterCorner(cornerIndex);
 
         GameState.Instance.Session = session;

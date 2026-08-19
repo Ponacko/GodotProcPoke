@@ -132,8 +132,11 @@ public static class GatingGenerator
 
     private static int PlaceKey(RegionGraph graph, Pcg32 rng, IReadOnlyDictionary<int, int> anchors, HashSet<int> used, int pos)
     {
-        // Prefer a fresh off-spine destination dungeon reachable before the gate (§4.3 rule 2).
-        bool Reachable(int areaId) => anchors[areaId] <= pos && !used.Contains(areaId);
+        // Prefer a fresh off-spine destination dungeon reachable before the gate (§4.3 rule 2). The
+        // post-game cave is never a candidate: it stays shut until the credits roll (GDD §11a), so a Key
+        // inside it would be a Key the player cannot reach.
+        bool Reachable(int areaId) =>
+            anchors[areaId] <= pos && !used.Contains(areaId) && !graph[areaId].Archetype.IsPostGame();
         var offSpine = anchors.Keys.Where(Reachable).ToList();
 
         var dungeons = offSpine.Where(id => graph[id].IsDungeon).ToList();
@@ -186,7 +189,11 @@ public static class GatingGenerator
 
         // Prefer an off-spine spot around mid-game; else a mid-path town.
         var midIndex = (int)Math.Round(ObstacleTable.FlyTiming * (path.Count - 1));
-        var offSpine = anchors.Keys.OrderBy(id => Math.Abs(anchors[id] - midIndex)).ToList();
+        // Fly is a mid-game travel utility, so it cannot wait behind the post-game cave's guard either.
+        var offSpine = anchors.Keys
+            .Where(id => !graph[id].Archetype.IsPostGame())
+            .OrderBy(id => Math.Abs(anchors[id] - midIndex))
+            .ToList();
         if (offSpine.Count > 0) return new FlyPlacement(offSpine[0], prereq);
 
         var town = path.FirstOrDefault(a => a.PathIndex >= midIndex && a.Archetype == AreaArchetype.Town)

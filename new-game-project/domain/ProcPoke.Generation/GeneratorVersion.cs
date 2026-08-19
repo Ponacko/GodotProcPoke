@@ -6,5 +6,5 @@ namespace ProcPoke.Generation;
 /// </summary>
 public static class GeneratorVersion
 {
-    public const int Current = 2;
+    public const int Current = 3;
 }

@@ -33,6 +33,13 @@ public static class AreaArchetypeExtensions
     public static bool IsPlain(this AreaArchetype a)
         => a is AreaArchetype.StartTown or AreaArchetype.Town or AreaArchetype.Route;
 
+    /// <summary>
+    /// The post-game dungeon (GDD §11a): the region's one deep cave, hung off its last town by the topology
+    /// pass, whose guard steps aside once the player is Champion. Because it opens only after the credits,
+    /// nothing the critical path needs may live there — see <c>GatingGenerator</c>'s key and Fly placement.
+    /// </summary>
+    public static bool IsPostGame(this AreaArchetype a) => a is AreaArchetype.DeepCave;
+
     /// <summary>Special Locations that connect by warp fade rather than seamless scrolling.</summary>
     public static bool IsDungeon(this AreaArchetype a) => a switch
     {

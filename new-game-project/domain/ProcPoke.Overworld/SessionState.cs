@@ -149,7 +149,9 @@ public sealed class OverworldSession
     private readonly HashSet<string> _defeatedTrainerIds = new(StringComparer.Ordinal);
     private readonly HashSet<int> _defeatedGymAreaIds = [];
     private readonly HashSet<int> _defeatedLeagueStages = [];
-    private readonly HashSet<int> _resolvedLegendaries = [];
+    private readonly HashSet<int> _leagueRunStages = [];
+    private readonly HashSet<int> _capturedLegendaries = [];
+    private readonly HashSet<int> _dormantLegendaries = [];
     private readonly HashSet<int> _collectedFossils = [];
     private readonly List<FossilPickup> _pendingRevivals = [];
     private bool _creditsReached;
@@ -166,11 +168,15 @@ public sealed class OverworldSession
         Time = TimeOfDayClock.FromMinutes(12 * 60);
         Interactions = new InteractionSession();
         Party = new Party();
+        Storage = new PcStorage();
+        Pokedex = new PokedexState();
     }
 
     public GeneratedRegion Region { get; }
     public PlayerIdentity Player { get; }
     public Party Party { get; }
+    public PcStorage Storage { get; }
+    public PokedexState Pokedex { get; }
     public InteractionSession Interactions { get; }
     public RegionMapState Map { get; }
     public TimeOfDayState Time { get; private set; }
@@ -246,7 +252,27 @@ public sealed class OverworldSession
     public bool HasDefeatedGymLeader(int areaId) => _defeatedGymAreaIds.Contains(areaId);
     public bool HasDefeatedLeagueStage(int stage) => _defeatedLeagueStages.Contains(stage);
     public IReadOnlySet<int> DefeatedLeagueStages => _defeatedLeagueStages;
+
+    /// <summary>The Champion flag (GDD §11a): the credits have rolled, so the post-game is open.</summary>
     public bool CreditsReached => _creditsReached;
+
+    /// <summary>Level bonus every League team fights at once the ladder reopens (GDD §11a's +10-15) — pure
+    /// reuse of the generated teams, which is what makes the legendary respawn rule worth having.</summary>
+    public const int LeagueRematchLevelBonus = 12;
+
+    /// <summary>Whether the League ladder is being re-run rather than climbed for the first time.</summary>
+    public bool LeagueRematch => _creditsReached;
+
+    /// <summary>
+    /// Post-game areas (the deep cave, GDD §11a) stay shut until the credits roll — its guard steps aside
+    /// for a Champion. No Key, hint, or Fly point is ever placed there, so this can never strand progress.
+    /// </summary>
+    public bool CanEnterArea(int areaId)
+        => DebugUnlock || _creditsReached || !Region.Graph[areaId].Archetype.IsPostGame();
+
+    /// <summary>What the guard says to a challenger who is not Champion yet.</summary>
+    public string AreaEntryRefusal(int areaId)
+        => $"A guard blocks the way into {Region.Names.Of(areaId)}. \"Only the Champion goes in there.\"";
 
     public void EnterInterior(InteriorTransition transition)
     {
@@ -274,7 +300,9 @@ public sealed class OverworldSession
         ArgumentNullException.ThrowIfNull(returnState);
         if (interaction.Kind != InteractionKind.Trainer)
             throw new ArgumentException("interaction is not a trainer", nameof(interaction));
-        if (HasDefeatedTrainer(interaction.Id)) return null;
+        // The League is the one repeatable fight (its rematch is the post-game, §11a), so it answers to
+        // CanStartLeagueStage below rather than to the one-time defeat flag every other trainer carries.
+        if (interaction.LeagueStage is null && HasDefeatedTrainer(interaction.Id)) return null;
 
         if (interaction.Trainer is { } trainer)
         {
@@ -290,8 +318,10 @@ public sealed class OverworldSession
         {
             if (!CanStartLeagueStage(interaction.AreaId, stage)) return null;
             var boss = ChampionTeamForPlayer(stage, interactionBoss);
+            var levelBonus = LeagueRematch ? LeagueRematchLevelBonus : 0;
             var roster = boss.Members
-                .Select(member => new TrainerRosterMember(member.SpeciesId, member.Level))
+                .Select(member => new TrainerRosterMember(
+                    member.SpeciesId, Math.Min(100, member.Level + levelBonus)))
                 .ToArray();
             var aceLevel = boss.Members.Max(member => member.Level);
             var rate = stage == Region.Bosses.EliteFour.Count ? "Champion" : "Elite Four";
@@ -328,7 +358,9 @@ public sealed class OverworldSession
         ArgumentNullException.ThrowIfNull(request);
         if (request.PrizeMoney < 0)
             throw new ArgumentOutOfRangeException(nameof(request), "trainer prize money cannot be negative");
-        if (_defeatedTrainerIds.Contains(request.TrainerId)) return false;
+        // A League stage can be won more than once (the rematch ladder), so its one-time flag is not the
+        // gate — CanStartLeagueStage already validated the attempt below.
+        if (request.LeagueReward is null && _defeatedTrainerIds.Contains(request.TrainerId)) return false;
         if (request.GymReward is { } gymReward)
         {
             var expectedBadge = Region.Identity.GymTypes.Keys
@@ -356,10 +388,28 @@ public sealed class OverworldSession
         if (request.LeagueReward is { } league)
         {
             _defeatedLeagueStages.Add(league.Stage);
-            if (league.Stage == Region.Bosses.EliteFour.Count) _creditsReached = true;
+            _leagueRunStages.Add(league.Stage);
+            if (league.Stage == Region.Bosses.EliteFour.Count) CompleteLeagueRun();
         }
         Money = updatedMoney;
         return true;
+    }
+
+    /// <summary>
+    /// League stages are climbed in order, all badges in hand. Progress is tracked per <em>run</em>, not for
+    /// the lifetime of the save: beating the Champion clears the run, which is exactly what reopens the
+    /// ladder as the §11a rematch. <see cref="DefeatedLeagueStages"/> keeps the lifetime record.
+    /// </summary>
+    /// <summary>
+    /// Beating the Champion: the credits roll, the ladder reopens at rematch levels, and every legendary
+    /// the player fought and beat comes back (GDD §5.5's B2W2 rule, so none is ever permanently lost).
+    /// Captured legendaries stay caught.
+    /// </summary>
+    private void CompleteLeagueRun()
+    {
+        _creditsReached = true;
+        _leagueRunStages.Clear();
+        _dormantLegendaries.Clear();
     }
 
     private bool CanStartLeagueStage(int areaId, int stage)
@@ -367,8 +417,8 @@ public sealed class OverworldSession
         if (areaId != Region.Graph.LeagueAreaId || stage < 0 || stage > Region.Bosses.EliteFour.Count)
             return false;
         if (!DebugUnlock && Badges < Region.Identity.GymTypes.Count) return false;
-        if (_defeatedLeagueStages.Contains(stage)) return false;
-        return stage == 0 || _defeatedLeagueStages.Contains(stage - 1);
+        if (_leagueRunStages.Contains(stage)) return false;
+        return stage == 0 || _leagueRunStages.Contains(stage - 1);
     }
 
     private BossTeam ChampionTeamForPlayer(int stage, BossTeam generatedChampion)
@@ -403,10 +453,17 @@ public sealed class OverworldSession
         return null;
     }
 
-    public bool HasResolvedLegendary(int speciesId) => _resolvedLegendaries.Contains(speciesId);
+    /// <summary>Whether this legendary's static encounter is currently spent — either caught for good, or
+    /// beaten and waiting for the next League clear to bring it back.</summary>
+    public bool HasResolvedLegendary(int speciesId)
+        => _capturedLegendaries.Contains(speciesId) || _dormantLegendaries.Contains(speciesId);
 
-    /// <summary>Won or captured; never called on a flee or loss (§5.5: legendaries never gate progress).</summary>
-    public void MarkLegendaryResolved(int speciesId) => _resolvedLegendaries.Add(speciesId);
+    /// <summary>Caught: gone from the world for good, because the player has it.</summary>
+    public void MarkLegendaryCaptured(int speciesId) => _capturedLegendaries.Add(speciesId);
+
+    /// <summary>Beaten rather than caught, so its encounter sleeps until the next Champion victory wakes
+    /// it (GDD §5.5). Fleeing marks nothing — the encounter is simply still standing there.</summary>
+    public void MarkLegendaryDefeated(int speciesId) => _dormantLegendaries.Add(speciesId);
 
     /// <summary>Checks whether entering <paramref name="areaId"/> should start a legendary static encounter:
     /// the first unresolved <see cref="Generation.Roster.LegendaryPlacement"/> at this area wins. There is no
@@ -453,21 +510,54 @@ public sealed class OverworldSession
         return collected;
     }
 
-    /// <summary>Revives pending fossils into the party in pickup order, stopping when the party fills up —
-    /// what is left stays pending for a later visit.</summary>
+    /// <summary>Revives pending fossils in pickup order, stopping only when there is nowhere left to put
+    /// one; what is left stays pending for a later visit.</summary>
     public IReadOnlyList<FossilPickup> ReviveFossils(GameData data)
     {
         ArgumentNullException.ThrowIfNull(data);
         var revived = new List<FossilPickup>();
-        while (_pendingRevivals.Count > 0 && !Party.IsFull)
+        while (_pendingRevivals.Count > 0)
         {
             var pickup = _pendingRevivals[0];
+            var member = BattleProgressionFactory.AtLevel(data, pickup.SpeciesId, pickup.Level);
+            if (!GainPokemon(data, member).Accepted) break;
             _pendingRevivals.RemoveAt(0);
-            Party.Add(BattleProgressionFactory.AtLevel(data, pickup.SpeciesId, pickup.Level));
             revived.Add(pickup);
         }
         return revived;
     }
+
+    /// <summary>
+    /// Every way the player comes to own a Pokémon — the starter, a catch, a revived fossil — goes through
+    /// here, so the party/PC overflow rule and the Pokédex "caught" tick are decided in exactly one place.
+    /// A full party sends it to the boxes rather than turning it away.
+    /// </summary>
+    public PokemonGainResult GainPokemon(GameData data, BattleProgressionState member)
+    {
+        ArgumentNullException.ThrowIfNull(data);
+        ArgumentNullException.ThrowIfNull(member);
+        var name = Nicknames.DisplayName(data, member);
+
+        if (!Party.IsFull)
+        {
+            Party.Add(member);
+            Pokedex.MarkCaught(member.SpeciesId);
+            return new PokemonGainResult(PokemonGainKind.JoinedParty, $"{name} joined your party!");
+        }
+
+        if (Storage.NextBox is not int box)
+            return new PokemonGainResult(
+                PokemonGainKind.NoRoom, $"There is no room anywhere for {name}.");
+
+        Storage.Deposit(member);
+        Pokedex.MarkCaught(member.SpeciesId);
+        return new PokemonGainResult(
+            PokemonGainKind.SentToBox, $"{name} was sent to Box {box + 1}.", box);
+    }
+
+    /// <summary>Met in battle: wild, static, or a trainer's. Seen is the weaker half of the dex record and
+    /// the only one a battle the player loses still earns.</summary>
+    public void MarkSpeciesSeen(int speciesId) => Pokedex.MarkSeen(speciesId);
 
     /// <summary>Talking to a town's Mart clerk (see <see cref="MartInteractions"/>): buys the single most
     /// expensive item currently affordable from that town's stock. Spends <see cref="Money"/> and adds to
@@ -522,16 +612,17 @@ public sealed class OverworldSession
     {
         if (_pendingRevivals.Count == 0)
             return new ServiceOutcome(ServiceKind.FossilRevival, false, "Bring me a fossil and I'll see to it.");
-        if (Party.IsFull)
-            return new ServiceOutcome(
-                ServiceKind.FossilRevival, false, "Your party is full — make room and I'll revive it.");
-
         var pickup = _pendingRevivals[0];
+        var member = BattleProgressionFactory.AtLevel(data, pickup.SpeciesId, pickup.Level);
+        var gained = GainPokemon(data, member);
+        if (!gained.Accepted)
+            return new ServiceOutcome(
+                ServiceKind.FossilRevival, false, "You have nowhere to put it — come back with room.");
+
         _pendingRevivals.RemoveAt(0);
-        Party.Add(BattleProgressionFactory.AtLevel(data, pickup.SpeciesId, pickup.Level));
         return new ServiceOutcome(
             ServiceKind.FossilRevival, true,
-            $"The fossil came back to life as {data.Species[pickup.SpeciesId].Name}!");
+            $"The fossil came back to life as {data.Species[pickup.SpeciesId].Name}! {gained.Message}");
     }
 
     /// <summary>Teaches the strongest tutor move the first party member with a free slot can learn. A full

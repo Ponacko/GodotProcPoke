@@ -76,6 +76,7 @@ public partial class TrainerBattleScreen : BattleScreenBase
         _session = TrainerBattleSession.Start(
             _data, player, _roster, RandomSeed(), $"{_trainerName}'s");
         State = _session.State;
+        session.MarkSpeciesSeen(State.Opponent.SpeciesId);
 
         var biome = session.Region.Biomes.Of(session.CurrentAreaId);
         Backdrop.Color = BattleBackdropPalette.Of(biome);
@@ -115,6 +116,8 @@ public partial class TrainerBattleScreen : BattleScreenBase
         {
             LoadOpponentSprite();
             PlayCry(State.Opponent.SpeciesId);
+            // Each Pokémon a trainer sends out is one the player has now seen.
+            GameState.Instance.Session!.MarkSpeciesSeen(State.Opponent.SpeciesId);
         }
         RefreshLabels();
         _busy = false;

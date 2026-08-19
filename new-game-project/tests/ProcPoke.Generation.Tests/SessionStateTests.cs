@@ -108,7 +108,7 @@ public sealed class SessionStateTests
             Assert.Equal(returnState, request.ReturnState);
 
             Assert.False(session.HasResolvedLegendary(expected.SpeciesId));
-            session.MarkLegendaryResolved(expected.SpeciesId);
+            session.MarkLegendaryDefeated(expected.SpeciesId);
             Assert.True(session.HasResolvedLegendary(expected.SpeciesId));
         }
 
@@ -149,7 +149,7 @@ public sealed class SessionStateTests
     }
 
     [Fact]
-    public void FossilsStayPendingRatherThanOverflowingAFullParty()
+    public void FossilsArePickedUpEvenWithAFullParty()
     {
         var region = Generate(31337);
         var session = new OverworldSession(
@@ -159,11 +159,12 @@ public sealed class SessionStateTests
 
         var pickups = session.CollectFossils(region.Dex.FossilAreaId);
 
-        // The pickup still happens — a full party costs the player nothing but a second trip to the lab.
+        // The pickup still happens — a fossil is an object, and a full party is not a reason to leave it
+        // in the cave. Where the revived Pokémon then goes is PokedexAndStorageTests' business.
         Assert.Equal(region.Special.Fossils.Count, pickups.Count);
         Assert.All(region.Special.Fossils, fossil => Assert.True(session.HasCollectedFossil(fossil.SpeciesId)));
-        Assert.Empty(session.ReviveFossils(TestData.Data));
         Assert.Equal(pickups, session.PendingFossilRevivals);
+        Assert.Equal(Party.MaxSize, session.Party.Members.Count);
     }
 
     [Fact]

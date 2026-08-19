@@ -181,6 +181,13 @@ public partial class OverworldRootController : Node2D
             && TransitionResolver.OutwardFacing(opening.Edge) == _movement.State.Facing);
         if (crossing is null) return;
 
+        // The post-game cave's guard (GDD §11a) is the one crossing a non-Champion cannot make.
+        if (!_session.CanEnterArea(crossing.NeighborAreaId))
+        {
+            _message.Text = _session.AreaEntryRefusal(crossing.NeighborAreaId);
+            return;
+        }
+
         _suppressNextEncounterRoll = true;
         await _transition.TransitionAsync(region, areaId, target, _movement.State.Facing,
             arrival => LoadArea(arrival.AreaId, new PlayerState(arrival.Position, arrival.Facing)));
