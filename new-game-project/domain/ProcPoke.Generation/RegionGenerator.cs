@@ -8,6 +8,7 @@ using ProcPoke.Generation.Identity;
 using ProcPoke.Generation.Roster;
 using ProcPoke.Generation.Rng;
 using ProcPoke.Generation.Rivals;
+using ProcPoke.Generation.Services;
 using ProcPoke.Generation.Npcs;
 using ProcPoke.Generation.Topology;
 using ProcPoke.Generation.Trainers;
@@ -16,13 +17,14 @@ namespace ProcPoke.Generation;
 
 /// <summary>A generated region so far: graph, gating, biomes, the edge-aligned opening plan carvers
 /// consume, the carved tile map per area (keyed by area id), names, gym/E4/Champion typing, the starter
-/// triangle, realized NPC posts, and the stitched world canvas. Grows as later passes (dex, …) land.</summary>
+/// triangle, realized NPC posts, the one-off city services, and the stitched world canvas. Grows as later
+/// passes (dex, …) land.</summary>
 public sealed record GeneratedRegion(
     RegionGraph Graph, GatingPlan Gating, BiomeMap Biomes, OpeningPlan Openings,
     IReadOnlyDictionary<int, CarvedArea> Carved, GenerationSettings Settings,
     RegionNames Names, RegionIdentity Identity, StarterPlan Starters, DexPlan Dex, SpecialSpecies Special,
     EncounterPlan Encounters, TrainerPlan Trainers, BossPlan Bosses, RivalPlan Rivals, NpcPlan Npcs,
-    WorldCanvasMap World)
+    ServicePlan Services, WorldCanvasMap World)
 {
     public RivalPlan Rival => Rivals;
 }
@@ -68,12 +70,13 @@ public static class RegionGenerator
             var trainers = TrainerPass.Generate(graph, carved, biomes, identity, dex, data, streams);
             var bosses = BossPass.Generate(graph, identity, dex, starters, settings, data, streams);
             var rivals = RivalPass.Generate(identity, dex, starters, settings, data, streams);
+            var services = ServicesPass.Generate(graph, carved, dex, streams);
             var npcs = NpcPass.Generate(graph, gating, names, identity, streams);
             carved = NpcTilePlacer.Place(npcs, carved, streams);
             var world = WorldCanvas.Compose(graph, biomes, carved, openings);
             return new GeneratedRegion(
                 graph, gating, biomes, openings, carved, settings, names, identity, starters, dex, special,
-                encounters, trainers, bosses, rivals, npcs, world);
+                encounters, trainers, bosses, rivals, npcs, services, world);
         }
 
         throw new InvalidOperationException(

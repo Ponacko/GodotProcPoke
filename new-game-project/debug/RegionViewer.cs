@@ -184,7 +184,7 @@ public partial class RegionViewer : Control
             RegionGraphText.Render(
             _region.Graph, _region.Gating, _region.Biomes, _region.Names, _region.Identity,
             _region.Starters, _region.Dex, _data, _region.Special, _region.Encounters,
-            _region.Trainers, _region.Bosses, _region.Rivals, _region.Npcs);
+            _region.Trainers, _region.Bosses, _region.Rivals, _region.Npcs, _region.Services);
         _areaText.Text = "Click an area on the map to inspect it.";
         _dexText.Text = BuildDexText(_region);
 

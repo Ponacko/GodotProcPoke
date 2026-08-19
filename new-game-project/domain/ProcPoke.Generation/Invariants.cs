@@ -4,6 +4,7 @@ using ProcPoke.Generation.Encounters;
 using ProcPoke.Generation.Gating;
 using ProcPoke.Generation.Npcs;
 using ProcPoke.Generation.Roster;
+using ProcPoke.Generation.Services;
 using ProcPoke.Generation.Topology;
 
 namespace ProcPoke.Generation;
@@ -56,7 +57,44 @@ public static class Invariants
         CheckDex(region, data, anchors, Fail);
         CheckPopulations(region, data, Fail);
         CheckLevels(region, anchors, Fail);
+        CheckServices(region, Fail);
         return errors;
+    }
+
+    /// <summary>Every one-off service exists somewhere reachable, seated in a real city house post
+    /// (GDD §8.4). A missing service is player-visible content loss, so it belongs here with the hard
+    /// topology checks rather than only in the services pass's own tests. The one exception is a region
+    /// whose cities have too few houses to seat them all — a badge-count-1 curiosity, not a defect in the
+    /// pass — so the "all present" half is checked only where the seats exist.</summary>
+    private static void CheckServices(GeneratedRegion region, Action<string> fail)
+    {
+        var seats = region.Graph.Areas
+            .Where(area => area.Archetype is AreaArchetype.StartTown or AreaArchetype.Town)
+            .Sum(area => region.Carved[area.Id].BuildingEntrances
+                .Count(entrance => entrance.Kind == BuildingKind.House) * ServicesPass.PostsPerHouse);
+        if (seats >= Enum.GetValues<ServiceKind>().Length)
+            foreach (var kind in Enum.GetValues<ServiceKind>())
+                if (region.Services.FirstOf(kind) is null) fail($"service {kind} is missing from the region");
+
+        foreach (var placement in region.Services.Placements)
+        {
+            if (!region.Carved.TryGetValue(placement.AreaId, out var carved))
+            {
+                fail($"service {placement.Kind} sits in unknown area {placement.AreaId}");
+                continue;
+            }
+            var houses = carved.BuildingEntrances.Count(entrance => entrance.Kind == BuildingKind.House);
+            if (placement.HouseIndex < 0 || placement.HouseIndex >= houses)
+                fail($"service {placement.Kind} sits in house {placement.HouseIndex} of an area with {houses}");
+            if (placement.PostIndex < 0) fail($"service {placement.Kind} sits at post {placement.PostIndex}");
+        }
+
+        var taken = region.Services.Placements.Select(p => (p.AreaId, p.HouseIndex, p.PostIndex)).ToList();
+        if (taken.Count != taken.Distinct().Count()) fail("two services share one house post");
+
+        var vendor = region.Services.LinkCableVendorAreaId;
+        if (region.Graph[vendor].Archetype is not (AreaArchetype.StartTown or AreaArchetype.Town))
+            fail($"Link Cable vendor area {vendor} is not a city");
     }
 
     private static void CheckOpenings(GeneratedRegion region, Action<string> fail)

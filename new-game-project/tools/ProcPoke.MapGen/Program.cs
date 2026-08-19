@@ -50,7 +50,7 @@ for (var i = 0; i < count; i++)
     Console.WriteLine($"════ seed {thisSeed} ════");
     Console.WriteLine(RegionGraphText.Render(region.Graph, region.Gating, region.Biomes,
         region.Names, region.Identity, region.Starters, region.Dex, data, region.Special, region.Encounters,
-        region.Trainers, region.Bosses, region.Rivals, region.Npcs));
+        region.Trainers, region.Bosses, region.Rivals, region.Npcs, region.Services));
 
     if (carve || png)
     {

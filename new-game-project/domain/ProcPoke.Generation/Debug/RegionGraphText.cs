@@ -7,6 +7,7 @@ using ProcPoke.Generation.Gating;
 using ProcPoke.Generation.Identity;
 using ProcPoke.Generation.Roster;
 using ProcPoke.Generation.Rivals;
+using ProcPoke.Generation.Services;
 using ProcPoke.Generation.Npcs;
 using ProcPoke.Generation.Topology;
 using ProcPoke.Generation.Trainers;
@@ -71,7 +72,7 @@ public static class RegionGraphText
         RegionNames? names = null, RegionIdentity? identity = null, StarterPlan? starters = null,
         DexPlan? dex = null, GameData? data = null, SpecialSpecies? special = null,
         EncounterPlan? encounters = null, TrainerPlan? trainers = null, BossPlan? bosses = null,
-        RivalPlan? rivals = null, NpcPlan? npcs = null)
+        RivalPlan? rivals = null, NpcPlan? npcs = null, ServicePlan? services = null)
     {
         var sb = new StringBuilder();
         sb.AppendLine($"Region  badges={g.BadgeCount}  areas={g.Areas.Count}  connections={g.Connections.Count}  connected={g.IsConnected()}");
@@ -161,6 +162,9 @@ public static class RegionGraphText
         if (npcs is not null)
             AppendNpcs(sb, g, npcs, names);
 
+        if (services is not null)
+            AppendServices(sb, g, services, names);
+
         return sb.ToString();
     }
 
@@ -237,6 +241,18 @@ public static class RegionGraphText
             foreach (var post in posts)
                 sb.AppendLine($"      {post.Kind}: {post.Text}");
         }
+    }
+
+    /// <summary>Which city hosts which one-off service, plus the guaranteed early Link Cable vendor.</summary>
+    private static void AppendServices(StringBuilder sb, RegionGraph g, ServicePlan services, RegionNames? names)
+    {
+        sb.AppendLine("City services:");
+        foreach (var placement in services.Placements
+                     .OrderBy(p => g[p.AreaId].PathIndex < 0 ? int.MaxValue : g[p.AreaId].PathIndex)
+                     .ThenBy(p => p.AreaId).ThenBy(p => p.HouseIndex))
+            sb.AppendLine(
+                $"    {placement.Kind,-14} @ {AreaName(g, names, placement.AreaId)} (house {placement.HouseIndex})");
+        sb.AppendLine($"    Link Cable vendor (Mart) @ {AreaName(g, names, services.LinkCableVendorAreaId)}");
     }
 
     /// <summary>Fossils and legendaries: species, area, and (for legendaries) level and appended dex number.</summary>
