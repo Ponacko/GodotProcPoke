@@ -116,6 +116,12 @@ public abstract partial class BattleScreenBase : Control
         if (BagButton is not null) BagButton.Disabled = CurrentBattleItem() is null;
     }
 
+    /// <summary>A species' name for narration, from the baked data the scene already holds.</summary>
+    private static string SpeciesName(int speciesId)
+        => GameState.Instance.Data is { } data && data.Species.TryGetValue(speciesId, out var species)
+            ? species.Name
+            : $"#{speciesId}";
+
     protected async Task Pause() => await ToSignal(GetTree().CreateTimer(0.8), Timer.SignalName.Timeout);
 
     // ── event replay: ADR-0006 — the sim narrates, this only animates + logs in strict order ──────────
@@ -176,6 +182,12 @@ public abstract partial class BattleScreenBase : Control
                 break;
             case FlinchInflicted flinch:
                 Log.AppendText($"{NameOf(flinch.Target)} flinched!\n");
+                break;
+            case PokemonSwitched switched:
+                Log.AppendText(switched.Fainted
+                    ? $"{NameOf(switched.Actor)} sent out {SpeciesName(switched.ToSpeciesId)}!\n"
+                    : $"{NameOf(switched.Actor)} withdrew {SpeciesName(switched.FromSpeciesId)} "
+                        + $"and sent out {SpeciesName(switched.ToSpeciesId)}!\n");
                 break;
             case ItemUsed item:
                 Log.AppendText(item.Actor == BattleActor.Player

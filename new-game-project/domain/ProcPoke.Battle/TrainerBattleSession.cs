@@ -37,8 +37,14 @@ public sealed class TrainerBattleSession
     private readonly string? _opponentIdPrefix;
     private readonly List<TrainerRosterMember> _defeated = [];
     private readonly BattleAiTier _tier;
+
+    /// <summary>HP a roster member is carrying, once it has been out and come back. A Pokémon withdrawn
+    /// from a hopeless matchup returns as damaged as it left, the way mainline switching works.</summary>
+    private readonly Dictionary<int, int> _carriedHp = [];
+    private readonly HashSet<int> _defeatedSlots = [];
     private int _potionsLeft;
     private int _opponentIndex;
+    private bool _switchedOnce;
     private bool _rewardsApplied;
 
     private TrainerBattleSession(
@@ -83,6 +89,9 @@ public sealed class TrainerBattleSession
     public int OpponentPosition => _opponentIndex + 1;
     public int OpponentRosterSize => _roster.Count;
 
+    /// <summary>Whether the boss has already spent its one hopeless-matchup switch (CONTEXT.md).</summary>
+    public bool HasSwitched => _switchedOnce;
+
     public static TrainerBattleSession Start(
         GameData data,
         BattlePokemon player,
@@ -121,32 +130,40 @@ public sealed class TrainerBattleSession
         if (playerAction is ThrowBallAction)
             throw new ArgumentException("You cannot throw a ball in a trainer battle.", nameof(playerAction));
 
-        var opponentAction = BattleAi.ChooseAction(
-            State, BattleActor.Opponent, _tier, _random, _typeChart, BossPotion());
+        var opponentAction = ChooseOpponentAction();
         if (opponentAction is UseItemAction) _potionsLeft--;
+
+        // A switch happens before anything else in the turn, so the player's move lands on whoever came in.
+        var switchEvents = new List<BattleEvent>();
+        if (opponentAction is SwitchAction switchAction)
+        {
+            _switchedOnce = true;
+            switchEvents.Add(SendOut(switchAction.RosterSlot, State.TurnNumber + 1, fainted: false));
+        }
+
         var turn = BattleTurnResolver.Resolve(State, playerAction, opponentAction, _random, _typeChart);
         State = turn.State;
+        var events = switchEvents.Concat(turn.Events).ToList();
 
         if (State.Player.IsFainted)
         {
             Outcome = TrainerBattleOutcome.PlayerLost;
-            return new TrainerBattleTurnResult(State, turn.Events, Outcome);
+            return new TrainerBattleTurnResult(State, events, Outcome);
         }
 
         if (!State.Opponent.IsFainted)
-            return new TrainerBattleTurnResult(State, turn.Events, Outcome);
+            return new TrainerBattleTurnResult(State, events, Outcome);
 
         _defeated.Add(_roster[_opponentIndex]);
-        _opponentIndex++;
-        if (_opponentIndex >= _roster.Count)
+        _defeatedSlots.Add(_opponentIndex);
+        _carriedHp.Remove(_opponentIndex);
+        if (NextSlotAfterFaint() is not int nextSlot)
         {
             Outcome = TrainerBattleOutcome.PlayerWon;
-            return new TrainerBattleTurnResult(State, turn.Events, Outcome);
+            return new TrainerBattleTurnResult(State, events, Outcome);
         }
 
-        var next = BuildOpponent(_data, _roster[_opponentIndex], _opponentIdPrefix);
-        State = State with { Opponent = next };
-        var events = new List<BattleEvent>(turn.Events) { new MessageShown(State.TurnNumber, $"{next.Id} was sent out!") };
+        events.Add(SendOut(nextSlot, State.TurnNumber, fainted: true));
         return new TrainerBattleTurnResult(State, events, Outcome);
     }
 
@@ -176,6 +193,72 @@ public sealed class TrainerBattleSession
         }
         _rewardsApplied = true;
         return results;
+    }
+
+    /// <summary>
+    /// What the trainer does this turn. A boss reaches for a potion below a quarter HP first (staying alive
+    /// outranks position), and otherwise leaves a hopeless matchup once per battle — the two tier-2
+    /// behaviours CONTEXT.md names, in the order it names them. Every other tier just picks a move.
+    /// </summary>
+    private BattleAction ChooseOpponentAction()
+    {
+        var action = BattleAi.ChooseAction(
+            State, BattleActor.Opponent, _tier, _random, _typeChart, BossPotion());
+        if (action is UseItemAction) return action;
+
+        if (_tier != BattleAiTier.Boss || _switchedOnce) return action;
+        if (!BattleAi.IsHopelessMatchup(State.Opponent, State.Player, _typeChart)) return action;
+        return BetterMatchupSlot() is int slot ? new SwitchAction(slot) : action;
+    }
+
+    /// <summary>
+    /// The alive team member with the best answer to what the player has out, or null when nobody is better
+    /// off than the Pokémon already in — there is no point spending a turn to swap one hopeless matchup for
+    /// another.
+    /// </summary>
+    private int? BetterMatchupSlot()
+    {
+        int? best = null;
+        var bestScore = BattleAi.BestMoveScore(State.Opponent, State.Player, _typeChart);
+
+        for (var slot = 0; slot < _roster.Count; slot++)
+        {
+            if (slot == _opponentIndex || _defeatedSlots.Contains(slot)) continue;
+            var candidate = BuildOpponent(_data, _roster[slot], _opponentIdPrefix);
+            if (BattleAi.IsHopelessMatchup(candidate, State.Player, _typeChart)) continue;
+
+            var score = BattleAi.BestMoveScore(candidate, State.Player, _typeChart);
+            if (score <= bestScore) continue;
+            bestScore = score;
+            best = slot;
+        }
+        return best;
+    }
+
+    /// <summary>The next member to send out when the active one faints: mainline order, first alive.</summary>
+    private int? NextSlotAfterFaint()
+    {
+        for (var slot = 0; slot < _roster.Count; slot++)
+            if (!_defeatedSlots.Contains(slot)) return slot;
+        return null;
+    }
+
+    /// <summary>
+    /// Puts a roster member into the battle and records what the one leaving was carrying, so a Pokémon
+    /// withdrawn and sent back in later resumes at the HP it left with rather than healing for free.
+    /// </summary>
+    private PokemonSwitched SendOut(int slot, int turn, bool fainted)
+    {
+        var leaving = State.Opponent;
+        if (!fainted) _carriedHp[_opponentIndex] = leaving.Hp;
+
+        _opponentIndex = slot;
+        var incoming = BuildOpponent(_data, _roster[slot], _opponentIdPrefix);
+        if (_carriedHp.TryGetValue(slot, out var carried))
+            incoming = incoming with { Hp = Math.Min(carried, incoming.MaxHp) };
+
+        State = State with { Opponent = incoming };
+        return new PokemonSwitched(turn, BattleActor.Opponent, leaving.SpeciesId, incoming.SpeciesId, fainted);
     }
 
     /// <summary>

@@ -131,6 +131,10 @@ public static class BattleTurnResolver
                 continue;
             }
 
+            // A switch was already carried out by the session before this turn was resolved (it owns the
+            // roster); all that is left here is that the switcher does not also get to act.
+            if (action is SwitchAction) continue;
+
             if (!CanAct(turn, actor, ref workingState, events, random)) continue;
 
             pokemon = actor == BattleActor.Player ? workingState.Player : workingState.Opponent;
@@ -228,6 +232,7 @@ public static class BattleTurnResolver
     /// before the priority bracket +5 ceiling that moves live under).</summary>
     private static int Priority(BattlePokemon pokemon, BattleAction action) => action switch
     {
+        SwitchAction => 7,
         UseItemAction => 6,
         UseMoveAction moveAction => pokemon.Moves.Single(move => move.Id == moveAction.MoveId).Priority,
         _ => 0,

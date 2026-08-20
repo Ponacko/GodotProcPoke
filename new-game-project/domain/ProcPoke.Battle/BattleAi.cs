@@ -12,8 +12,9 @@ public enum BattleAiTier
 /// <summary>
 /// Selects an action for the active combatant, per the three-tier ladder (CONTEXT.md's AI Tier): wild picks
 /// at random, a standard trainer picks the best damage with ~20% imperfection, and a boss picks the best
-/// damage outright and reaches for a potion below a quarter HP. The tier-2 hopeless-matchup switch is still
-/// missing: the opponent's roster is sent out in fixed order, so there is nothing to switch to yet.
+/// damage outright, reaches for a potion below a quarter HP, and switches out of a hopeless matchup once per
+/// battle. The switch itself is decided by the session that owns the roster (this class only ever sees one
+/// active Pokémon), using the matchup helpers below.
 /// </summary>
 public static class BattleAi
 {
@@ -59,6 +60,53 @@ public static class BattleAi
             .Select(candidate => candidate.Move)
             .ToArray();
         return new UseMoveAction(best[random.NextInt(best.Length)].Id);
+    }
+
+    /// <summary>
+    /// How hard <paramref name="attacker"/> can hit <paramref name="target"/>: the score of its best move,
+    /// on the same scale <see cref="ChooseAction"/> ranks moves by. Zero when it has no damaging move that
+    /// lands at all.
+    /// </summary>
+    public static double BestMoveScore(BattlePokemon attacker, BattlePokemon target, TypeChart? typeChart = null)
+    {
+        ArgumentNullException.ThrowIfNull(attacker);
+        ArgumentNullException.ThrowIfNull(target);
+        typeChart ??= NeutralTypeChart;
+        return attacker.Moves.Count == 0
+            ? 0
+            : attacker.Moves.Max(move => Score(move, attacker, target, typeChart));
+    }
+
+    /// <summary>
+    /// The best type multiplier <paramref name="attacker"/> can bring against <paramref name="target"/>,
+    /// over its damaging moves. 0 when everything it knows is either non-damaging or ineffective.
+    /// </summary>
+    public static double BestEffectiveness(
+        BattlePokemon attacker, BattlePokemon target, TypeChart? typeChart = null)
+    {
+        ArgumentNullException.ThrowIfNull(attacker);
+        ArgumentNullException.ThrowIfNull(target);
+        var chart = typeChart ?? NeutralTypeChart;
+        var damaging = attacker.Moves.Where(move => move.Power is > 0).ToArray();
+        return damaging.Length == 0
+            ? 0
+            : damaging.Max(move => target.Types.Aggregate(
+                1.0, (multiplier, type) => multiplier * chart.Effectiveness(move.Type, type)));
+    }
+
+    /// <summary>
+    /// A hopeless matchup, the one a tier-2 boss will spend a turn escaping (CONTEXT.md): nothing it knows
+    /// hits for even neutral damage, while the other side has something super-effective to answer with.
+    /// Both halves matter — being resisted is survivable if the opponent cannot punish it, and taking
+    /// super-effective hits is survivable if you can hit back just as hard.
+    /// </summary>
+    public static bool IsHopelessMatchup(
+        BattlePokemon mine, BattlePokemon theirs, TypeChart? typeChart = null)
+    {
+        ArgumentNullException.ThrowIfNull(mine);
+        ArgumentNullException.ThrowIfNull(theirs);
+        return BestEffectiveness(mine, theirs, typeChart) < 1.0
+            && BestEffectiveness(theirs, mine, typeChart) > 1.0;
     }
 
     private static double Score(Move move, BattlePokemon attacker, BattlePokemon target, TypeChart chart)

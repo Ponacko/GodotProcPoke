@@ -13,6 +13,7 @@ public enum BattleActionKind
     UseMove,
     ThrowBall,
     UseItem,
+    Switch,
     Wait,
 }
 
@@ -33,6 +34,12 @@ public sealed record ThrowBallAction(
 /// </summary>
 public sealed record UseItemAction(
     int ItemId, string ItemName, Medicine Medicine) : BattleAction(BattleActionKind.UseItem);
+
+/// <summary>
+/// Bring in another team member. Trainer-battle-only, and resolved by the session that owns the roster —
+/// the turn resolver never sees more than one Pokémon a side, so it treats this as a turn already spent.
+/// </summary>
+public sealed record SwitchAction(int RosterSlot) : BattleAction(BattleActionKind.Switch);
 
 public sealed record WaitAction() : BattleAction(BattleActionKind.Wait);
 
@@ -86,6 +93,10 @@ public sealed record RecoilDamage(
 
 public sealed record FlinchInflicted(
     int Turn, BattleActor Actor, BattleActor Target) : BattleEvent(Turn);
+
+/// <summary>One Pokémon making way for another, whether withdrawn or fainted.</summary>
+public sealed record PokemonSwitched(
+    int Turn, BattleActor Actor, int FromSpeciesId, int ToSpeciesId, bool Fainted) : BattleEvent(Turn);
 
 public sealed record ItemUsed(
     int Turn, BattleActor Actor, int ItemId, string ItemName) : BattleEvent(Turn);
