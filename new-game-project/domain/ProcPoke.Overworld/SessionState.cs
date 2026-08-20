@@ -34,6 +34,18 @@ public static class NewGameIdentity
     }
 }
 
+/// <summary>What a brand-new game starts with.</summary>
+public static class NewGame
+{
+    /// <summary>
+    /// Mainline's starting purse (¥3000). It exists because balls are bought, not handed out: the GDD's
+    /// opening beat gives the player a starter "from three Poké Balls" and nothing else, so without a purse
+    /// the first catch would have to wait on the first trainer's prize money. A debug session started
+    /// straight from the region viewer is not a new game and gets nothing.
+    /// </summary>
+    public const int StartingMoney = 3000;
+}
+
 /// <summary>Visited locations and Fly targeting are session state, never properties of generated maps.</summary>
 public sealed class RegionMapState
 {
@@ -154,9 +166,14 @@ public sealed class OverworldSession
     private readonly List<FossilPickup> _pendingRevivals = [];
     private bool _creditsReached;
 
-    public OverworldSession(GeneratedRegion region, PlayerIdentity player)
+    /// <param name="startingMoney">The purse a new game begins with (<see cref="NewGame.StartingMoney"/>).
+    /// Defaults to nothing, which is right for a debug session and for a load, where the saved figure is
+    /// assigned straight afterwards.</param>
+    public OverworldSession(GeneratedRegion region, PlayerIdentity player, int startingMoney = 0)
         : this(region, player, new InteractionSession())
     {
+        if (startingMoney < 0) throw new ArgumentOutOfRangeException(nameof(startingMoney));
+        Money = startingMoney;
     }
 
     private OverworldSession(GeneratedRegion region, PlayerIdentity player, InteractionSession interactions)

@@ -67,7 +67,7 @@ public partial class StarterSelectScreen : Control
             + $"Your rival chose {data.Species[rivalSpeciesId].Name}!";
         await ToSignal(GetTree().CreateTimer(1.5), Timer.SignalName.Timeout);
 
-        var session = new OverworldSession(region, identity);
+        var session = new OverworldSession(region, identity, NewGame.StartingMoney);
         session.GainPokemon(data, progression);
         session.SetStarterCorner(cornerIndex);
 

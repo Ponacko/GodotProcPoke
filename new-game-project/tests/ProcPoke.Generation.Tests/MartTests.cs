@@ -1,3 +1,4 @@
+using ProcPoke.Battle;
 using ProcPoke.Generation;
 using ProcPoke.Generation.Topology;
 using ProcPoke.Overworld;
@@ -99,6 +100,29 @@ public sealed class MartTests
         Assert.All(fractions, f => Assert.InRange(f, 0.0, 1.0));
         for (var i = 1; i < fractions.Length; i++)
             Assert.True(fractions[i] > fractions[i - 1], "later towns must have a strictly larger fraction");
+    }
+
+    /// <summary>A new game can afford its first Poké Balls, because balls are bought rather than given:
+    /// without a purse the first catch would wait on the first trainer's prize money.</summary>
+    [Fact]
+    public void ANewGamesPurseCoversBallsAtTheFirstMart()
+    {
+        var region = Generate();
+        var session = new OverworldSession(
+            region, NewGameIdentity.Create(CharacterChoice.CharacterA, "Player"), NewGame.StartingMoney);
+        var town = region.Graph.Areas.First(area => area.Archetype == AreaArchetype.StartTown);
+
+        Assert.Equal(NewGame.StartingMoney, session.Money);
+        var result = session.BuyFromMart(TestData.Data, town.Id);
+
+        Assert.Equal(MartPurchaseKind.Bought, result.Kind);
+        Assert.InRange(session.Money, 0, NewGame.StartingMoney - 1);
+        // Enough left over for a ball after that first purchase.
+        var cheapestBall = MartCatalog
+            .For(TestData.Data, MartAvailability.FractionOf(region.Graph, town.Id))
+            .Where(itemId => BallCatalog.For(TestData.Data, itemId) is not null)
+            .Min(itemId => TestData.Data.Items[itemId].Cost);
+        Assert.True(session.Money >= cheapestBall, $"{session.Money} left, ball costs {cheapestBall}");
     }
 
     [Fact]
