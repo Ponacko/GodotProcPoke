@@ -242,6 +242,37 @@ public sealed class SaveTests : IDisposable
         Assert.Equal(keyArea, loaded.CurrentAreaId);
     }
 
+    /// <summary>
+    /// A save stores the generated region so it outlives generator bumps, which only works if the stamp
+    /// keeps naming the generator that <em>built</em> the region. Re-saving a loaded region must therefore
+    /// carry its version forward rather than relabelling it with the running build's.
+    /// </summary>
+    [Fact]
+    public void ResavingALoadedRegionKeepsItsOriginalGeneratorStamp()
+    {
+        var store = Store();
+        var region = Region();
+        var session = new OverworldSession(region, NewGameIdentity.Create(CharacterChoice.CharacterA, "P"));
+        var fresh = store.Save(1, session, new PlayerState(new GridPosition(1, 1)), DateTimeOffset.UnixEpoch);
+
+        // A region generated here and now is stamped with the running generator.
+        Assert.Equal(GeneratorVersion.Current, fresh.GeneratorVersion);
+        Assert.Equal(GeneratorVersion.Current, session.RegionGeneratorVersion);
+
+        // Stand in for a save written by an older generator, load it, and save again.
+        var older = fresh.Session with { RegionGeneratorVersion = 1 };
+        var reloaded = OverworldSession.Restore(fresh.Region.ToRegion(), older);
+        Assert.Equal(1, reloaded.RegionGeneratorVersion);
+
+        var resaved = store.Save(2, reloaded, new PlayerState(new GridPosition(1, 1)), DateTimeOffset.UnixEpoch);
+
+        Assert.Equal(1, resaved.GeneratorVersion);
+        Assert.Equal(1, SeedString.Decode(resaved.SeedString).GeneratorVersion);
+        Assert.Equal(1, store.TrySummarize(2)!.GeneratorVersion);
+        // The settings still decode, so the string stays shareable either way.
+        Assert.Equal(region.Settings, SeedString.Decode(resaved.SeedString).Settings);
+    }
+
     [Fact]
     public void SlotsAreIndependentAndListable()
     {

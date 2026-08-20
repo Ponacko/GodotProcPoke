@@ -95,7 +95,7 @@ public static class Nicknames
 }
 
 /// <summary>
-/// The Move Deleter's rule (GDD §8.4): any move can go, including a permanent field move, but never the
+/// The Move Deleter's rule (GDD §8a): any move can go, including a permanent field move, but never the
 /// last one — a Pokémon with no moves cannot battle at all.
 /// </summary>
 public static class MoveDeleter

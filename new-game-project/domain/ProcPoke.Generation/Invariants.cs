@@ -74,14 +74,14 @@ public static class Invariants
     }
 
     /// <summary>Every one-off service exists somewhere reachable, seated in a real city house post
-    /// (GDD §8.4). A missing service is player-visible content loss, so it belongs here with the hard
+    /// (GDD §8a). A missing service is player-visible content loss, so it belongs here with the hard
     /// topology checks rather than only in the services pass's own tests. The one exception is a region
     /// whose cities have too few houses to seat them all — a badge-count-1 curiosity, not a defect in the
     /// pass — so the "all present" half is checked only where the seats exist.</summary>
     private static void CheckServices(GeneratedRegion region, Action<string> fail)
     {
         var seats = region.Graph.Areas
-            .Where(area => area.Archetype is AreaArchetype.StartTown or AreaArchetype.Town)
+            .Where(area => area.Archetype.IsCity())
             .Sum(area => region.Carved[area.Id].BuildingEntrances
                 .Count(entrance => entrance.Kind == BuildingKind.House) * ServicesPass.PostsPerHouse);
         if (seats >= Enum.GetValues<ServiceKind>().Length)
@@ -98,14 +98,16 @@ public static class Invariants
             var houses = carved.BuildingEntrances.Count(entrance => entrance.Kind == BuildingKind.House);
             if (placement.HouseIndex < 0 || placement.HouseIndex >= houses)
                 fail($"service {placement.Kind} sits in house {placement.HouseIndex} of an area with {houses}");
-            if (placement.PostIndex < 0) fail($"service {placement.Kind} sits at post {placement.PostIndex}");
+            if (placement.PostIndex < 0 || placement.PostIndex >= ServicesPass.PostsPerHouse)
+                fail($"service {placement.Kind} sits at post {placement.PostIndex} of a house with "
+                    + $"{ServicesPass.PostsPerHouse}");
         }
 
         var taken = region.Services.Placements.Select(p => (p.AreaId, p.HouseIndex, p.PostIndex)).ToList();
         if (taken.Count != taken.Distinct().Count()) fail("two services share one house post");
 
         var vendor = region.Services.LinkCableVendorAreaId;
-        if (region.Graph[vendor].Archetype is not (AreaArchetype.StartTown or AreaArchetype.Town))
+        if (!region.Graph[vendor].Archetype.IsCity())
             fail($"Link Cable vendor area {vendor} is not a city");
     }
 

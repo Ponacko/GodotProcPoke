@@ -9,10 +9,16 @@ public sealed record BattleItemChoice(int ItemId, string ItemName, Medicine Medi
     public UseItemAction ToAction() => new(ItemId, ItemName, Medicine);
 }
 
+/// <summary>One ball out of the bag, ready to throw.</summary>
+public sealed record BattleBallChoice(int ItemId, Ball Ball)
+{
+    public ThrowBallAction ToAction() => new(Ball.Name, Ball.Multiplier);
+}
+
 /// <summary>
-/// Which medicine to reach for mid-battle. A battle bag is narrower than the field bag: reviving needs a
-/// party to revive from, which a single-active battle has not got, so only HP (and Full Restore's status
-/// cure) is on offer here.
+/// Which medicine or ball to reach for mid-battle. A battle bag is narrower than the field bag: reviving
+/// needs a party to revive from, which a single-active battle has not got, so only HP (and Full Restore's
+/// status cure) is on offer here.
 /// </summary>
 public static class BattleBag
 {
@@ -46,6 +52,33 @@ public static class BattleBag
     public static BattleItemChoice? BestFor(
         GameData data, Bag bag, int hp, int maxHp, BattleStatus status = BattleStatus.None)
         => UsableFor(data, bag, hp, maxHp, status).FirstOrDefault();
+
+    /// <summary>Every ball in the bag, strongest first.</summary>
+    public static IReadOnlyList<BattleBallChoice> BallsIn(GameData data, Bag bag)
+    {
+        ArgumentNullException.ThrowIfNull(data);
+        ArgumentNullException.ThrowIfNull(bag);
+        return bag.Items.Keys
+            .Select(itemId => (itemId, ball: BallCatalog.For(data, itemId)))
+            .Where(pair => pair.ball is not null)
+            .Select(pair => new BattleBallChoice(pair.itemId, pair.ball!))
+            .OrderByDescending(choice => choice.Ball.Multiplier)
+            .ThenBy(choice => choice.ItemId)
+            .ToArray();
+    }
+
+    /// <summary>
+    /// The ball to throw, or null when the bag holds none. The strongest ordinary ball wins, and the Master
+    /// Ball is held back for a legendary — a one-tap throw that spent it on a wild Rattata would be a worse
+    /// bug than not offering it at all.
+    /// </summary>
+    public static BattleBallChoice? BestBallFor(GameData data, Bag bag, bool legendary)
+    {
+        var balls = BallsIn(data, bag);
+        var ordinary = balls.FirstOrDefault(choice => !choice.Ball.IsMaster);
+        if (legendary) return balls.FirstOrDefault() ?? ordinary;
+        return ordinary;
+    }
 
     /// <summary>Sort key: items that cover the missing HP rank by how much they overheal, and items that
     /// fall short rank behind all of them, biggest first.</summary>

@@ -20,7 +20,7 @@ public static class MartCatalog
     private static readonly string[] EarlyCategories = [StandardBalls, Healing];
     private static readonly string[] LateCategories = [StandardBalls, Healing, StatusCures, Revival];
 
-    /// <summary>Progression fraction past which every Mart stocks Link Cables (GDD §8.4's "late-game
+    /// <summary>Progression fraction past which every Mart stocks Link Cables (GDD §8a's "late-game
     /// Marts"); before it, only the services pass's one guaranteed vendor does.</summary>
     public const double LinkCableFraction = 0.75;
 
@@ -55,10 +55,14 @@ public static class LinkCable
     public const string ItemName = "Linking Cord";
 
     public static int IdIn(GameData data)
+        => IdOrNullIn(data) ?? throw new InvalidOperationException($"baked items contain no \"{ItemName}\"");
+
+    /// <summary>The cable's id, or null if the baked data has no such item — for callers that would rather
+    /// carry on without it (a Mart still has balls and medicine to sell) than fail outright.</summary>
+    public static int? IdOrNullIn(GameData data)
     {
         ArgumentNullException.ThrowIfNull(data);
-        return data.Items.Values.FirstOrDefault(item => item.Name == ItemName)?.Id
-            ?? throw new InvalidOperationException($"baked items contain no \"{ItemName}\"");
+        return data.Items.Values.FirstOrDefault(item => item.Name == ItemName)?.Id;
     }
 }
 

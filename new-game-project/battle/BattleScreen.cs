@@ -73,26 +73,43 @@ public partial class BattleScreen : BattleScreenBase
         PlayCry(State.Opponent.SpeciesId);
 
         FightButton.Pressed += () => { Actions.Visible = false; MoveButtons.Visible = true; };
-        _ballButton.Pressed += () => ResolveAction(new ThrowBallAction("Poké Ball"));
+        _ballButton.Pressed += ThrowBall;
         _runButton.Pressed += Flee;
 
         BuildMoveButtons(moveId => ResolveAction(new UseMoveAction(moveId)));
-        BuildBagButton(choice =>
-        {
-            // The item is spent whether or not the sim finds anything to heal; the button is only offered
-            // when there is, and a spent turn with a spent item is the mainline bargain either way.
-            GameState.Instance.Session!.SpendItem(choice.ItemId);
-            ResolveAction(choice.ToAction());
-        });
+        BuildBagButton(ResolveAction);
         RefreshBagButton();
+        RefreshBallButton();
         RefreshLabels();
         Log.Text = $"A wild {_data.Species[State.Opponent.SpeciesId].Name} appeared!\n";
+    }
+
+    /// <summary>
+    /// Throws the best ball in the bag and spends it. Balls are bought, not infinite: with none in the bag
+    /// the button is disabled, which is also why the Master Ball is held back for a legendary.
+    /// </summary>
+    private void ThrowBall()
+    {
+        if (_busy || _session.Outcome != WildBattleOutcome.Ongoing) return;
+        var session = GameState.Instance.Session!;
+        if (session.BestBall(_data, _request.Legendary is not null) is not { } choice)
+        {
+            Log.AppendText("\nYou have no Poké Balls!\n");
+            return;
+        }
+
+        session.SpendItem(choice.ItemId);
+        Log.AppendText($"\nYou used one {choice.Ball.Name}.\n");
+        ResolveAction(choice.ToAction());
     }
 
     private async void Flee()
     {
         if (_busy || _session.Outcome != WildBattleOutcome.Ongoing) return;
         Log.AppendText("\nGot away safely!\n");
+        // §5.5: a legendary that was KO'd *or fled from* respawns after the next League clear, so running
+        // away spends the encounter exactly as beating it does — it is never lost, only dormant.
+        ResolveLegendaryIfPresent(captured: false);
         PersistSurvivingHp();
         await ReturnToOverworld(_request.ReturnState);
     }
@@ -184,11 +201,17 @@ public partial class BattleScreen : BattleScreenBase
                 $"{_data.Species[evolution.FromSpeciesId].Name} evolved into {_data.Species[evolution.ToSpeciesId].Name}!\n");
     }
 
+    /// <summary>Greys the Ball button out when the bag holds no ball this encounter can use.</summary>
+    private void RefreshBallButton()
+        => _ballButton.Disabled =
+            GameState.Instance.Session?.BestBall(_data, _request.Legendary is not null) is null;
+
     private void SetActionsEnabled(bool enabled)
     {
         FightButton.Disabled = !enabled;
         _ballButton.Disabled = !enabled;
         _runButton.Disabled = !enabled;
+        if (enabled) RefreshBallButton();
         foreach (var child in MoveButtons.GetChildren())
             if (child is Button button) button.Disabled = !enabled;
         if (BagButton is not null) BagButton.Disabled = !enabled;

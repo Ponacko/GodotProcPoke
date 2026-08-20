@@ -44,8 +44,11 @@ public sealed class SaveStore
         var file = new SaveFile
         {
             FormatVersion = SaveFile.CurrentFormatVersion,
-            GeneratorVersion = GeneratorVersion.Current,
-            SeedString = Generation.SeedString.Encode(session.Region.Settings),
+            // The region's own provenance, not this build's: a save keeps the generated region, so
+            // re-saving after a version bump must not relabel it.
+            GeneratorVersion = session.RegionGeneratorVersion,
+            SeedString = Generation.SeedString.Encode(
+                session.Region.Settings, session.RegionGeneratorVersion),
             SavedAt = savedAt,
             Region = RegionSnapshot.From(session.Region),
             Session = session.ToSnapshot(playerState),

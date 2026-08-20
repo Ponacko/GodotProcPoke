@@ -105,6 +105,11 @@ public sealed record LocationSnapshot
 public sealed record SessionSnapshot
 {
     public required PlayerIdentity Player { get; init; }
+
+    /// <summary>Which generator built this region. Set when the region was generated and carried through
+    /// every later save, so a re-save after a version bump does not relabel where the region came from.
+    /// Older saves, written before this field existed, read as null and fall back to the file's stamp.</summary>
+    public int? RegionGeneratorVersion { get; init; }
     public required LocationSnapshot Location { get; init; }
     public required int LastPokemonCenterAreaId { get; init; }
     public required IReadOnlyList<int> VisitedAreaIds { get; init; }
@@ -137,11 +142,14 @@ public sealed record SessionSnapshot
 /// </summary>
 public sealed record SaveFile
 {
-    /// <summary>Bumped only when this schema changes shape — distinct from the generator version, which
-    /// says which generator built the region inside.</summary>
+    /// <summary>Bumped only when this schema changes shape — distinct from
+    /// <see cref="GeneratorVersion"/>, which says which generator built the region inside.</summary>
     public const int CurrentFormatVersion = 1;
 
     public required int FormatVersion { get; init; }
+
+    /// <summary>The generator that built <see cref="Region"/> — not necessarily the one running now, since
+    /// a save keeps the fully generated region and outlives generator bumps (GDD §11).</summary>
     public required int GeneratorVersion { get; init; }
     public required string SeedString { get; init; }
 

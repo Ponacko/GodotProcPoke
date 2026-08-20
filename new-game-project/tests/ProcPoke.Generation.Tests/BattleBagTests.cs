@@ -84,6 +84,49 @@ public sealed class BattleBagTests
     }
 
     [Fact]
+    public void TheStrongestOrdinaryBallIsThrownAndTheMasterBallIsSavedForALegendary()
+    {
+        var bag = BagOf("Poké Ball", "Great Ball", "Ultra Ball", "Master Ball");
+
+        var ordinary = BattleBag.BestBallFor(TestData.Data, bag, legendary: false)!;
+        Assert.Equal("Ultra Ball", ordinary.Ball.Name);
+        Assert.False(ordinary.Ball.IsMaster);
+
+        var legendary = BattleBag.BestBallFor(TestData.Data, bag, legendary: true)!;
+        Assert.True(legendary.Ball.IsMaster);
+        Assert.Equal("Master Ball", legendary.Ball.Name);
+    }
+
+    [Fact]
+    public void AMasterBallAloneIsStillNotSpentOnAnOrdinaryEncounter()
+    {
+        var bag = BagOf("Master Ball");
+
+        Assert.Null(BattleBag.BestBallFor(TestData.Data, bag, legendary: false));
+        Assert.NotNull(BattleBag.BestBallFor(TestData.Data, bag, legendary: true));
+    }
+
+    [Fact]
+    public void NoBallInTheBagMeansNoThrow()
+    {
+        Assert.Null(BattleBag.BestBallFor(TestData.Data, new Bag(), legendary: false));
+        Assert.Null(BattleBag.BestBallFor(TestData.Data, new Bag(), legendary: true));
+        // A situational ball has no Gen 5 multiplier this battle can honour, so it is not offered.
+        Assert.Empty(BattleBag.BallsIn(TestData.Data, BagOf("Net Ball", "Dusk Ball")));
+    }
+
+    [Fact]
+    public void ABallChoiceConvertsStraightIntoAThrow()
+    {
+        var choice = BattleBag.BestBallFor(TestData.Data, BagOf("Great Ball"), legendary: false)!;
+
+        var action = choice.ToAction();
+
+        Assert.Equal("Great Ball", action.BallId);
+        Assert.Equal(1.5, action.BallMultiplier);
+    }
+
+    [Fact]
     public void TheChoiceConvertsStraightIntoABattleAction()
     {
         var choice = BattleBag.BestFor(TestData.Data, BagOf("Potion"), hp: 5, maxHp: 60)!;

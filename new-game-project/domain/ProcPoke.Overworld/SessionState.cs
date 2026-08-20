@@ -53,7 +53,7 @@ public sealed class RegionMapState
         ArgumentNullException.ThrowIfNull(region);
         if (!CanUseFly(region, hasFly, badges, debugUnlock)) return [];
         return region.Graph.Areas
-            .Where(area => IsCity(area) && _visited.Contains(area.Id))
+            .Where(area => area.Archetype.IsCity() && _visited.Contains(area.Id))
             .OrderBy(area => area.PathIndex < 0 ? int.MaxValue : area.PathIndex)
             .ThenBy(area => area.Id)
             .Select(area => area.Id)
@@ -66,14 +66,12 @@ public sealed class RegionMapState
         ArgumentNullException.ThrowIfNull(region);
         return CanUseFly(region, hasFly, badges, debugUnlock)
             && _visited.Contains(areaId)
-            && region.Graph.Areas.Any(area => area.Id == areaId && IsCity(area));
+            && region.Graph.Areas.Any(area => area.Id == areaId && area.Archetype.IsCity());
     }
 
     private static bool CanUseFly(GeneratedRegion region, bool hasFly, int badges, bool debugUnlock)
         => debugUnlock || (hasFly && badges >= region.Gating.Fly.BadgePrerequisite);
 
-    private static bool IsCity(Area area)
-        => area.Archetype is AreaArchetype.StartTown or AreaArchetype.Town;
 }
 
 public enum TimeOfDayPhase
@@ -179,6 +177,14 @@ public sealed class OverworldSession
 
     public GeneratedRegion Region { get; }
     public PlayerIdentity Player { get; }
+
+    /// <summary>
+    /// Which generator built <see cref="Region"/>. A new game's region comes from the generator running
+    /// now; a loaded one keeps the version its save recorded, because a save stores the fully generated
+    /// region and therefore outlives generator bumps (GDD §11). Saving reads this rather than the current
+    /// version, so re-saving an old region never relabels where it came from.
+    /// </summary>
+    public int RegionGeneratorVersion { get; private init; } = GeneratorVersion.Current;
     public Party Party { get; }
     public PcStorage Storage { get; }
     public PokedexState Pokedex { get; }
@@ -404,11 +410,6 @@ public sealed class OverworldSession
     }
 
     /// <summary>
-    /// League stages are climbed in order, all badges in hand. Progress is tracked per <em>run</em>, not for
-    /// the lifetime of the save: beating the Champion clears the run, which is exactly what reopens the
-    /// ladder as the §11a rematch. <see cref="DefeatedLeagueStages"/> keeps the lifetime record.
-    /// </summary>
-    /// <summary>
     /// Beating the Champion: the credits roll, the ladder reopens at rematch levels, and every legendary
     /// the player fought and beat comes back (GDD §5.5's B2W2 rule, so none is ever permanently lost).
     /// Captured legendaries stay caught.
@@ -420,6 +421,11 @@ public sealed class OverworldSession
         _dormantLegendaries.Clear();
     }
 
+    /// <summary>
+    /// League stages are climbed in order, all badges in hand. Progress is tracked per <em>run</em>, not for
+    /// the lifetime of the save: beating the Champion clears the run, which is exactly what reopens the
+    /// ladder as the §11a rematch. <see cref="DefeatedLeagueStages"/> keeps the lifetime record.
+    /// </summary>
     private bool CanStartLeagueStage(int areaId, int stage)
     {
         if (areaId != Region.Graph.LeagueAreaId || stage < 0 || stage > Region.Bosses.EliteFour.Count)
@@ -567,10 +573,17 @@ public sealed class OverworldSession
     /// the only one a battle the player loses still earns.</summary>
     public void MarkSpeciesSeen(int speciesId) => Pokedex.MarkSeen(speciesId);
 
-    /// <summary>Talking to a town's Mart clerk (see <see cref="MartInteractions"/>): buys the single most
-    /// expensive item currently affordable from that town's stock. Spends <see cref="Money"/> and adds to
+    /// <summary>
+    /// Talking to a town's Mart clerk (see <see cref="MartInteractions"/>): buys the single most expensive
+    /// item currently affordable from that town's stock. Spends <see cref="Money"/> and adds to
     /// <see cref="InteractionSession.Bag"/> — both session-owned, so this must live here rather than on
-    /// <see cref="Interactions"/>, which owns neither.</summary>
+    /// <see cref="Interactions"/>, which owns neither.
+    /// <para>
+    /// The Link Cable is the one exception to "most expensive": at ¥8000 it outprices everything else on
+    /// the shelf, so a clerk that always sold the dearest item would become a cable dispenser and stop
+    /// selling balls and medicine. It is a special order instead — offered once, while the player has none.
+    /// </para>
+    /// </summary>
     public MartPurchaseResult BuyFromMart(GameData data, int areaId)
     {
         ArgumentNullException.ThrowIfNull(data);
@@ -580,12 +593,19 @@ public sealed class OverworldSession
         if (stock.Count == 0)
             return new MartPurchaseResult(MartPurchaseKind.StockEmpty, "There's nothing in stock yet.");
 
-        var affordable = stock.Where(itemId => data.Items[itemId].Cost <= Money).ToArray();
+        var linkCableId = LinkCable.IdOrNullIn(data);
+        var affordable = stock
+            .Where(itemId => data.Items[itemId].Cost <= Money)
+            .Where(itemId => itemId != linkCableId || !Interactions.Bag.Has(itemId))
+            .ToArray();
         if (affordable.Length == 0)
             return new MartPurchaseResult(
                 MartPurchaseKind.NothingAffordable, "You can't afford anything here right now.");
 
-        var itemId = affordable.OrderByDescending(id => data.Items[id].Cost).First();
+        // A cable the player does not own yet is the special order; otherwise the dearest thing in stock.
+        var itemId = linkCableId is { } cable && affordable.Contains(cable)
+            ? cable
+            : affordable.OrderByDescending(id => data.Items[id].Cost).First();
         var cost = data.Items[itemId].Cost;
         Money -= cost;
         Interactions.Bag.Add(itemId);
@@ -640,12 +660,12 @@ public sealed class OverworldSession
         for (var i = 0; i < Party.Members.Count; i++)
         {
             var member = Party.Members[i];
-            if (member.MoveIds.Count >= MoveTutor.MoveSlotCount) continue;
             var offers = MoveTutor.OffersFor(data, member);
             if (offers.Count == 0) continue;
 
             var moveId = offers[0];
-            Party.Replace(i, MoveTutor.Teach(data, member, moveId));
+            if (!TeachTutorMove(data, i, moveId)) continue;
+
             return new ServiceOutcome(
                 ServiceKind.MoveTutor, true,
                 $"{Nicknames.DisplayName(data, member)} learned {data.Moves[moveId].Name}!");
@@ -671,7 +691,7 @@ public sealed class OverworldSession
             : $"{lead.Nickname}? A first-rate name — I wouldn't change a thing.";
     }
 
-    /// <summary>The Move Deleter's real operation (GDD §8.4). Returns false rather than throwing when the
+    /// <summary>The Move Deleter's real operation (GDD §8a). Returns false rather than throwing when the
     /// move isn't known or is the last one, so a menu can grey the choice out.</summary>
     public bool DeleteMove(int partyIndex, int moveId)
     {
@@ -760,6 +780,11 @@ public sealed class OverworldSession
     public BattleItemChoice? BestBattleItem(GameData data, int hp, int maxHp, BattleStatus status)
         => BattleBag.BestFor(data, Interactions.Bag, hp, maxHp, status);
 
+    /// <summary>The ball to throw, or null when the bag holds none — what a battle screen's Ball button
+    /// offers. Balls are bought, so an empty bag means no catching until the player visits a Mart.</summary>
+    public BattleBallChoice? BestBall(GameData data, bool legendary)
+        => BattleBag.BestBallFor(data, Interactions.Bag, legendary);
+
     public void EnableDebugUnlock() => Interactions.EnableDebugUnlock();
 
     // ── saving ────────────────────────────────────────────────────────────────────────────────────────
@@ -774,6 +799,7 @@ public sealed class OverworldSession
         return new Save.SessionSnapshot
         {
             Player = Player,
+            RegionGeneratorVersion = RegionGeneratorVersion,
             Location = new Save.LocationSnapshot
             {
                 AreaId = CurrentAreaId,
@@ -821,6 +847,9 @@ public sealed class OverworldSession
         var session = new OverworldSession(
             region, snapshot.Player, InteractionSession.Restore(snapshot.Interactions))
         {
+            // A save written before this field existed does not say; its region can only have come from
+            // the generator that was current when the save format shipped.
+            RegionGeneratorVersion = snapshot.RegionGeneratorVersion ?? GeneratorVersion.Current,
             CurrentAreaId = snapshot.Location.AreaId,
             LastPokemonCenterAreaId = snapshot.LastPokemonCenterAreaId,
             Badges = snapshot.Badges,

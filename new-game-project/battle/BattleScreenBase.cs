@@ -83,12 +83,16 @@ public abstract partial class BattleScreenBase : Control
     /// one-unambiguous-action shape the Mart clerk and the service NPCs use. It disables itself whenever
     /// the bag holds nothing that would help, so the choice is never a wasted turn.
     /// </summary>
-    protected Button BuildBagButton(Action<BattleItemChoice> onItemChosen)
+    protected Button BuildBagButton(Action<BattleAction> takeTurn)
     {
         var button = new Button { Text = "Bag" };
         button.Pressed += () =>
         {
-            if (CurrentBattleItem() is { } choice) onItemChosen(choice);
+            if (CurrentBattleItem() is not { } choice) return;
+            // The item is spent whether or not the simulation finds anything to heal; the button is only
+            // offered when there is, and a spent turn with a spent item is the mainline bargain either way.
+            GameState.Instance.Session!.SpendItem(choice.ItemId);
+            takeTurn(choice.ToAction());
         };
         Actions.AddChild(button);
         BagButton = button;

@@ -43,7 +43,7 @@ public sealed class MartTests
         // Early stock has none, unless this Mart is the services pass's guaranteed early vendor.
         Assert.DoesNotContain(linkCableId, MartCatalog.For(TestData.Data, 0.2));
         Assert.Contains(linkCableId, MartCatalog.For(TestData.Data, 0.2, stocksLinkCable: true));
-        // Late-game Marts stock them regardless (GDD §8.4).
+        // Late-game Marts stock them regardless (GDD §8a).
         Assert.Contains(linkCableId, MartCatalog.For(TestData.Data, 1.0));
     }
 
@@ -63,6 +63,26 @@ public sealed class MartTests
 
         Assert.Equal(MartPurchaseKind.Bought, result.Kind);
         Assert.Equal(LinkCable.IdIn(TestData.Data), result.ItemId);
+    }
+
+    /// <summary>At ¥8000 the Link Cable outprices the whole shelf, so "sell the dearest affordable thing"
+    /// would turn the guaranteed vendor into a cable dispenser. It is a one-off special order instead.</summary>
+    [Fact]
+    public void TheVendorSellsOneLinkCableAndThenGoesBackToNormalStock()
+    {
+        var region = Generate();
+        var session = new OverworldSession(
+            region, NewGameIdentity.Create(CharacterChoice.CharacterA, "Player"));
+        session.CompleteTrainerBattle(new GeneratedTrainerBattleTransitionRequest(
+            "t1", "Rich Trainer", new PlayerState(new GridPosition(0, 0)), [], 100_000));
+        var cable = LinkCable.IdIn(TestData.Data);
+
+        Assert.Equal(cable, session.BuyFromMart(TestData.Data, region.Services.LinkCableVendorAreaId).ItemId);
+
+        var second = session.BuyFromMart(TestData.Data, region.Services.LinkCableVendorAreaId);
+        Assert.Equal(MartPurchaseKind.Bought, second.Kind);
+        Assert.NotEqual(cable, second.ItemId);
+        Assert.Equal(1, session.Interactions.Bag.Count(cable));
     }
 
     [Fact]

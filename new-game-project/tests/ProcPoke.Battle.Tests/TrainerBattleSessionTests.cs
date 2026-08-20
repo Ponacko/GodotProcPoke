@@ -85,6 +85,35 @@ public sealed class TrainerBattleSessionTests
         Assert.Equal(0, session.OpponentPotionsLeft);
     }
 
+    /// <summary>
+    /// The potion is scaled to the Pokémon it heals, not to the trainer's rank: a fixed Hyper Potion would
+    /// fully heal a first-gym team twice over, and difficulty is meant to come from teams and levels.
+    /// </summary>
+    [Fact]
+    public void ABossHealsWithAPotionSizedToItsPokemon()
+    {
+        var names = new List<string>();
+        foreach (var level in new[] { 12, 50 })
+        {
+            var session = TrainerBattleSession.Start(
+                Data, Sturdy(1), [new TrainerRosterMember(143, level)], seed: 7, tier: BattleAiTier.Boss);
+            var maxHp = session.State.Opponent.MaxHp;
+
+            for (var turn = 0; turn < 4000 && session.Outcome == TrainerBattleOutcome.Ongoing; turn++)
+            foreach (var item in session.TakeTurn(new UseMoveAction(33)).Events.OfType<ItemUsed>())
+            {
+                names.Add(item.ItemName);
+                // Worth having, but never a full heal on top of the fight.
+                var restored = MedicineCatalog.For(item.ItemName)!.HpRestoredFor(maxHp);
+                Assert.InRange(restored, maxHp / 2, maxHp);
+            }
+        }
+
+        // A level-12 Snorlax and a level-50 one do not get the same bottle.
+        Assert.NotEmpty(names);
+        Assert.True(names.Distinct().Count() > 1, string.Join(", ", names));
+    }
+
     /// <summary>The same grind against a standard trainer: no potions, ever.</summary>
     [Fact]
     public void AStandardTrainerNeverHeals()

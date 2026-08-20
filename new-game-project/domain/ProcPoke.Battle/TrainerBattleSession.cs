@@ -64,9 +64,17 @@ public sealed class TrainerBattleSession
     /// is meant to come from team composition and levels, not from an unkillable healer.</summary>
     public const int BossPotions = 2;
 
-    /// <summary>The medicine a boss reaches for, and the reason this session needs <c>GameData</c> for more
-    /// than building opponents.</summary>
-    private const string BossPotionName = "Hyper Potion";
+    /// <summary>
+    /// The potions a boss may reach for, weakest first. Which one it uses depends on the Pokémon being
+    /// healed, not on the trainer's rank: a fixed Hyper Potion would fully heal a first-gym team twice
+    /// over, and difficulty is meant to come from team composition and levels, never from deeper AI
+    /// (CONTEXT.md's AI Tier).
+    /// </summary>
+    private static readonly string[] BossPotionLadder = ["Potion", "Super Potion", "Hyper Potion"];
+
+    /// <summary>Share of a Pokémon's maximum HP a boss's potion should be worth — enough to matter, not
+    /// enough to undo the whole fight.</summary>
+    private const double BossPotionShare = 0.5;
 
     public BattleState State { get; private set; }
     public TrainerBattleOutcome Outcome { get; private set; } = TrainerBattleOutcome.Ongoing;
@@ -170,13 +178,39 @@ public sealed class TrainerBattleSession
         return results;
     }
 
-    /// <summary>The boss's next potion, or null once it has spent them all.</summary>
+    /// <summary>
+    /// The boss's next potion, or null once it has spent them all: the weakest one on the ladder worth at
+    /// least <see cref="BossPotionShare"/> of the active Pokémon's maximum, so a low-level gym leader heals
+    /// with a Potion and a Champion with a Hyper Potion.
+    /// </summary>
     private UseItemAction? BossPotion()
     {
         if (_potionsLeft <= 0) return null;
-        var item = _data.Items.Values.FirstOrDefault(candidate => candidate.Name == BossPotionName);
-        if (item is null || MedicineCatalog.For(BossPotionName) is not { } medicine) return null;
-        return new UseItemAction(item.Id, item.Name, medicine);
+        var wanted = State.Opponent.MaxHp * BossPotionShare;
+
+        UseItemAction? weakest = null;
+        foreach (var name in BossPotionLadder)
+        {
+            if (_data.Items.Values.FirstOrDefault(candidate => candidate.Name == name) is not { } item) continue;
+            if (MedicineCatalog.For(name) is not { } medicine) continue;
+            weakest ??= new UseItemAction(item.Id, item.Name, medicine);
+            if (medicine.HpRestoredFor(State.Opponent.MaxHp) >= wanted)
+                return new UseItemAction(item.Id, item.Name, medicine);
+        }
+        // Nothing on the ladder reaches half its health: the strongest is the best it can do.
+        return weakest is null ? null : StrongestPotion() ?? weakest;
+    }
+
+    private UseItemAction? StrongestPotion()
+    {
+        for (var i = BossPotionLadder.Length - 1; i >= 0; i--)
+        {
+            var name = BossPotionLadder[i];
+            if (_data.Items.Values.FirstOrDefault(candidate => candidate.Name == name) is not { } item) continue;
+            if (MedicineCatalog.For(name) is { } medicine)
+                return new UseItemAction(item.Id, item.Name, medicine);
+        }
+        return null;
     }
 
     /// <summary>Potions this boss has left; zero for every non-boss trainer.</summary>

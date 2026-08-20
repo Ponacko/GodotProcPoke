@@ -24,12 +24,17 @@ public static class SeedString
     /// <c>PP&lt;version&gt;-&lt;seed base36&gt;-&lt;badges&gt;-&lt;dex&gt;-&lt;cap&gt;</c>. Base 36 keeps a
     /// 64-bit seed to 13 characters, and the leading version is what lets a decoder warn before generating.
     /// </summary>
-    public static string Encode(GenerationSettings settings)
+    /// <param name="generatorVersion">Which generator this region came from. Defaults to the running one,
+    /// which is right for a region generated here and now; a save re-encoding a region it loaded passes the
+    /// version that built it, so the stamp keeps pointing at the real origin.</param>
+    public static string Encode(GenerationSettings settings, int? generatorVersion = null)
     {
         ArgumentNullException.ThrowIfNull(settings);
         settings.Validate();
+        var version = generatorVersion ?? GeneratorVersion.Current;
+        if (version < 1) throw new ArgumentOutOfRangeException(nameof(generatorVersion));
         return string.Join('-',
-            $"{Prefix}{GeneratorVersion.Current}",
+            $"{Prefix}{version}",
             Base36(settings.Seed),
             settings.BadgeCount.ToString(CultureInfo.InvariantCulture),
             settings.DexSize.ToString(CultureInfo.InvariantCulture),

@@ -25,7 +25,7 @@ public static class RegionLink
         var occupied = graph.Areas.Select(area => area.Cell).ToHashSet();
 
         var candidates = graph.Areas
-            .OrderByDescending(area => IsCity(area))
+            .OrderByDescending(area => area.Archetype.IsCity())
             .ThenBy(area => area.PathIndex < 0 ? int.MaxValue : area.PathIndex)
             .ThenBy(area => area.Id);
 
@@ -37,7 +37,4 @@ public static class RegionLink
         }
         return null;
     }
-
-    private static bool IsCity(Area area)
-        => area.Archetype is AreaArchetype.StartTown or AreaArchetype.Town;
 }

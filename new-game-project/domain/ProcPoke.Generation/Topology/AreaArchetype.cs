@@ -34,6 +34,13 @@ public static class AreaArchetypeExtensions
         => a is AreaArchetype.StartTown or AreaArchetype.Town or AreaArchetype.Route;
 
     /// <summary>
+    /// A city: somewhere with the Center/Mart/Gym building set, which is exactly the two town archetypes.
+    /// The test Fly targeting, the Mart catalog, the services pass and the Region Link all ask.
+    /// </summary>
+    public static bool IsCity(this AreaArchetype a)
+        => a is AreaArchetype.StartTown or AreaArchetype.Town;
+
+    /// <summary>
     /// The post-game dungeon (GDD §11a): the region's one deep cave, hung off its last town by the topology
     /// pass, whose guard steps aside once the player is Champion. Because it opens only after the credits,
     /// nothing the critical path needs may live there — see <c>GatingGenerator</c>'s key and Fly placement.

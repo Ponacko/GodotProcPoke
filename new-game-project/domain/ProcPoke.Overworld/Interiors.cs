@@ -114,7 +114,7 @@ public static class InteriorTemplateCatalog
                 break;
             case InteriorKind.House:
                 // Two posts, because a house is where the services pass seats city services and a city can
-                // hold two of them (GDD §8.4). An ordinary house simply leaves both posts unbound.
+                // hold two of them (GDD §8a). An ordinary house simply leaves both posts unbound.
                 grid[center.X, center.Y] = LogicalTile.NpcPost;
                 grid[Math.Max(1, center.X - 2), center.Y] = LogicalTile.NpcPost;
                 break;

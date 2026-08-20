@@ -76,6 +76,9 @@ One of the four scripted rival encounters (post-starter, early route, midpoint c
 ### Services Pass
 The generation pass that assigns one-off city services (Move Deleter, Name Rater, fossil revival, Link Cable vendor, move tutors) to generated cities, 0–2 per city, under per-service placement constraints (fossil revival near the fossil cave, Move Deleter by mid-game, etc.). Every service is guaranteed present somewhere per seed. Service NPCs stand in city **houses** — the one town building with no fixed role — so a city's service capacity is its house count; the Link Cable vendor is the exception, being a stocking rule on one early city's Mart rather than an NPC of its own.
 
+### Post-Game Cave
+The region's single deep-cave destination dungeon, hung off one of its last towns. A guard turns everyone away until the Champion flag sets, after which it holds the region's highest-level wilds and typically a legendary. Because it is shut for the whole main run, no Gate Key, Hint NPC, or Fly point is ever placed inside it.
+
 ### Second Region
 The Phase 7 post-game feature (Gen 2 Kanto homage): after the Champion, the player may generate a second region from a new sub-seed, merged with the first. Its own dex (novelty-preferring), starter (unused triangle), gyms, and villain thread; no second Elite Four — a **Summit** boss instead. Regions stay separate map spaces joined by a **Region Link**.
 

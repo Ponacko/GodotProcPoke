@@ -95,11 +95,7 @@ public partial class TrainerBattleScreen : BattleScreenBase
         FightButton.Pressed += () => { Actions.Visible = false; MoveButtons.Visible = true; };
 
         BuildMoveButtons(moveId => ResolveAction(new UseMoveAction(moveId)));
-        BuildBagButton(choice =>
-        {
-            GameState.Instance.Session!.SpendItem(choice.ItemId);
-            ResolveAction(choice.ToAction());
-        });
+        BuildBagButton(ResolveAction);
         RefreshBagButton();
         RefreshLabels();
         var greeting = _rivalRequest is not null

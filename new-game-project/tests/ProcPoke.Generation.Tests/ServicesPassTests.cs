@@ -8,7 +8,7 @@ using Xunit;
 namespace ProcPoke.Generation.Tests;
 
 /// <summary>
-/// The services pass (GDD §8.4). Every constraint is recomputed from the graph and the carved towns rather
+/// The services pass (GDD §8a). Every constraint is recomputed from the graph and the carved towns rather
 /// than read back off the plan, so a pass that placed a service by accident still fails.
 /// </summary>
 public class ServicesPassTests

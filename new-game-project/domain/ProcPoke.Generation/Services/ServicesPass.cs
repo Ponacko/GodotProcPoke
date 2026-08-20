@@ -7,7 +7,7 @@ using ProcPoke.Generation.Topology;
 namespace ProcPoke.Generation.Services;
 
 /// <summary>
-/// The one-off city services (GDD §8.4). Every kind is seated in a city house — the one town building
+/// The one-off city services (GDD §8a). Every kind is seated in a city house — the one town building
 /// that carries no fixed role, so a service NPC displaces nothing. The Link Cable vendor is deliberately
 /// absent: it is a Mart property, not an NPC post (see <see cref="ServicePlan.LinkCableVendorAreaId"/>).
 /// </summary>
@@ -35,7 +35,7 @@ public sealed record ServicePlan
     public required IReadOnlyList<ServicePlacement> Placements { get; init; }
 
     /// <summary>The city whose Mart stocks Link Cables regardless of progression — the "one guaranteed
-    /// earlier vendor" of GDD §8.4, distinct from the late-game Marts that stock them by price ceiling
+    /// earlier vendor" of GDD §8a, distinct from the late-game Marts that stock them by price ceiling
     /// alone.</summary>
     public required int LinkCableVendorAreaId { get; init; }
 
@@ -57,7 +57,7 @@ public sealed record ServicePlan
 }
 
 /// <summary>
-/// The services pass (GDD §8.4): 0–2 one-off services per city, under per-service placement constraints —
+/// The services pass (GDD §8a): 0–2 one-off services per city, under per-service placement constraints —
 /// fossil revival in the nearest city to the fossil cave that can seat it, the Move Deleter by mid-game (the
 /// HM escape hatch must land before HM-slot regret gets expensive), the Name Rater and move tutors anywhere.
 /// A city with no house hosts none — houses are where services sit, so a house-less town is skipped, and
@@ -94,7 +94,7 @@ public static class ServicesPass
 
         var rng = streams.Stream("services");
         var order = AvailabilityOrder.Of(graph, GatingGenerator.OffSpineAnchors(graph));
-        var cities = order.Where(areaId => IsCity(graph[areaId])).ToList();
+        var cities = order.Where(areaId => graph[areaId].Archetype.IsCity()).ToList();
         var houses = cities.ToDictionary(areaId => areaId, areaId => HouseCount(carved[areaId]));
         var guaranteed = Enum.GetValues<ServiceKind>();
 
@@ -154,11 +154,6 @@ public static class ServicesPass
                 kind, areaId, HouseIndex: seat % houses[areaId], PostIndex: seat / houses[areaId]));
         }
     }
-
-    /// <summary>The GDD's "city": somewhere with the Center/Mart/Gym building set, which is exactly the two
-    /// town archetypes — the same test Fly targeting and the Mart catalog use.</summary>
-    private static bool IsCity(Area area)
-        => area.Archetype is AreaArchetype.StartTown or AreaArchetype.Town;
 
     private static int HouseCount(CarvedArea carved)
         => carved.BuildingEntrances.Count(entrance => entrance.Kind == BuildingKind.House);
