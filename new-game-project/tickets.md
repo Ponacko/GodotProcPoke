@@ -588,14 +588,20 @@ determinism check replays the realization pass as well.
 
 Implemented mechanically in `Invariants.cs`, `Debug/CarverSignatures.cs`, and the MapGen `--packet [seeds]`
 mode. The shared checker covers topology/chokepoints, gate keys and hints, edge alignment, names, dex
-numbering/families/type coverage, encounter/trainer/boss/rival membership, and level monotonicity. Packet mode
+numbering/families/type coverage, encounter/trainer/boss/rival membership, level monotonicity, the city
+services, the post-game area holding no Key/hint/Fly, and the reserved external-connection slot. Packet mode
 defaults to the required 10,000-seed × {4, 8, 12} parallel sweep, renders the pinned showcase set with per-area PNGs,
-stitched `_overview.png`/`_world.png` images, and writes `PACKET.md`; a 100-seed smoke sweep (300 regions) is green. The
-mechanical test corpus exercises the same checker. The human visual verdict remains pending.
+stitched `_overview.png`/`_world.png` images, and writes `PACKET.md`. The
+mechanical test corpus exercises the same checker.
+
+**The full sweep is green:** `--packet 10000` reports *30,000 regions, 0 invariant failures* (run on
+generator v3, after the Phase 5 gating change that keeps keys and Fly out of the post-game cave), with 1,150
+showcase PNGs across the 10 pinned seeds × 3 badge counts. The human visual verdict remains pending — that
+one is yours: the renders are under `.cache/mapgen/packet-10k/showcase/`.
 
 **Blocked by:** every other ticket in this file.
 
-- [ ] `Invariants.CheckAll` passes on ≥10,000 seeds × {4, 8, 12} badges via one command
+- [x] `Invariants.CheckAll` passes on ≥10,000 seeds × {4, 8, 12} badges via one command
 - [x] One command generates the packet; overviews are spatially stitched (2b); packet includes the per-archetype distinctness self-check
 - [ ] Human verdict recorded: pass, or a gap list + explicit decision on ADR-0001
 
