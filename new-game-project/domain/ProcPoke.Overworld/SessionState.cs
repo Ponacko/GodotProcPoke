@@ -157,6 +157,11 @@ public sealed class OverworldSession
     private bool _creditsReached;
 
     public OverworldSession(GeneratedRegion region, PlayerIdentity player)
+        : this(region, player, new InteractionSession())
+    {
+    }
+
+    private OverworldSession(GeneratedRegion region, PlayerIdentity player, InteractionSession interactions)
     {
         ArgumentNullException.ThrowIfNull(region);
         ArgumentNullException.ThrowIfNull(player);
@@ -166,7 +171,7 @@ public sealed class OverworldSession
         LastPokemonCenterAreaId = CurrentAreaId;
         Map = new RegionMapState(CurrentAreaId);
         Time = TimeOfDayClock.FromMinutes(12 * 60);
-        Interactions = new InteractionSession();
+        Interactions = interactions;
         Party = new Party();
         Storage = new PcStorage();
         Pokedex = new PokedexState();
@@ -756,6 +761,102 @@ public sealed class OverworldSession
         => BattleBag.BestFor(data, Interactions.Bag, hp, maxHp, status);
 
     public void EnableDebugUnlock() => Interactions.EnableDebugUnlock();
+
+    // ── saving ────────────────────────────────────────────────────────────────────────────────────────
+
+    /// <summary>
+    /// Everything that has happened to this region, for a save file. The region itself is snapshotted
+    /// separately (<see cref="Save.RegionSnapshot"/>) — this is only the play on top of it.
+    /// </summary>
+    public Save.SessionSnapshot ToSnapshot(PlayerState playerState)
+    {
+        ArgumentNullException.ThrowIfNull(playerState);
+        return new Save.SessionSnapshot
+        {
+            Player = Player,
+            Location = new Save.LocationSnapshot
+            {
+                AreaId = CurrentAreaId,
+                Player = playerState,
+                InsideBuildingDoor = ActiveInterior is { } interior
+                    ? (interior.Entrance.X, interior.Entrance.Y)
+                    : null,
+            },
+            LastPokemonCenterAreaId = LastPokemonCenterAreaId,
+            VisitedAreaIds = Map.VisitedAreaIds.Order().ToArray(),
+            Badges = Badges,
+            Money = Money,
+            MinutesSinceMidnight = Time.MinutesSinceMidnight,
+            HasFly = _hasFly,
+            StarterCornerIndex = _starterCornerIndex,
+            DefeatedRivalBeats = _defeatedRivalBeats.Order().ToArray(),
+            DefeatedTrainerIds = _defeatedTrainerIds.OrderBy(id => id, StringComparer.Ordinal).ToArray(),
+            DefeatedGymAreaIds = _defeatedGymAreaIds.Order().ToArray(),
+            DefeatedLeagueStages = _defeatedLeagueStages.Order().ToArray(),
+            LeagueRunStages = _leagueRunStages.Order().ToArray(),
+            CreditsReached = _creditsReached,
+            CapturedLegendaries = _capturedLegendaries.Order().ToArray(),
+            DormantLegendaries = _dormantLegendaries.Order().ToArray(),
+            CollectedFossils = _collectedFossils.Order().ToArray(),
+            PendingFossilRevivals = _pendingRevivals.ToArray(),
+            Party = Party.Members.ToArray(),
+            Stored = Storage.Stored.ToArray(),
+            PokedexSeen = Pokedex.Seen.Order().ToArray(),
+            PokedexCaught = Pokedex.Caught.Order().ToArray(),
+            Interactions = Interactions.ToSnapshot(),
+        };
+    }
+
+    /// <summary>
+    /// Rebuilds a session from a save. Restoring is a plain assignment of recorded facts, never a replay:
+    /// <see cref="VisitArea"/> would hand out keys and Fly again, which is exactly what a load must not do.
+    /// </summary>
+    public static OverworldSession Restore(GeneratedRegion region, Save.SessionSnapshot snapshot)
+    {
+        ArgumentNullException.ThrowIfNull(region);
+        ArgumentNullException.ThrowIfNull(snapshot);
+        if (!region.Graph.Areas.Any(area => area.Id == snapshot.Location.AreaId))
+            throw new ArgumentException("the save's area does not exist in this region", nameof(snapshot));
+
+        var session = new OverworldSession(
+            region, snapshot.Player, InteractionSession.Restore(snapshot.Interactions))
+        {
+            CurrentAreaId = snapshot.Location.AreaId,
+            LastPokemonCenterAreaId = snapshot.LastPokemonCenterAreaId,
+            Badges = snapshot.Badges,
+            Money = snapshot.Money,
+        };
+        session.SetTime(snapshot.MinutesSinceMidnight);
+        session._hasFly = snapshot.HasFly;
+        session._starterCornerIndex = snapshot.StarterCornerIndex;
+        session._creditsReached = snapshot.CreditsReached;
+
+        foreach (var areaId in snapshot.VisitedAreaIds) session.Map.Visit(areaId);
+        foreach (var beat in snapshot.DefeatedRivalBeats) session._defeatedRivalBeats.Add(beat);
+        foreach (var id in snapshot.DefeatedTrainerIds) session._defeatedTrainerIds.Add(id);
+        foreach (var areaId in snapshot.DefeatedGymAreaIds) session._defeatedGymAreaIds.Add(areaId);
+        foreach (var stage in snapshot.DefeatedLeagueStages) session._defeatedLeagueStages.Add(stage);
+        foreach (var stage in snapshot.LeagueRunStages) session._leagueRunStages.Add(stage);
+        foreach (var speciesId in snapshot.CapturedLegendaries) session._capturedLegendaries.Add(speciesId);
+        foreach (var speciesId in snapshot.DormantLegendaries) session._dormantLegendaries.Add(speciesId);
+        foreach (var speciesId in snapshot.CollectedFossils) session._collectedFossils.Add(speciesId);
+        session._pendingRevivals.AddRange(snapshot.PendingFossilRevivals);
+        foreach (var member in snapshot.Party) session.Party.Add(member);
+        foreach (var member in snapshot.Stored) session.Storage.Deposit(member);
+        foreach (var speciesId in snapshot.PokedexSeen) session.Pokedex.MarkSeen(speciesId);
+        foreach (var speciesId in snapshot.PokedexCaught) session.Pokedex.MarkCaught(speciesId);
+
+        if (snapshot.Location.InsideBuildingDoor is { } door)
+        {
+            var entrance = region.Carved[snapshot.Location.AreaId].BuildingEntrances
+                .FirstOrDefault(candidate => candidate.X == door.X && candidate.Y == door.Y)
+                ?? throw new ArgumentException(
+                    "the save is inside a building this region does not have", nameof(snapshot));
+            session.ActiveInterior = new ActiveInterior(
+                snapshot.Location.AreaId, entrance, InteriorTemplateCatalog.For(entrance.Kind));
+        }
+        return session;
+    }
 
     public IReadOnlyList<int> FlyTargets()
         => Map.FlyTargets(Region, _hasFly, Badges, DebugUnlock);

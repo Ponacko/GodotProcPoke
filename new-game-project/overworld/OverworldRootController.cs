@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 using Godot;
 using ProcPoke;
@@ -222,6 +223,71 @@ public partial class OverworldRootController : Node2D
         if (outcome.Kind == InteractionOutcomeKind.GateUnlocked)
             _movement.UpdateCapabilities(_session.Interactions.ForMovement(
                 _session.CurrentAreaId, new MovementCapabilities(), _registry, _session.Region.Gating, _session.Badges));
+    }
+
+    /// <summary>
+    /// Save anywhere and load back (GDD §11), on F5/F9. A key rather than a menu item because there is no
+    /// menu yet; the slot is whichever this playthrough came from, so saving does not silently overwrite
+    /// slot 1 from a game loaded out of slot 3.
+    /// </summary>
+    public override void _UnhandledInput(InputEvent @event)
+    {
+        if (!@event.IsPressed()) return;
+
+        if (@event.IsActionPressed(InputBindings.SaveGame))
+        {
+            GetViewport().SetInputAsHandled();
+            SaveGame();
+            return;
+        }
+
+        if (@event.IsActionPressed(InputBindings.LoadGame))
+        {
+            GetViewport().SetInputAsHandled();
+            LoadGame();
+        }
+    }
+
+    private void SaveGame()
+    {
+        var slot = GameState.Instance.ActiveSlot;
+        try
+        {
+            GameState.SaveStore().Save(slot, _session, _movement.State, DateTimeOffset.Now);
+            _message.Text = $"Saved to slot {slot}.";
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        {
+            GD.PushWarning($"save failed: {exception.Message}");
+            _message.Text = "The game could not be saved.";
+        }
+    }
+
+    private void LoadGame()
+    {
+        var slot = GameState.Instance.ActiveSlot;
+        var store = GameState.SaveStore();
+        if (!store.Exists(slot))
+        {
+            _message.Text = $"Slot {slot} is empty.";
+            return;
+        }
+
+        try
+        {
+            var (session, playerState) = store.Load(slot);
+            GameState.Instance.Session = session;
+            GameState.Instance.ResumePlayerState = playerState;
+            GameState.Instance.ActiveSlot = slot;
+            // A load replaces the whole world, so it re-enters the scene rather than patching this one.
+            GetTree().ChangeSceneToFile("res://overworld/OverworldRoot.tscn");
+        }
+        catch (Exception exception)
+            when (exception is IOException or InvalidDataException or System.Text.Json.JsonException)
+        {
+            GD.PushWarning($"load failed: {exception.Message}");
+            _message.Text = $"Slot {slot} could not be loaded.";
+        }
     }
 
     private WildEncounter? TryRollEncounter(MovementResolution resolution)

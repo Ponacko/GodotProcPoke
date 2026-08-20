@@ -37,6 +37,10 @@ public static class Invariants
             if (!graph[connection.AreaA].Cell.IsAdjacentTo(graph[connection.AreaB].Cell))
                 Fail($"connection {connection.AreaA}-{connection.AreaB} is not adjacent");
 
+        // The Phase 7 provision (GDD §11): somewhere for the Region Link to attach, kept free from the start
+        // so adding a second region never forces region 1 to regenerate.
+        if (RegionLink.SlotFor(graph) is null) Fail("region has no free external-connection slot");
+
         if (!GatingValidator.IsSolvable(graph, region.Gating)) Fail("gating replay cannot reach the League");
         // The post-game cave opens only after the credits (GDD §11a), so nothing the run needs may sit
         // inside it. Fly included: it is a mid-game utility, not a reward for winning.

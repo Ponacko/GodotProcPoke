@@ -36,5 +36,14 @@ public partial class GameState : Node
     /// tile).</summary>
     public PlayerState? ResumePlayerState { get; set; }
 
+    /// <summary>Which save slot this playthrough belongs to — set when a save is loaded, so a later save
+    /// goes back where it came from rather than always to slot 1.</summary>
+    public int ActiveSlot { get; set; } = 1;
+
+    /// <summary>Where save slots live. <c>user://</c> is Godot's per-user writable directory, globalized
+    /// because the domain's <c>SaveStore</c> is engine-independent and takes a real filesystem path.</summary>
+    public static Overworld.Save.SaveStore SaveStore()
+        => new(ProjectSettings.GlobalizePath("user://saves"));
+
     public override void _Ready() => Instance = this;
 }

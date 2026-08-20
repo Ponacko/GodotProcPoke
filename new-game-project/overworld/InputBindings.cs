@@ -18,7 +18,11 @@ public static class InputBindings
     public const string Menu = "menu";
     public const string Map = "map";
 
-    private static readonly (string Action, Key Key, JoyButton Button)[] Defaults =
+    /// <summary>Save anywhere (GDD §11). Keyboard-only until the options menu exists to host it.</summary>
+    public const string SaveGame = "save_game";
+    public const string LoadGame = "load_game";
+
+    private static readonly (string Action, Key Key, JoyButton? Button)[] Defaults =
     [
         (MoveUp, Key.W, JoyButton.DpadUp),
         (MoveRight, Key.D, JoyButton.DpadRight),
@@ -31,6 +35,8 @@ public static class InputBindings
         (Surf, Key.F, JoyButton.LeftShoulder),
         (Menu, Key.Escape, JoyButton.Start),
         (Map, Key.M, JoyButton.Back),
+        (SaveGame, Key.F5, null),
+        (LoadGame, Key.F9, null),
     ];
 
     public static void EnsureDefaults()
@@ -42,7 +48,8 @@ public static class InputBindings
             var keyboard = new InputEventKey { PhysicalKeycode = key };
             if (!InputMap.ActionHasEvent(action, keyboard)) InputMap.ActionAddEvent(action, keyboard);
 
-            var controller = new InputEventJoypadButton { ButtonIndex = button };
+            if (button is not { } joypadButton) continue;
+            var controller = new InputEventJoypadButton { ButtonIndex = joypadButton };
             if (!InputMap.ActionHasEvent(action, controller)) InputMap.ActionAddEvent(action, controller);
         }
     }

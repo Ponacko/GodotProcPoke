@@ -268,6 +268,29 @@ public sealed class InteractionSession
 
     public void EnableDebugUnlock() => DebugUnlock = true;
 
+    /// <summary>Everything this session has picked up, opened, and been taught — the save's half of the
+    /// interaction state (the other half, the tile markers, is generated and never stored).</summary>
+    public Save.InteractionSnapshot ToSnapshot() => new()
+    {
+        CollectedItemIds = _collectedItems.OrderBy(id => id, StringComparer.Ordinal).ToArray(),
+        UnlockedGateIds = _unlockedGates.Order().ToArray(),
+        Keys = _keys.OrderBy(key => key, StringComparer.OrdinalIgnoreCase).ToArray(),
+        Bag = Bag.Items.OrderBy(entry => entry.Key).ToDictionary(entry => entry.Key, entry => entry.Value),
+        DebugUnlock = DebugUnlock,
+    };
+
+    public static InteractionSession Restore(Save.InteractionSnapshot snapshot)
+    {
+        ArgumentNullException.ThrowIfNull(snapshot);
+        var session = new InteractionSession();
+        foreach (var id in snapshot.CollectedItemIds) session._collectedItems.Add(id);
+        foreach (var gateId in snapshot.UnlockedGateIds) session._unlockedGates.Add(gateId);
+        foreach (var key in snapshot.Keys) session._keys.Add(key);
+        foreach (var (itemId, count) in snapshot.Bag) session.Bag.Add(itemId, count);
+        if (snapshot.DebugUnlock) session.EnableDebugUnlock();
+        return session;
+    }
+
     public void GrantKey(string keyName)
     {
         ArgumentException.ThrowIfNullOrWhiteSpace(keyName);
